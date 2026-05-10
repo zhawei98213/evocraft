@@ -338,6 +338,47 @@
 - 调用内置 `imagegen` 生成正式 UI 图。
 - 根据生成结果选择是否继续生成单屏细化图。
 
+### 2026-05-10：B 方案蓝色主视觉修正
+
+本轮任务是什么：
+
+- 根据用户反馈修正 B 方案视觉方向：B 方案应为蓝色主导，而不是偏绿色或蓝绿色主导，并重新生成 UI 图。
+
+已完成什么：
+
+- 更新 `docs/design/desgin.md`，将主色从 `Primary Teal` 修正为 `Primary Blue #2563EB`。
+- 将青绿色降级为 AI 处理中、图形保留等辅助提示色，不再作为主 CTA 或主视觉。
+- 将干净题面、App rail、背景等 surface 从偏薄荷绿改为浅蓝体系。
+- 更新 `docs/design/2026-05-10-b-style-ui-generation-brief.md` 的正式 ImageGen Prompt，避免再次生成偏绿色 UI。
+- 更新 `docs/design/2026-05-10-ui-style-options-brief.md`、项目记忆和想法胶囊，统一记录 B 方案是蓝色主导。
+
+卡在哪里：
+
+- 无。之前生成的 UI 图偏绿，不能作为后续 coding 参考；本轮会基于修正后的蓝色主视觉重新生成。
+
+执行的是什么命令：
+
+- `sed -n '1,220p' AGENTS.md`
+- `sed -n '1,220p' docs/planning/evocraft-project-memory.md`
+- `sed -n '1,380p' docs/planning/evocraft-roadmap-progress.md`
+- `rg -n "蓝绿|蓝绿色|green|teal|Teal|mint|Mint|#0F9F9A|#08716F|#DDF5F1|#F0FBF8|#EEF7F4|#F7FAF8|Primary" docs/design/desgin.md docs/design/2026-05-10-b-style-ui-generation-brief.md docs/design/2026-05-10-ui-style-options-brief.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/planning/evocraft-project-memory.md`
+- `sed -n '1,120p' docs/design/desgin.md`
+- `sed -n '230,410p' docs/design/desgin.md`
+- `sed -n '45,115p' docs/design/2026-05-10-b-style-ui-generation-brief.md`
+- `rg -n "#2563EB|#1D4ED8|Primary Blue|蓝色主|Blue must dominate|青绿色只|pale-blue|#F5F8FF|#06B6D4" docs/design/desgin.md docs/design/2026-05-10-b-style-ui-generation-brief.md docs/design/2026-05-10-ui-style-options-brief.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/planning/evocraft-project-memory.md`
+- `rg -n "蓝绿色主色|Primary Teal|#0F9F9A|#08716F|#DDF5F1|#F0FBF8|mint clean|Primary teal|teal primary|blue-green primary|蓝绿色功能色" docs/design/desgin.md docs/design/2026-05-10-b-style-ui-generation-brief.md docs/design/2026-05-10-ui-style-options-brief.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/planning/evocraft-project-memory.md || true`
+- `rg -n "TBD|TODO|待定|待补充|PLACEHOLDER|implement later" AGENTS.md docs || true`
+- `git diff --check`
+- `git add docs/design/desgin.md docs/design/2026-05-10-b-style-ui-generation-brief.md docs/design/2026-05-10-ui-style-options-brief.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md`
+- `git commit ...`
+- `git push`
+
+下一步的计划：
+
+- 验证文档中不再存在 B 方案偏绿色主视觉描述。
+- 提交并推送修正后的设计文档。
+- 调用内置 `imagegen` 重新生成蓝色主导的正式 UI 图。
+
 ## 下一步
 
 1. 把 PRD v1.0 转成 UI 生成简报，明确 App Hub、错题收集应用入口、屏幕、组件、文案、视觉方向。

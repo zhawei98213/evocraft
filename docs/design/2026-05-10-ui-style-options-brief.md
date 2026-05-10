@@ -38,7 +38,7 @@
 视觉特征：
 
 - 更强的分栏布局。
-- 蓝绿色功能色。
+- 蓝色为主，青绿色只作为辅助功能色。
 - 状态标签更清晰。
 - 类似生产力工具，但保持儿童学习场景温度。
 
@@ -75,7 +75,7 @@ Asset type: desktop app UI style exploration board
 Primary request: Create a polished 16:9 UI style exploration board for EvoCraft, an AI learning assistant app collection for Shanghai children. Show four distinct visual style directions side by side in a 2x2 comparison board, each represented by a realistic desktop app mockup for the same wrong-question capture product flow.
 Style directions:
 A. 清爽学习桌: calm warm educational tool, warm white, soft green and blue, trustworthy, friendly, clean study desk feeling.
-B. 未来学习工作台: modern AI productivity workspace, structured two-pane layout, blue-green accents, clear status chips, efficient but still warm.
+B. 未来学习工作台: modern AI productivity workspace, structured two-pane layout, blue-dominant visual system with cyan secondary accents, clear status chips, efficient but still warm.
 C. 纸面笔记本: modern web app with subtle paper notebook feeling, clean worksheet cards, organized wrong-question notebook, light paper texture, not messy.
 D. 成长收集册: restrained growth-and-collection feeling, soft warm yellow reward accents, future app collection hints, light gamification without mascot.
 Shared product content: EvoCraft, AI 学习助手应用集合, 错题收集, 上传错题照片, 原图, 干净题面, 识别草稿, 去痕需复核, 保存错题.

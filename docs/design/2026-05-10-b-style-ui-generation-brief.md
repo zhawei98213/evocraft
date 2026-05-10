@@ -52,9 +52,10 @@
 ## 视觉约束
 
 - 采用 B 方案：未来学习工作台。
-- 主色：蓝绿色 `#0F9F9A`。
+- 主色：蓝色 `#2563EB`。
 - AI 信息：蓝色系 `#2563EB` / `#E8F0FF`。
-- 干净题面：薄荷浅绿 `#F0FBF8`。
+- AI 辅助：青色系 `#06B6D4` / `#E6FAFD`，只用于处理中、图形保留等辅助提示。
+- 干净题面：浅蓝 `#F5F8FF`。
 - 复核提示：玫红浅底 `#FFE7EC` + 玫红文字 `#E85D75`。
 - 轻奖励/保存反馈：暖黄色小面积点缀 `#F6B743`。
 - 背景浅色，不做暗色主题。
@@ -101,10 +102,12 @@ Screen 4 - 已保存错题详情:
 - Include a low-priority placeholder for future analysis, not a full analysis product.
 
 Visual system:
-- Light canvas background #F7FAF8.
-- White panels, mint clean question surface #F0FBF8.
-- Primary teal #0F9F9A for active app, primary buttons, progress.
-- Learning blue #2563EB and #E8F0FF for AI information.
+- Light blue canvas background #F7F9FF.
+- White panels, pale-blue clean question surface #F5F8FF.
+- Primary blue #2563EB for active app, primary buttons, progress, selected states.
+- Deep blue #1D4ED8 for pressed state and important links.
+- Cyan #06B6D4 and #E6FAFD only for AI processing and retained visual fragment hints.
+- Blue must dominate the visual impression; do not use green or teal as the primary brand/action color.
 - Rose review chip #FFE7EC / #E85D75 for "去痕需复核".
 - Small amber #F6B743 only for success or future growth hint.
 - Inter / Noto Sans SC style typography, 8px buttons, 12px to 16px panels, light borders, subtle shadows.
