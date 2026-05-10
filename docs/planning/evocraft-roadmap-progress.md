@@ -297,6 +297,47 @@
 - 用 `docs/design/desgin.md` 作为 UI 图细化和前端实现的视觉输入。
 - 进入技术栈选择与第一版 App Shell / 错题收集页面实现计划。
 
+### 2026-05-10：B 方案正式 UI 图生成
+
+本轮任务是什么：
+
+- 根据 PRD v1.0 和 B 方案 `未来学习工作台` 设计基线，生成可指导后续 coding 的正式桌面端 UI 图。
+
+已完成什么：
+
+- 新增 `docs/design/2026-05-10-b-style-ui-generation-brief.md`，沉淀正式 ImageGen Prompt。
+- 将 UI 图目标从风格探索收敛为 coding reference：四屏 2x2 图板，覆盖 App Hub、上传页、识别复核页、已保存详情页。
+- 更新 README 和想法胶囊，记录正式 UI 图必须服务后续组件拆分和实现。
+- 准备调用内置 `imagegen` 生成正式 UI 图。
+
+卡在哪里：
+
+- 无。生成图像会先作为会话预览；如果后续需要纳入仓库资产，应从生成结果中选择后再保存到项目目录。
+
+执行的是什么命令：
+
+- `sed -n '1,260p' docs/prd/2026-05-10-wrong-question-capture-mvp-prd.md`
+- `sed -n '261,560p' docs/prd/2026-05-10-wrong-question-capture-mvp-prd.md`
+- `sed -n '1,260p' docs/design/desgin.md`
+- `sed -n '261,520p' docs/design/desgin.md`
+- `sed -n '1,260p' docs/planning/evocraft-roadmap-progress.md`
+- `sed -n '261,380p' docs/planning/evocraft-roadmap-progress.md`
+- `sed -n '1,180p' docs/ideas/2026-05-10-evocraft-seed-capsule.md`
+- `sed -n '1,220p' /Users/zha/.codex/skills/.system/imagegen/SKILL.md`
+- `git status --short --branch`
+- `rg -n "正式 UI 图|coding|ImageGen Prompt|App Hub|识别检查|去痕复核|未来学习工作台" docs/design/2026-05-10-b-style-ui-generation-brief.md docs/README.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/planning/evocraft-roadmap-progress.md`
+- `rg -n "TBD|TODO|待定|待补充|lorem|Lorem|PLACEHOLDER|implement later" AGENTS.md docs || true`
+- `git diff --check`
+- `git add docs/README.md docs/design/2026-05-10-b-style-ui-generation-brief.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/planning/evocraft-roadmap-progress.md`
+- `git commit ...`
+- `git push`
+
+下一步的计划：
+
+- 提交并推送正式 UI 图生成简报。
+- 调用内置 `imagegen` 生成正式 UI 图。
+- 根据生成结果选择是否继续生成单屏细化图。
+
 ## 下一步
 
 1. 把 PRD v1.0 转成 UI 生成简报，明确 App Hub、错题收集应用入口、屏幕、组件、文案、视觉方向。
