@@ -9,6 +9,7 @@
 - [应用集合架构](planning/evocraft-app-collection-architecture.md)：EvoCraft 作为 AI 学习助手应用集合的顶层结构。
 - [想法胶囊](ideas/2026-05-10-evocraft-seed-capsule.md)：原始想法碎片和产品方向。
 - [MVP PRD v1.0](prd/2026-05-10-wrong-question-capture-mvp-prd.md)：用于生成 UI 图和指导开发的第一版正式产品需求文档。
+- [MVP UI 原型简报](design/2026-05-10-mvp-ui-prototype-brief.md)：基于 PRD v1.0 的第一版 UI 原型生成说明。
 
 ## 记忆规则
 

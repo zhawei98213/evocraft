@@ -184,6 +184,40 @@
 
 - 继续推进 PRD v1.0 到 UI 生成简报。
 
+### 2026-05-10：MVP UI 原型生成
+
+本轮任务是什么：
+
+- 根据 PRD v1.0 准备并生成第一版桌面端 UI 原型。
+
+已完成什么：
+
+- 读取项目级 `AGENTS.md`、项目记忆、路线图进度、想法胶囊和 PRD v1.0。
+- 创建 `docs/design/2026-05-10-mvp-ui-prototype-brief.md`，沉淀 UI 原型生成简报和 ImageGen Prompt。
+- 更新 README，把 UI 原型简报加入文档索引。
+- 更新想法胶囊，提炼第一版 UI 原型的产品观点：桌面端工具感、App Hub、四屏流程、去痕复核。
+- 准备在文档提交后调用内置 `image_gen` 生成 UI 原型图。
+
+卡在哪里：
+
+- 无。图片会先作为会话中的原型预览；若后续需要纳入仓库资产，需要再基于生成结果保存到项目目录。
+
+执行的是什么命令：
+
+- `sed -n '1,140p' AGENTS.md`
+- `sed -n '1,120p' docs/planning/evocraft-project-memory.md`
+- `sed -n '1,210p' docs/planning/evocraft-roadmap-progress.md`
+- `sed -n '1,130p' docs/ideas/2026-05-10-evocraft-seed-capsule.md`
+- `sed -n '1,460p' docs/prd/2026-05-10-wrong-question-capture-mvp-prd.md`
+- `mkdir -p docs/design`
+
+下一步的计划：
+
+- 提交并推送 UI 原型简报。
+- 调用内置 `image_gen` 生成 UI 原型图。
+- 根据生成的 UI 原型判断是否需要二次迭代。
+- 如果原型方向确认，再进入 UI 实现或更细的页面设计稿拆分。
+
 ## 下一步
 
 1. 把 PRD v1.0 转成 UI 生成简报，明确 App Hub、错题收集应用入口、屏幕、组件、文案、视觉方向。
