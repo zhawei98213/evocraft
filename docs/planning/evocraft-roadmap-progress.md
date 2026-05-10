@@ -218,6 +218,41 @@
 - 根据生成的 UI 原型判断是否需要二次迭代。
 - 如果原型方向确认，再进入 UI 实现或更细的页面设计稿拆分。
 
+### 2026-05-10：UI 风格探索
+
+本轮任务是什么：
+
+- 使用 `imagegen` 再生成几套 EvoCraft UI 风格方向，供后续选择视觉基线。
+
+已完成什么：
+
+- 新增 `docs/design/2026-05-10-ui-style-options-brief.md`，定义四套风格方向：清爽学习桌、未来学习工作台、纸面笔记本、成长收集册。
+- 更新 README，把 UI 风格探索简报加入文档索引。
+- 更新想法胶囊，记录 UI 风格探索的产品观点：风格要服务错题收集的可信复核流程。
+
+卡在哪里：
+
+- 无。图片会先作为会话中的风格对比预览；如果后续选定某一套，再沉淀为正式视觉基线。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `sed -n '1,120p' AGENTS.md`
+- `sed -n '1,120p' docs/planning/evocraft-project-memory.md`
+- `sed -n '1,260p' docs/planning/evocraft-roadmap-progress.md`
+- `sed -n '1,120p' docs/ideas/2026-05-10-evocraft-seed-capsule.md`
+- `sed -n '1,220p' docs/design/2026-05-10-mvp-ui-prototype-brief.md`
+- `rg` 占位词扫描命令，范围为 `docs` 和 `AGENTS.md`
+- `git diff --check`
+- `git add docs/README.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/planning/evocraft-roadmap-progress.md docs/design/2026-05-10-ui-style-options-brief.md`
+- `git commit ...`
+- `git push`
+
+下一步的计划：
+
+- 调用内置 `image_gen` 生成四套 UI 风格对比图。
+- 用户选择一个方向后，将其沉淀为正式 UI 视觉基线。
+
 ## 下一步
 
 1. 把 PRD v1.0 转成 UI 生成简报，明确 App Hub、错题收集应用入口、屏幕、组件、文案、视觉方向。
