@@ -14,6 +14,7 @@
 - [B 方案设计基线](design/desgin.md)：选定 `未来学习工作台` 后的 EvoCraft MVP 视觉与组件规范。
 - [B 方案正式 UI 图生成简报](design/2026-05-10-b-style-ui-generation-brief.md)：用于生成可指导 coding 的多屏 UI 图。
 - [B 方案 Figma 导入包](design/figma/README.md)：蓝色主导 UI 的 SVG 总览画板和独立页面稿。
+- [第一版静态 Web MVP](../app/index.html)：基于 PRD 和 B 方案设计基线实现的本地错题收集闭环。
 
 ## 记忆规则
 

@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>EvoCraft 错题收集 MVP</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="app-rail" aria-label="EvoCraft 应用集合">
+        <div class="brand">
+          <div class="brand-mark" aria-hidden="true">E</div>
+          <div>
+            <strong>EvoCraft</strong>
+            <span>AI 学习助手应用集合</span>
+          </div>
+        </div>
+
+        <nav class="rail-nav" aria-label="主导航">
+          <button class="rail-link is-active" type="button" data-action="go-hub">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z"/></svg>
+            </span>
+            应用集合
+          </button>
+          <button class="rail-link" type="button" data-action="go-upload">
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v5h5"/></svg>
+            </span>
+            错题收集
+          </button>
+          <button class="rail-link" type="button" disabled>
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M6 5h12v14H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
+            </span>
+            学习资料
+          </button>
+          <button class="rail-link" type="button" disabled>
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M7 4v4M17 4v4M5 8h14M6 6h12v14H6z"/></svg>
+            </span>
+            复习计划
+          </button>
+          <button class="rail-link" type="button" disabled>
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.5 6 .9-4.3 4.2 1 6-5.4-2.9-5.4 2.9 1-6-4.3-4.2 6-.9z"/></svg>
+            </span>
+            学习奖励
+          </button>
+        </nav>
+
+        <div class="rail-footer">
+          <button class="rail-link" type="button" disabled>
+            <span class="nav-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M12 15.5A3.5 3.5 0 1 0 12 8a3.5 3.5 0 0 0 0 7.5z"/><path d="M19.4 15a8.1 8.1 0 0 0 .1-1 8.1 8.1 0 0 0-.1-1l2-1.5-2-3.4-2.4 1a7 7 0 0 0-1.7-1L15 5.5h-4l-.3 2.6a7 7 0 0 0-1.7 1l-2.4-1-2 3.4 2 1.5a8.1 8.1 0 0 0-.1 1 8.1 8.1 0 0 0 .1 1l-2 1.5 2 3.4 2.4-1a7 7 0 0 0 1.7 1l.3 2.6h4l.3-2.6a7 7 0 0 0 1.7-1l2.4 1 2-3.4z"/></svg>
+            </span>
+            设置
+          </button>
+          <div class="student-switch">
+            <span class="avatar" aria-hidden="true">小</span>
+            <span>小明同学</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-workspace" id="main-content">
+        <section class="screen hub-screen" data-screen="hub" aria-labelledby="hub-title">
+          <header class="workspace-header">
+            <div>
+              <h1 id="hub-title">应用集合</h1>
+              <p>选择应用，开始高效学习</p>
+            </div>
+            <div class="window-controls" aria-hidden="true">
+              <span></span><span></span><span></span>
+            </div>
+          </header>
+
+          <div class="app-grid">
+            <article class="app-tile app-tile-active">
+              <div class="tile-icon primary" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M6 3h9l3 3v15H6z"/><path d="M9 11h6M9 15h4M15 3v4h4"/></svg>
+              </div>
+              <h2>错题收集</h2>
+              <p>拍照上传，AI 去痕整理</p>
+              <button class="button-primary" type="button" data-action="go-upload">当前可用</button>
+            </article>
+            <article class="app-tile app-tile-locked">
+              <div class="tile-icon locked" aria-hidden="true">A</div>
+              <h2>背单词</h2>
+              <p>AI 助记，高效记忆</p>
+              <span class="soft-pill">规划中</span>
+            </article>
+            <article class="app-tile app-tile-locked">
+              <div class="tile-icon locked" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M7 4v4M17 4v4M5 8h14M6 6h12v14H6z"/></svg>
+              </div>
+              <h2>复习计划</h2>
+              <p>智能规划，科学复习</p>
+              <span class="soft-pill">规划中</span>
+            </article>
+            <article class="app-tile app-tile-locked">
+              <div class="tile-icon locked" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="m12 3 2.7 5.5 6 .9-4.3 4.2 1 6-5.4-2.9-5.4 2.9 1-6-4.3-4.2 6-.9z"/></svg>
+              </div>
+              <h2>学习奖励</h2>
+              <p>成长激励，持续进步</p>
+              <span class="soft-pill">规划中</span>
+            </article>
+          </div>
+
+          <section class="recent-section" aria-labelledby="recent-title">
+            <div class="section-heading">
+              <h2 id="recent-title">最近使用</h2>
+              <button class="button-ghost" type="button" data-action="show-records">查看全部</button>
+            </div>
+            <div class="record-list" id="hub-record-list"></div>
+          </section>
+        </section>
+
+        <section class="screen upload-screen" data-screen="upload" aria-labelledby="upload-title" hidden>
+          <header class="workspace-header">
+            <div>
+              <h1 id="upload-title">错题收集</h1>
+              <p>上传错题照片，AI 帮你整理成干净题面</p>
+            </div>
+            <button class="button-secondary" type="button">使用指南</button>
+          </header>
+
+          <div class="upload-layout">
+            <div class="upload-card">
+              <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp,image/bmp,.heic" hidden />
+              <button class="upload-dropzone" type="button" id="dropzone">
+                <span class="upload-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M12 5v10M8 9l4-4 4 4"/><path d="M5 19h14"/></svg>
+                </span>
+                <strong id="dropzone-title">将错题照片拖拽到这里</strong>
+                <span id="dropzone-copy">或点击选择图片</span>
+                <small>支持 JPG / PNG / BMP / HEIC，单张不超过 20MB</small>
+              </button>
+              <div class="upload-preview" id="upload-preview" hidden>
+                <img id="preview-image" alt="已上传的错题原图预览" />
+                <div>
+                  <strong id="preview-name"></strong>
+                  <span id="preview-meta"></span>
+                </div>
+                <button class="button-secondary" type="button" data-action="replace-image">替换图片</button>
+              </div>
+              <p class="form-error" id="upload-error" role="alert"></p>
+
+              <div class="subject-block" aria-labelledby="subject-title">
+                <h2 id="subject-title">选择学科 <span>可由 AI 自动识别</span></h2>
+                <div class="segmented-control" role="radiogroup" aria-label="选择学科">
+                  <button class="is-selected" type="button" data-subject="auto">自动</button>
+                  <button type="button" data-subject="chinese">语文</button>
+                  <button type="button" data-subject="math">数学</button>
+                  <button type="button" data-subject="english">英语</button>
+                </div>
+              </div>
+
+              <button class="button-primary start-button" type="button" data-action="start-recognition" disabled>
+                开始整理
+              </button>
+            </div>
+
+            <section class="mini-records" aria-labelledby="mini-records-title">
+              <div class="section-heading">
+                <h2 id="mini-records-title">最近记录</h2>
+                <button class="button-ghost" type="button" data-action="show-records">查看更多</button>
+              </div>
+              <div class="record-list compact" id="upload-record-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="screen review-screen" data-screen="review" aria-labelledby="review-title" hidden>
+          <header class="workspace-header">
+            <div>
+              <h1 id="review-title">识别检查 / 去痕复核</h1>
+              <p>检查 AI 草稿和去痕效果，如果词句或图形不对就修改后保存</p>
+            </div>
+            <div class="header-actions">
+              <button class="button-secondary" type="button" data-action="go-upload">重新上传</button>
+              <button class="button-primary" type="button" data-action="save-record">复核后保存</button>
+            </div>
+          </header>
+
+          <div class="review-grid">
+            <article class="image-panel source-image-panel">
+              <header>
+                <div>
+                  <h2>原图</h2>
+                  <p>含手写与批改痕迹</p>
+                </div>
+                <span class="status-chip review">含手写与批改</span>
+              </header>
+              <img id="review-original-image" alt="错题原图" />
+              <footer>
+                <button class="button-ghost" type="button">放大</button>
+                <button class="button-ghost" type="button">缩小</button>
+                <span>1 / 1</span>
+              </footer>
+            </article>
+
+            <article class="image-panel clean-question-panel">
+              <header>
+                <div>
+                  <h2>干净题面</h2>
+                  <p>去除作答痕迹，默认用于复习</p>
+                </div>
+                <span class="status-chip clean">去痕后</span>
+              </header>
+              <img id="review-clean-image" alt="AI 生成的干净题面" />
+              <footer>
+                <span class="status-chip ai">图形已保留</span>
+                <span class="status-chip review">去痕需复核</span>
+              </footer>
+            </article>
+          </div>
+
+          <form class="editor-form" id="record-form">
+            <div class="form-row two">
+              <label>
+                <span>科目</span>
+                <select name="subject" id="field-subject">
+                  <option value="chinese">语文</option>
+                  <option value="math">数学</option>
+                  <option value="english">英语</option>
+                </select>
+              </label>
+              <label>
+                <span>题目标题</span>
+                <input name="title" id="field-title" type="text" />
+              </label>
+            </div>
+            <label>
+              <span>题目文字</span>
+              <textarea name="questionText" id="field-question" rows="6"></textarea>
+            </label>
+            <div class="form-row two">
+              <label>
+                <span>学生答案</span>
+                <textarea name="studentAnswer" id="field-student-answer" rows="3"></textarea>
+              </label>
+              <label>
+                <span>正确答案</span>
+                <textarea name="correctAnswer" id="field-correct-answer" rows="3"></textarea>
+              </label>
+            </div>
+            <label>
+              <span>备注</span>
+              <textarea name="notes" id="field-notes" rows="3"></textarea>
+            </label>
+          </form>
+        </section>
+
+        <section class="screen detail-screen" data-screen="detail" aria-labelledby="detail-title" hidden>
+          <header class="workspace-header">
+            <div>
+              <button class="inline-back" type="button" data-action="go-hub">返回应用集合</button>
+              <h1 id="detail-title">已保存错题详情</h1>
+            </div>
+            <div class="header-actions">
+              <button class="button-secondary" type="button" data-action="toggle-detail-image">查看原图</button>
+              <button class="button-secondary" type="button" data-action="edit-current-record">编辑题面</button>
+              <button class="button-primary" type="button" data-action="go-upload">继续收集</button>
+            </div>
+          </header>
+
+          <div class="detail-layout">
+            <article class="saved-question-card">
+              <div class="section-heading">
+                <div>
+                  <h2 id="detail-record-title">题目（干净题面）</h2>
+                  <p id="detail-record-subtitle"></p>
+                </div>
+                <span class="status-chip clean" id="detail-mode-chip">干净题面</span>
+              </div>
+              <img id="detail-image" alt="已保存错题题面" />
+              <div class="question-text" id="detail-question-text"></div>
+            </article>
+
+            <aside class="detail-info" aria-label="题目信息">
+              <h2>题目信息</h2>
+              <dl>
+                <div>
+                  <dt>科目</dt>
+                  <dd id="detail-subject"></dd>
+                </div>
+                <div>
+                  <dt>创建时间</dt>
+                  <dd id="detail-created"></dd>
+                </div>
+                <div>
+                  <dt>来源</dt>
+                  <dd>上传图片</dd>
+                </div>
+              </dl>
+              <div class="status-row">
+                <span class="status-chip clean">去痕完成</span>
+                <span class="status-chip ai">已人工修正</span>
+              </div>
+              <div class="reward-note">
+                <strong>继续加油！</strong>
+                <p>你已经整理错题资料，后续可以继续做分析和复习计划。</p>
+              </div>
+            </aside>
+          </div>
+        </section>
+      </main>
+
+      <aside class="ai-review-panel" id="side-panel" aria-label="AI 复核面板"></aside>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+  </body>
+</html>

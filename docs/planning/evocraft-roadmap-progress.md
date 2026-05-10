@@ -429,12 +429,46 @@
 - 将 SVG 参考稿整理为 Figma 组件、变量和 Auto Layout。
 - 之后基于 Figma 原型或 SVG 结构进入前端实现计划。
 
+### 2026-05-10：第一版静态 Web MVP
+
+本轮任务是什么：
+
+- 根据 PRD v1.0 和 `docs/design/desgin.md`、`docs/design/design.png` 生成 EvoCraft 错题收集第一个 MVP。
+
+已完成什么：
+
+- 新增零依赖静态 Web 应用：`app/index.html`、`app/styles.css`、`app/main.js`、`app/state.js`。
+- 实现 App Hub、错题上传、识别检查 / 去痕复核、已保存错题详情四个主屏。
+- 实现图片上传预览、科目选择、mock AI 识别草稿、原图 / 干净题面展示、可编辑字段、保存记录和 `localStorage` 本地持久化。
+- 新增 `tests/static-mvp.test.mjs` 和 `package.json` 的 `npm test` 脚本，锁住核心数据形态和静态入口。
+- 更新项目记忆和文档索引，记录第一个 MVP 采用静态 Web 与本地 mock 识别。
+
+卡在哪里：
+
+- Browser 插件连接两次超时，未能使用 in-app Browser 完成验证；已回退到本地 Playwright 进行等价渲染与交互验证。
+
+执行的是什么命令：
+
+- `sed -n` 读取 `docs/planning/evocraft-project-memory.md`、`docs/planning/evocraft-roadmap-progress.md`、`docs/ideas/2026-05-10-evocraft-seed-capsule.md`、PRD 和设计基线。
+- `view_image` 查看 `docs/design/design.png`。
+- `node tests/static-mvp.test.mjs`
+- `npm test`
+- `python3 -m http.server 4173`
+- `NODE_PATH=... node` 运行 Playwright smoke 脚本，验证 `http://127.0.0.1:4173/app/index.html` 的上传、识别、保存、详情和移动端截图。
+- `git diff --check`
+
+下一步的计划：
+
+- 决定是否把静态 MVP 升级为 React/Vite 或桌面应用外壳。
+- 在接入真实 AI/OCR 前，先补隐私授权、删除机制、失败状态和手动保存细节。
+- 继续细化真实题目图片处理、干净题面生成和复核交互。
+
 ## 下一步
 
-1. 把 PRD v1.0 转成 UI 生成简报，明确 App Hub、错题收集应用入口、屏幕、组件、文案、视觉方向。
-2. 生成或绘制第一版桌面端 UI 图。
-3. 选择技术栈。
-4. 为错题收集 MVP 制定实现计划。
+1. 决定静态 Web MVP 的下一阶段技术形态：继续零依赖迭代、升级 React/Vite，或转桌面应用外壳。
+2. 为真实 AI/OCR 接入补隐私、授权、删除和失败恢复设计。
+3. 细化图片处理能力：真实题目区域识别、干净题面生成、低置信度标注和人工复核。
+4. 根据第一版 MVP 的使用反馈决定是否进入错题分析能力。
 
 ## 持续跟踪风险
 

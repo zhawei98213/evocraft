@@ -1,0 +1,188 @@
+export const APP_ID = "wrong_question_capture";
+export const STORAGE_KEY = "evocraft.wrongQuestion.records.v1";
+
+export const SUBJECTS = {
+  chinese: "语文",
+  math: "数学",
+  english: "英语",
+};
+
+const subjectSamples = {
+  chinese: {
+    title: "阅读理解句子赏析题",
+    question:
+      "阅读短文第 3 段，结合上下文，说说画线句子表达了人物怎样的心情，并写出你的理由。",
+    answer: "抓住关键词和人物动作，结合上下文作答。",
+  },
+  math: {
+    title: "一次函数图像与坐标综合题",
+    question:
+      "23. 如图，在平面直角坐标系中，抛物线与 x 轴交于 A(-1,0)、B(3,0) 两点，与 y 轴交于点 C(0,3)，点 P 是抛物线在第一象限上的一点，连接 OP。\n(1) 求抛物线的解析式；\n(2) 当点 P 的横坐标为 1 时，求三角形 POC 的面积；\n(3) 连接 CP，当 CP 垂直 OP 时，求点 P 的坐标。",
+    answer: "先由 A、B、C 三点求解析式，再代入 P 点坐标计算。",
+  },
+  english: {
+    title: "完形填空语境判断题",
+    question:
+      "Read the passage and choose the best answer for each blank. Pay attention to the tense, pronouns and the meaning of the whole paragraph.",
+    answer: "先通读段落，确认时态和上下文线索后再选择。",
+  },
+};
+
+function svgDataUri(svg) {
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
+}
+
+export function createCleanQuestionImage(subject = "math") {
+  const sample = subjectSamples[subject] ?? subjectSamples.math;
+  const title = sample.title;
+  const body = sample.question.split("\n").slice(0, 4);
+  const bodyText = body
+    .map(
+      (line, index) =>
+        `<text x="44" y="${108 + index * 34}" fill="#24313D" font-size="18">${escapeSvg(
+          line,
+        )}</text>`,
+    )
+    .join("");
+
+  return svgDataUri(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="880" height="620" viewBox="0 0 880 620">
+      <rect width="880" height="620" rx="20" fill="#F5F8FF"/>
+      <rect x="24" y="24" width="832" height="572" rx="18" fill="#FFFFFF" stroke="#DCE6F5"/>
+      <text x="44" y="70" fill="#17212B" font-family="Inter, Noto Sans SC, sans-serif" font-size="25" font-weight="700">${escapeSvg(
+        title,
+      )}</text>
+      ${bodyText}
+      <g transform="translate(118 340)">
+        <line x1="0" y1="150" x2="360" y2="150" stroke="#17212B" stroke-width="3"/>
+        <line x1="82" y1="178" x2="82" y2="12" stroke="#17212B" stroke-width="3"/>
+        <path d="M28 150 C84 26 210 20 306 150" fill="none" stroke="#17212B" stroke-width="4"/>
+        <line x1="82" y1="150" x2="240" y2="62" stroke="#17212B" stroke-width="3"/>
+        <circle cx="82" cy="150" r="4" fill="#17212B"/>
+        <circle cx="28" cy="150" r="4" fill="#17212B"/>
+        <circle cx="306" cy="150" r="4" fill="#17212B"/>
+        <circle cx="240" cy="62" r="5" fill="#17212B"/>
+        <text x="16" y="174" fill="#17212B" font-size="20">A</text>
+        <text x="300" y="174" fill="#17212B" font-size="20">B</text>
+        <text x="60" y="28" fill="#17212B" font-size="20">C</text>
+        <text x="252" y="58" fill="#17212B" font-size="20">P</text>
+        <text x="96" y="174" fill="#17212B" font-size="20">O</text>
+        <text x="370" y="154" fill="#17212B" font-size="20">x</text>
+        <text x="74" y="0" fill="#17212B" font-size="20">y</text>
+      </g>
+      <rect x="580" y="354" width="206" height="74" rx="12" fill="#E8F0FF" stroke="#B8C8E6"/>
+      <text x="604" y="386" fill="#1D4ED8" font-size="18" font-weight="700">AI 已生成干净题面</text>
+      <text x="604" y="414" fill="#536171" font-size="15">红笔与作答痕迹已隐藏</text>
+    </svg>
+  `);
+}
+
+export function createOriginalPlaceholderImage() {
+  return svgDataUri(`
+    <svg xmlns="http://www.w3.org/2000/svg" width="880" height="620" viewBox="0 0 880 620">
+      <rect width="880" height="620" rx="20" fill="#FFFDF7"/>
+      <rect x="28" y="28" width="824" height="564" rx="18" fill="#FFFFFF" stroke="#E6D7C8"/>
+      <text x="52" y="78" fill="#17212B" font-size="25" font-weight="700">原图预览</text>
+      <text x="52" y="130" fill="#24313D" font-size="19">23. 如图，在平面直角坐标系中，抛物线与 x 轴交于 A、B 两点...</text>
+      <text x="52" y="170" fill="#24313D" font-size="19">(1) 求抛物线的解析式；</text>
+      <text x="52" y="208" fill="#24313D" font-size="19">(2) 当点 P 的横坐标为 1 时，求面积；</text>
+      <g transform="translate(112 340)">
+        <line x1="0" y1="150" x2="360" y2="150" stroke="#17212B" stroke-width="3"/>
+        <line x1="82" y1="178" x2="82" y2="12" stroke="#17212B" stroke-width="3"/>
+        <path d="M28 150 C84 26 210 20 306 150" fill="none" stroke="#17212B" stroke-width="4"/>
+        <line x1="82" y1="150" x2="240" y2="62" stroke="#17212B" stroke-width="3"/>
+      </g>
+      <path d="M555 214 c44 20 72 12 92 -16" fill="none" stroke="#E85D75" stroke-width="8" stroke-linecap="round"/>
+      <path d="M560 316 l26 28 l74 -90" fill="none" stroke="#E85D75" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="600" y="390" fill="#E85D75" font-size="31" font-weight="700" transform="rotate(-8 600 390)">解法正确!</text>
+      <text x="612" y="454" fill="#E85D75" font-size="26" font-weight="700">a=-1  b=2  c=3</text>
+    </svg>
+  `);
+}
+
+export function createMockRecognition({ subject = "math", imageUri } = {}) {
+  const normalizedSubject = SUBJECTS[subject] ? subject : "math";
+  const sample = subjectSamples[normalizedSubject];
+  const now = new Date().toISOString();
+
+  return {
+    id: `draft-${Date.now()}`,
+    appId: APP_ID,
+    createdAt: now,
+    updatedAt: now,
+    subject: normalizedSubject,
+    title: sample.title,
+    questionText: sample.question,
+    originalImageUri: imageUri || createOriginalPlaceholderImage(),
+    cleanedQuestionImageUri: createCleanQuestionImage(normalizedSubject),
+    visualSnippetUri: createCleanQuestionImage(normalizedSubject),
+    studentAnswer: "AI 识别到学生作答痕迹，已从干净题面中隐藏，请人工确认是否需要保留到备注。",
+    correctAnswer: sample.answer,
+    notes: "当前为本地 mock 识别结果；真实 AI/OCR 接入前不会上传儿童学习照片。",
+    recognitionStatus: "needs_review",
+    recognitionConfidence: 0.92,
+    cleanupStatus: "needs_review",
+    cleanupConfidence: 0.78,
+    reviewItems: [
+      { label: "题干文字已识别", status: "可信" },
+      { label: "学生作答已隐藏", status: "请检查" },
+      { label: "图形内容已保留", status: "可信" },
+      { label: "批改痕迹需确认", status: "需复核" },
+    ],
+  };
+}
+
+export function createRecordFromDraft(draft, overrides = {}) {
+  const now = overrides.now || new Date().toISOString();
+
+  return {
+    ...draft,
+    id: overrides.id || `wq-${Date.now()}`,
+    createdAt: overrides.createdAt || now,
+    updatedAt: now,
+    title: overrides.title ?? draft.title,
+    subject: overrides.subject ?? draft.subject,
+    questionText: overrides.questionText ?? draft.questionText,
+    studentAnswer: overrides.studentAnswer ?? draft.studentAnswer,
+    correctAnswer: overrides.correctAnswer ?? draft.correctAnswer,
+    notes: overrides.notes ?? draft.notes,
+    recognitionStatus: "reviewed",
+    cleanupStatus: "reviewed",
+  };
+}
+
+export function loadRecords(storage = globalThis.localStorage) {
+  if (!storage) return [];
+
+  try {
+    const raw = storage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function persistRecords(records, storage = globalThis.localStorage) {
+  if (!storage) return;
+  storage.setItem(STORAGE_KEY, JSON.stringify(records));
+}
+
+export function formatTime(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "刚刚";
+
+  return new Intl.DateTimeFormat("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
+}
+
+function escapeSvg(value) {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
