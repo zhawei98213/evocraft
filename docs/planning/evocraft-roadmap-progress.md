@@ -379,6 +379,56 @@
 - 提交并推送修正后的设计文档。
 - 调用内置 `imagegen` 重新生成蓝色主导的正式 UI 图。
 
+### 2026-05-10：Figma 可导入 UI 矢量稿
+
+本轮任务是什么：
+
+- 根据蓝色 B 方案 UI 图，绘制可导入 Figma 的完整 UI 参考稿，方便后续在 Figma 中继续绘制原型并指导 coding。
+
+已完成什么：
+
+- 新增 `tools/generate-figma-ui.mjs`，用当前设计 token 和屏幕结构生成 Figma 友好的 SVG。
+- 生成四屏总览 SVG：`docs/design/figma/evocraft-b-ui-board.svg`。
+- 生成四个独立页面 SVG：App Hub、上传页、识别复核页、已保存详情页。
+- 新增 `docs/design/figma/README.md`，说明如何导入 Figma、如何拆组件和如何重新生成。
+- 新增 `docs/design/figma/evocraft-b-tokens.json`，方便在 Figma 中建立颜色、圆角、间距和字体变量。
+- 更新 README、项目记忆和想法胶囊，记录 Figma 输入包已成为后续原型绘制参考。
+
+卡在哪里：
+
+- 生成脚本第一次运行时，Node `path` 模块和 SVG path helper 命名冲突，已改为 `nodePath` / `svgPath` 后恢复。
+
+执行的是什么命令：
+
+- `find /Users/zha/.codex/generated_images/019e0fb7-8d9d-7d70-8279-ecfba4d479e2 -maxdepth 1 -type f -print | sort -r | head -20`
+- `ls -lt /Users/zha/.codex/generated_images/019e0fb7-8d9d-7d70-8279-ecfba4d479e2 | head -20`
+- `sed -n '1,180p' docs/design/desgin.md`
+- `sed -n '180,420p' docs/design/desgin.md`
+- `sed -n '1,160p' docs/design/2026-05-10-b-style-ui-generation-brief.md`
+- `sed -n '1,180p' docs/ideas/2026-05-10-evocraft-seed-capsule.md`
+- `git status --short --branch`
+- `node tools/generate-figma-ui.mjs`
+- `find docs/design/figma -type f -maxdepth 3 -print | sort`
+- `wc -c docs/design/figma/evocraft-b-ui-board.svg docs/design/figma/screens/*.svg`
+- `xmllint --noout docs/design/figma/evocraft-b-ui-board.svg docs/design/figma/screens/*.svg`
+- `qlmanage -t -s 1800 -o docs/design/figma/preview docs/design/figma/evocraft-b-ui-board.svg`
+- `rm -rf docs/design/figma/preview`
+- `node --check tools/generate-figma-ui.mjs`
+- `node -e 'JSON.parse(require("fs").readFileSync("docs/design/figma/evocraft-b-tokens.json", "utf8")); console.log("tokens json ok")'`
+- `find docs/design/figma tools -type f -print | sort`
+- `rg -n "Figma|evocraft-b-ui-board|evocraft-b-tokens|generate-figma|SVG|Auto Layout" docs/README.md docs/design/figma docs/ideas docs/planning tools/generate-figma-ui.mjs`
+- `rg -n "#0F9F9A|Primary Teal|teal primary|blue-green primary|绿色主" docs/design/figma docs/design/desgin.md docs/design/2026-05-10-b-style-ui-generation-brief.md || true`
+- `git diff --check`
+- `git add docs/README.md docs/design/figma tools/generate-figma-ui.mjs docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md`
+- `git commit ...`
+- `git push`
+
+下一步的计划：
+
+- 在 Figma 中导入总览 SVG 和四个独立页面 SVG。
+- 将 SVG 参考稿整理为 Figma 组件、变量和 Auto Layout。
+- 之后基于 Figma 原型或 SVG 结构进入前端实现计划。
+
 ## 下一步
 
 1. 把 PRD v1.0 转成 UI 生成简报，明确 App Hub、错题收集应用入口、屏幕、组件、文案、视觉方向。
