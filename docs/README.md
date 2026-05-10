@@ -8,7 +8,7 @@
 - [路线图与进度](planning/evocraft-roadmap-progress.md)：长期路线、当前阶段、进度记录。
 - [应用集合架构](planning/evocraft-app-collection-architecture.md)：EvoCraft 作为 AI 学习助手应用集合的顶层结构。
 - [想法胶囊](ideas/2026-05-10-evocraft-seed-capsule.md)：原始想法碎片和产品方向。
-- [MVP PRD](prd/2026-05-10-wrong-question-capture-mvp-prd.md)：用于生成 UI 图和指导开发的第一版产品需求文档。
+- [MVP PRD v1.0](prd/2026-05-10-wrong-question-capture-mvp-prd.md)：用于生成 UI 图和指导开发的第一版正式产品需求文档。
 
 ## 记忆规则
 
