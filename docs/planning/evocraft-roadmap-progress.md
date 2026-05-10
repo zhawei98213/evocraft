@@ -253,6 +253,50 @@
 - 调用内置 `image_gen` 生成四套 UI 风格对比图。
 - 用户选择一个方向后，将其沉淀为正式 UI 视觉基线。
 
+### 2026-05-10：B 方案设计基线
+
+本轮任务是什么：
+
+- 根据用户选择的 B 方案 `未来学习工作台`，参考 `docs/design/temlpalte-notion.md` 的设计系统拆分方式，组装 EvoCraft 第一版 MVP 的设计基线文档。
+
+已完成什么：
+
+- 新增 `docs/design/desgin.md`，把 B 方案沉淀为正式设计基线。
+- 保留模板的拆分方式：Overview、Colors、Typography、Layout、Elevation、Shapes、Components、Responsive Behavior、Do's and Don'ts。
+- 将色系统一改为 B 方案：蓝绿色主功能色、蓝色 AI 信息、玫红复核提示、暖黄色轻成长点缀。
+- 明确桌面端三栏工作台结构：App Hub rail、错题主工作区、AI 复核面板。
+- 更新 README、项目记忆和想法胶囊，记录 B 方案已成为当前视觉方向。
+
+卡在哪里：
+
+- 无。文件名按用户请求保留为 `desgin.md`，后续如需标准化可另行改名为 `design.md`。暂存检查发现参考模板末尾多一个空白行，已只清理该空白行；提交钩子要求 OmX co-author trailer，已补齐后提交。
+
+执行的是什么命令：
+
+- `sed -n '1,260p' docs/design/temlpalte-notion.md`
+- `sed -n '261,620p' docs/design/temlpalte-notion.md`
+- `sed -n '1,260p' docs/design/2026-05-10-ui-style-options-brief.md`
+- `sed -n '1,220p' docs/ideas/2026-05-10-evocraft-seed-capsule.md`
+- `sed -n '1,260p' docs/planning/evocraft-roadmap-progress.md`
+- `sed -n '1,240p' docs/planning/evocraft-project-memory.md`
+- `git status --short --branch`
+- `find docs/design -maxdepth 1 -type f -print | sort`
+- `rg -n "未来学习工作台|B 方案|desgin|蓝绿色|去痕需复核|App Hub" docs/README.md docs/design docs/ideas docs/planning`
+- `rg -n "TBD|TODO|待定|待补充|lorem|Lorem|PLACEHOLDER|implement later" AGENTS.md docs || true`
+- `git diff --check`
+- `git diff --stat`
+- `git diff --cached --check`
+- `git diff --cached --stat`
+- `tail -n 8 docs/design/temlpalte-notion.md | nl -ba`
+- `git add docs/README.md docs/design/desgin.md docs/design/temlpalte-notion.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md`
+- `git commit ...`
+- `git push`
+
+下一步的计划：
+
+- 用 `docs/design/desgin.md` 作为 UI 图细化和前端实现的视觉输入。
+- 进入技术栈选择与第一版 App Shell / 错题收集页面实现计划。
+
 ## 下一步
 
 1. 把 PRD v1.0 转成 UI 生成简报，明确 App Hub、错题收集应用入口、屏幕、组件、文案、视觉方向。
