@@ -16,5 +16,7 @@
 
 1. 先读 `docs/planning/evocraft-project-memory.md`。
 2. 再读 `docs/planning/evocraft-roadmap-progress.md`。
-3. 当决策、文件、功能、风险变化时，更新进度记录。
-4. 原始想法放在 `docs/ideas/`，已经收敛的产品需求放在 `docs/prd/`。
+3. 当新增 PRD、更新 PRD 或出现明确产品想法时，必须同步更新想法胶囊。
+4. 想法胶囊按时间线记录提炼后的观点，不复制 PRD 原文。
+5. 当决策、文件、功能、风险变化时，更新进度记录。
+6. 原始想法放在 `docs/ideas/`，已经收敛的产品需求放在 `docs/prd/`。
