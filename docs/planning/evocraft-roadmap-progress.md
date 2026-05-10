@@ -70,17 +70,119 @@
 - 科学概念复习。
 - 个性化每日学习计划。
 
+## 进度记录规则
+
+每一轮实质任务都要按时间线记录。记录必须包含：
+
+- 本轮任务是什么
+- 已完成什么
+- 卡在哪里
+- 执行的是什么命令
+- 下一步的计划
+
+如果没有卡点，写 `无`。命令不需要粘贴完整输出，但要保留足够复现的命令名称或关键命令。
+
 ## 当前进度
 
-| 日期 | 状态 | 说明 |
-| --- | --- | --- |
-| 2026-05-10 | 已开始 | 创建 EvoCraft 第一版项目记忆结构。 |
-| 2026-05-10 | 已开始 | 记录种子想法：上海孩子、AI 学习助手集合、先做错题收集、后续再做游戏化。 |
-| 2026-05-10 | 已完成草稿 | 形成第一版“单道错题收集”MVP PRD。 |
-| 2026-05-10 | 已更新需求 | 明确错题记录必须考虑去除学生书写、批改、圈画等痕迹，保留原图同时生成干净题面。 |
-| 2026-05-10 | 已更新架构 | 明确错题收集是 EvoCraft 应用集合里的第一个应用，第一版需要保留 App Hub 和后续应用扩展空间。 |
-| 2026-05-10 | 已完成 v1 | 生成正式 PRD v1.0，补齐本地优先、AI 能力契约、错误状态、隐私边界、验收标准和 UI 生成摘要。 |
-| 2026-05-10 | 已新增铁律 | 新增项目级 `AGENTS.md` 规则：新增 PRD、更新 PRD 或出现明确想法时，必须同步按时间线更新想法胶囊。 |
+### 2026-05-10：产品文档基础与 PRD v1.0
+
+本轮任务是什么：
+
+- 建立 EvoCraft 的长期产品记忆，形成第一个可用于 UI 生成的错题收集应用 MVP PRD。
+
+已完成什么：
+
+- 创建项目文档索引、项目记忆、路线图与进度、想法胶囊。
+- 明确 EvoCraft 是 AI 学习助手应用集合，`错题收集` 是第一个可用应用。
+- 明确错题收集不只是保存照片，还要生成去除书写、批改、圈画痕迹后的干净题面。
+- 生成正式 PRD v1.0，补齐本地优先、AI 能力契约、错误状态、隐私边界、验收标准和 UI 生成摘要。
+- 初始化 git 仓库，绑定并推送到 `git@github.com:zhawei98213/evocraft.git`。
+
+卡在哪里：
+
+- 无。仍待后续确认技术栈、真实 AI/OCR 服务、App Hub 是否展示未来应用占位、第一批目标年级。
+
+执行的是什么命令：
+
+- `find docs -type f -maxdepth 4 -print`
+- `rg` 占位词扫描命令，范围为 `docs`
+- `rg -n "应用集合|App Hub|错题收集|干净题面|原图|本地优先|AI 能力契约|隐私|验收标准|决策边界" docs/prd/2026-05-10-wrong-question-capture-mvp-prd.md`
+- `git init -b main`
+- `git remote add origin git@github.com:zhawei98213/evocraft.git`
+- `git add .gitignore docs`
+- `git commit ...`
+- `git push -u origin main`
+
+下一步的计划：
+
+- 把 PRD v1.0 转成 UI 生成简报，明确 App Hub、错题收集应用入口、屏幕、组件、文案、视觉方向。
+
+### 2026-05-10：想法胶囊铁律
+
+本轮任务是什么：
+
+- 把“新增 PRD、更新 PRD 或出现明确产品想法时，必须同步更新想法胶囊”的规则写成仓库级铁律。
+
+已完成什么：
+
+- 新增项目级 `AGENTS.md`。
+- 在 `AGENTS.md` 中写入想法胶囊铁律。
+- 更新 README、项目记忆、路线图与进度。
+- 在想法胶囊中新增“胶囊记录铁律”和按日期记录的想法时间线。
+- 提交并推送到远端。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `find .. -maxdepth 2 -name AGENTS.md -print`
+- `rg -n "铁律|想法胶囊|PRD|时间线|提炼|复制 PRD|copy" AGENTS.md docs/README.md docs/planning docs/ideas`
+- `git diff --check`
+- `git add AGENTS.md docs/README.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md`
+- `git commit ...`
+- `git push`
+
+下一步的计划：
+
+- 后续任何 PRD 或明确产品想法变更，都先提炼观点写入想法胶囊，再提交。
+
+### 2026-05-10：长期记忆与结构化进度机制
+
+本轮任务是什么：
+
+- 把长期记忆和进度机制写入 `AGENTS.md`，并让进度文件固定记录任务、完成、卡点、命令、下一步计划。
+
+已完成什么：
+
+- 在 `AGENTS.md` 中新增长期记忆、进度机制和 git 持久化规则。
+- 在 README 和项目记忆中同步长期记忆规则。
+- 在想法胶囊中提炼记录“长期开发不能依赖聊天上下文”的观点。
+- 将当前进度从简单表格升级为结构化进度记录。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `sed -n '1,220p' AGENTS.md`
+- `sed -n '1,180p' docs/planning/evocraft-roadmap-progress.md`
+- `sed -n '1,140p' docs/planning/evocraft-project-memory.md`
+- `sed -n '1,130p' docs/ideas/2026-05-10-evocraft-seed-capsule.md`
+- `git status --short --branch`
+- `rg` 长期记忆与进度机制关键词扫描命令，范围为 `AGENTS.md` 和 `docs`
+- `rg` 占位词扫描命令，范围为 `AGENTS.md` 和 `docs`
+- `git diff --check`
+- `git diff --stat`
+- `git add AGENTS.md docs/README.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md`
+- `git commit ...`
+- `git push`
+
+下一步的计划：
+
+- 继续推进 PRD v1.0 到 UI 生成简报。
 
 ## 下一步
 
