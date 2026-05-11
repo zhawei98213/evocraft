@@ -18,6 +18,8 @@ Required behavior:
 - Extract the product idea, principle, or viewpoint; do not copy PRD sections verbatim.
 - Keep entries concise and decision-oriented.
 - If a PRD changes scope, architecture, user value, AI behavior, privacy posture, data shape, or UI direction, add a capsule entry summarizing the underlying idea.
+- If the user explicitly says a feature is missing, asks to add/补 a feature, or points out a product gap, update the relevant PRD in the same change set and update the idea capsule with the underlying product decision.
+- If implementation happens before the PRD update, do not finish, commit, or push until the PRD and idea capsule have been synchronized.
 - Do not finish or commit a PRD-related change unless the idea capsule has been checked and updated when needed.
 
 The PRD is the structured requirement artifact. The idea capsule is the chronological product memory and intent ledger.
