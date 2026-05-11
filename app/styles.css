@@ -76,11 +76,13 @@ textarea:focus-visible {
 }
 
 body[data-screen="hub"] .app-shell,
+body[data-screen="records"] .app-shell,
 body[data-screen="detail"] .app-shell {
   grid-template-columns: 236px minmax(640px, 1fr);
 }
 
 body[data-screen="hub"] .ai-review-panel,
+body[data-screen="records"] .ai-review-panel,
 body[data-screen="detail"] .ai-review-panel {
   display: none;
 }
@@ -402,6 +404,7 @@ body[data-screen="detail"] .ai-review-panel {
 .recent-section,
 .mini-records,
 .upload-card,
+.records-panel,
 .editor-form,
 .saved-question-card,
 .detail-info {
@@ -490,6 +493,7 @@ body[data-screen="detail"] .ai-review-panel {
   font-size: 13px;
   font-style: normal;
   font-weight: 700;
+  white-space: nowrap;
 }
 
 .record-row.is-compact {
@@ -665,6 +669,53 @@ body[data-screen="detail"] .ai-review-panel {
 .start-button {
   width: 100%;
   margin-top: 22px;
+}
+
+.records-layout {
+  display: grid;
+  gap: 18px;
+}
+
+.records-overview {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.records-overview article {
+  display: grid;
+  gap: 6px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 18px;
+  box-shadow: var(--shadow-1);
+}
+
+.records-overview span,
+.records-overview small {
+  color: var(--steel);
+  font-size: 13px;
+}
+
+.records-overview strong {
+  color: var(--primary-deep);
+  font-size: 26px;
+  line-height: 1.2;
+}
+
+.records-panel {
+  padding: 18px;
+}
+
+.records-list .record-row {
+  grid-template-columns: 148px 1fr auto;
+  padding: 12px;
+}
+
+.records-list .record-row img {
+  width: 148px;
+  height: 84px;
 }
 
 .review-grid {
@@ -1047,6 +1098,7 @@ textarea {
   }
 
   body[data-screen="hub"] .app-shell,
+  body[data-screen="records"] .app-shell,
   body[data-screen="detail"] .app-shell {
     grid-template-columns: 220px minmax(0, 1fr);
   }
@@ -1069,6 +1121,7 @@ textarea {
   }
 
   body[data-screen="hub"] .app-shell,
+  body[data-screen="records"] .app-shell,
   body[data-screen="detail"] .app-shell {
     grid-template-columns: 1fr;
   }
@@ -1086,7 +1139,7 @@ textarea {
   .rail-nav {
     display: grid;
     flex: none;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .rail-link:disabled,
@@ -1112,18 +1165,26 @@ textarea {
   .app-grid,
   .review-grid,
   .form-row.two,
+  .records-overview,
   .detail-layout {
     grid-template-columns: 1fr;
   }
 
   .upload-preview,
-  .record-row {
+  .record-row,
+  .records-list .record-row {
     grid-template-columns: 72px 1fr;
   }
 
   .upload-preview .button-secondary,
-  .record-row em {
+  .record-row em,
+  .records-list .record-row em {
     grid-column: 1 / -1;
+  }
+
+  .records-list .record-row img {
+    width: 72px;
+    height: 52px;
   }
 }
 

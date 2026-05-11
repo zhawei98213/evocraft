@@ -17,8 +17,11 @@ for (const marker of [
   "data-screen=\"hub\"",
   "data-screen=\"upload\"",
   "data-screen=\"review\"",
+  "data-screen=\"records\"",
   "data-screen=\"detail\"",
   "id=\"image-input\"",
+  "id=\"records-list\"",
+  "data-action=\"go-records\"",
 ]) {
   assert.ok(html.includes(marker), `index.html should include ${marker}`);
 }

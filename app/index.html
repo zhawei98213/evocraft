@@ -30,11 +30,11 @@
             </span>
             错题收集
           </button>
-          <button class="rail-link" type="button" disabled>
+          <button class="rail-link" type="button" data-action="go-records">
             <span class="nav-icon" aria-hidden="true">
               <svg viewBox="0 0 24 24"><path d="M6 5h12v14H6z"/><path d="M9 8h6M9 12h6M9 16h4"/></svg>
             </span>
-            学习资料
+            错题本
           </button>
           <button class="rail-link" type="button" disabled>
             <span class="nav-icon" aria-hidden="true">
@@ -254,10 +254,52 @@
           </form>
         </section>
 
-        <section class="screen detail-screen" data-screen="detail" aria-labelledby="detail-title" hidden>
+        <section class="screen records-screen" data-screen="records" aria-labelledby="records-title" hidden>
           <header class="workspace-header">
             <div>
               <button class="inline-back" type="button" data-action="go-hub">返回应用集合</button>
+              <h1 id="records-title">错题本</h1>
+              <p>这里集中查看已经保存的错题记录，默认展示干净题面，点开后可查看原图。</p>
+            </div>
+            <button class="button-primary" type="button" data-action="go-upload">继续收集</button>
+          </header>
+
+          <div class="records-layout">
+            <section class="records-overview" aria-label="错题本概览">
+              <article>
+                <span>已保存</span>
+                <strong id="records-count">0</strong>
+                <small>道错题</small>
+              </article>
+              <article>
+                <span>默认复习材料</span>
+                <strong>干净题面</strong>
+                <small>原图仍保留用于复核</small>
+              </article>
+              <article>
+                <span>当前状态</span>
+                <strong>本地保存</strong>
+                <small>不上传真实照片</small>
+              </article>
+            </section>
+
+            <section class="records-panel" aria-labelledby="records-list-title">
+              <div class="section-heading">
+                <div>
+                  <h2 id="records-list-title">全部错题</h2>
+                  <p>按最近保存排序</p>
+                </div>
+                <button class="button-secondary" type="button" data-action="go-upload">新增错题</button>
+              </div>
+              <div class="record-list records-list" id="records-list"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="screen detail-screen" data-screen="detail" aria-labelledby="detail-title" hidden>
+          <header class="workspace-header">
+            <div>
+              <button class="inline-back" type="button" data-action="go-records">返回错题本</button>
               <h1 id="detail-title">已保存错题详情</h1>
             </div>
             <div class="header-actions">

@@ -33,6 +33,8 @@ const els = {
   startButton: document.querySelector("[data-action='start-recognition']"),
   hubRecordList: document.querySelector("#hub-record-list"),
   uploadRecordList: document.querySelector("#upload-record-list"),
+  recordsList: document.querySelector("#records-list"),
+  recordsCount: document.querySelector("#records-count"),
   reviewOriginalImage: document.querySelector("#review-original-image"),
   reviewCleanImage: document.querySelector("#review-clean-image"),
   form: document.querySelector("#record-form"),
@@ -65,12 +67,13 @@ function bindEvents() {
     const actions = {
       "go-hub": () => setScreen("hub"),
       "go-upload": () => setScreen("upload"),
+      "go-records": () => setScreen("records"),
       "replace-image": () => els.imageInput.click(),
       "start-recognition": startRecognition,
       "save-record": saveCurrentRecord,
       "toggle-detail-image": toggleDetailImage,
       "edit-current-record": editCurrentRecord,
-      "show-records": () => setScreen(appState.records.length ? "detail" : "upload"),
+      "show-records": () => setScreen("records"),
     };
 
     actions[action]?.();
@@ -119,7 +122,7 @@ function bindEvents() {
 function setScreen(screen) {
   appState.screen = screen;
 
-  if (screen === "detail" && !getSelectedRecord()) {
+  if ((screen === "detail" || screen === "records") && !getSelectedRecord()) {
     appState.selectedRecordId = appState.records[0]?.id ?? null;
   }
 
@@ -216,7 +219,8 @@ function render() {
     link.classList.toggle(
       "is-active",
       (appState.screen === "hub" && action === "go-hub") ||
-        (appState.screen !== "hub" && action === "go-upload"),
+        (["upload", "review"].includes(appState.screen) && action === "go-upload") ||
+        (["records", "detail"].includes(appState.screen) && action === "go-records"),
     );
   });
 
@@ -225,6 +229,7 @@ function render() {
 
   if (appState.screen === "upload") renderUploadPreview();
   if (appState.screen === "review") renderReview();
+  if (appState.screen === "records") renderRecords();
   if (appState.screen === "detail") renderDetail();
 }
 
@@ -278,6 +283,13 @@ function renderDetail() {
 function renderRecordLists() {
   renderRecordList(els.hubRecordList, appState.records.slice(0, 1), false);
   renderRecordList(els.uploadRecordList, appState.records.slice(0, 3), true);
+  if (els.recordsList) renderRecordList(els.recordsList, appState.records, false);
+  if (els.recordsCount) els.recordsCount.textContent = String(appState.records.length);
+}
+
+function renderRecords() {
+  renderRecordList(els.recordsList, appState.records, false);
+  els.recordsCount.textContent = String(appState.records.length);
 }
 
 function renderRecordList(container, records, compact) {
@@ -298,7 +310,7 @@ function renderRecordList(container, records, compact) {
           <img src="${record.cleanedQuestionImageUri}" alt="" />
           <span>
             <strong>${escapeHtml(record.title)}</strong>
-            <small>${SUBJECTS[record.subject] ?? record.subject} · ${formatTime(record.createdAt)}</small>
+            <small>${SUBJECTS[record.subject] ?? record.subject} · ${formatTime(record.createdAt)} · 干净题面已保存</small>
           </span>
           <em>打开</em>
         </button>
@@ -320,6 +332,7 @@ function renderSidePanel() {
     hub: renderHubSidePanel,
     upload: renderUploadSidePanel,
     review: renderReviewSidePanel,
+    records: renderRecordsSidePanel,
     detail: renderDetailSidePanel,
   };
 
@@ -406,6 +419,24 @@ function renderDetailSidePanel() {
       <div class="reward-note compact">
         <strong>继续加油！</strong>
         <p>后续分析入口已预留，当前 MVP 先完成收集闭环。</p>
+      </div>
+      <button class="button-primary full" type="button" data-action="go-upload">继续收集</button>
+    </section>
+  `;
+}
+
+function renderRecordsSidePanel() {
+  return `
+    <section class="side-block">
+      <h2>错题本</h2>
+      <div class="metric-card">
+        <strong>${appState.records.length}</strong>
+        <span>已保存记录</span>
+      </div>
+      <div class="review-checklist">
+        <div><span class="dot done"></span> 点开记录可看干净题面</div>
+        <div><span class="dot done"></span> 详情页可切换查看原图</div>
+        <div><span class="dot wait"></span> 后续接入错题分析</div>
       </div>
       <button class="button-primary full" type="button" data-action="go-upload">继续收集</button>
     </section>
