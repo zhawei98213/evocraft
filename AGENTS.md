@@ -26,6 +26,18 @@ The PRD is the structured requirement artifact. The idea capsule is the chronolo
 
 PRD 负责结构化需求；想法胶囊负责按时间线记录提炼后的产品观点和意图演化。
 
+## Feature Gap Feedback Protocol / 缺失功能反馈协议
+
+When the user explicitly says a feature is missing, asks to add or 补 a feature, asks where an expected feature is, or otherwise points out a product gap:
+
+1. Treat it as a product requirement change, not only an implementation request.
+2. Update the relevant PRD in the same change set, including affected scope, flow, page/information architecture, functional requirements, and acceptance criteria.
+3. Update the idea capsule with the underlying product decision or principle.
+4. Update project memory/progress if the change affects process, implementation status, verification status, or future work.
+5. Do not finish, commit, or push the implementation until code, PRD, idea capsule, and progress records are synchronized.
+
+当用户明确指出“缺少功能”“补功能”“这个功能在哪里”等产品缺口时，必须把它当成需求边界变化处理，而不是只改代码。
+
 ## Long-Term Memory And Progress / 长期记忆与进度机制
 
 Before any meaningful product, design, documentation, or implementation work, read the project memory and progress files:
