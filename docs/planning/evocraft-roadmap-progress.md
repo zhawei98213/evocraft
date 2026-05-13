@@ -532,6 +532,7 @@
 
 - 将 `docs/prd/2026-05-10-wrong-question-capture-mvp-prd.md` 更新为 v1.2，补入独立 `选择题目区域` 步骤、手动画框兜底、整张原图和题目区域双保留、国内模型优先与分层调用策略。
 - 新增 `docs/superpowers/specs/2026-05-13-question-region-domestic-model-design.md`，记录已确认设计、页面结构、数据字段、AI 能力契约、错误处理和测试重点。
+- 新增 `docs/superpowers/plans/2026-05-13-question-region-mvp.md`，将选题区域 MVP 拆成测试、数据、页面、交互、详情联动、浏览器验证和项目记录更新八个实现任务。
 - 更新想法胶囊，记录“多题照片必须先确认本次识别区域”和“国内模型优先、Qwen 优先评估、分层调用”的产品判断。
 - 更新项目记忆和文档索引，记录 PRD v1.2、选题区域流程和模型供应商策略。
 - 更新 `.gitignore`，排除 `.superpowers/` 视觉伴随运行态，避免误提交。
@@ -547,19 +548,17 @@
 - `curl` 检查视觉伴随本地页面。
 - `rg` 搜索 PRD、文档索引和设计/模型相关条目。
 - Web 检索阿里云百炼、火山引擎豆包视觉理解等官方资料，用于模型策略判断。
+- `sed -n` 读取 `app/index.html`、`app/main.js`、`app/state.js` 和 `tests/static-mvp.test.mjs`，用于制定实现计划。
 
 下一步的计划：
 
-- 等用户审阅 `docs/superpowers/specs/2026-05-13-question-region-domestic-model-design.md`。
-- 用户确认后，再进入实现计划：先补静态 MVP 的选题区域页面和数据结构，再考虑真实国内 AI/OCR 接入。
+- 执行 `docs/superpowers/plans/2026-05-13-question-region-mvp.md`：先补静态 MVP 的选题区域页面和数据结构，再考虑真实国内 AI/OCR 接入。
 
 ## 下一步
 
-1. 审阅并确认 `docs/superpowers/specs/2026-05-13-question-region-domestic-model-design.md`。
-2. 根据确认后的设计，为静态 Web MVP 编写选题区域实现计划。
-3. 补强隐私授权、删除机制、失败恢复和模型调用失败状态。
-4. 在真实 AI/OCR 接入前，先用 mock 完成候选框、手动画框和题目区域数据闭环。
-5. 后续再决定是否接入阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
+1. 执行 `docs/superpowers/plans/2026-05-13-question-region-mvp.md`，先用 mock 完成候选框、手动画框和题目区域数据闭环。
+2. 补强隐私授权、删除机制、失败恢复和模型调用失败状态。
+3. 后续再决定是否接入阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
 
 ## 持续跟踪风险
 
