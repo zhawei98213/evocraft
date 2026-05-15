@@ -296,7 +296,9 @@ function saveCurrentRecord() {
 }
 
 function toggleDetailImage() {
-  appState.detailMode = appState.detailMode === "clean" ? "original" : "clean";
+  const modes = ["clean", "region", "original"];
+  const currentIndex = modes.indexOf(appState.detailMode);
+  appState.detailMode = modes[(currentIndex + 1) % modes.length];
   renderDetail();
 }
 
@@ -491,15 +493,36 @@ function renderDetail() {
     return;
   }
 
-  const showingOriginal = appState.detailMode === "original";
-  els.detailImage.src = showingOriginal ? record.originalImageUri : record.cleanedQuestionImageUri;
-  els.detailRecordTitle.textContent = showingOriginal ? "题目（原图）" : "题目（干净题面）";
+  const modeConfig = {
+    clean: {
+      src: record.cleanedQuestionImageUri,
+      title: "题目（干净题面）",
+      chip: "干净题面",
+      chipClass: "clean",
+    },
+    region: {
+      src: record.selectedRegionImageUri ?? record.originalImageUri,
+      title: "题目（确认区域）",
+      chip: "题目区域",
+      chipClass: "ai",
+    },
+    original: {
+      src: record.originalImageUri,
+      title: "题目（整张原图）",
+      chip: "整张原图",
+      chipClass: "review",
+    },
+  };
+  const currentMode = modeConfig[appState.detailMode] ?? modeConfig.clean;
+
+  els.detailImage.src = currentMode.src;
+  els.detailRecordTitle.textContent = currentMode.title;
   els.detailRecordSubtitle.textContent = record.title;
   els.detailQuestionText.textContent = record.questionText;
   els.detailSubject.textContent = SUBJECTS[record.subject] ?? record.subject;
   els.detailCreated.textContent = formatTime(record.createdAt);
-  els.detailModeChip.textContent = showingOriginal ? "原图" : "干净题面";
-  els.detailModeChip.className = `status-chip ${showingOriginal ? "review" : "clean"}`;
+  els.detailModeChip.textContent = currentMode.chip;
+  els.detailModeChip.className = `status-chip ${currentMode.chipClass}`;
 }
 
 function renderRecordLists() {
@@ -532,7 +555,7 @@ function renderRecordList(container, records, compact) {
           <img src="${record.cleanedQuestionImageUri}" alt="" />
           <span>
             <strong>${escapeHtml(record.title)}</strong>
-            <small>${SUBJECTS[record.subject] ?? record.subject} · ${formatTime(record.createdAt)} · 干净题面已保存</small>
+            <small>${SUBJECTS[record.subject] ?? record.subject} · ${formatTime(record.createdAt)} · 已确认题目区域</small>
           </span>
           <em>打开</em>
         </button>
@@ -681,7 +704,7 @@ function renderRecordsSidePanel() {
       </div>
       <div class="review-checklist">
         <div><span class="dot done"></span> 点开记录可看干净题面</div>
-        <div><span class="dot done"></span> 详情页可切换查看原图</div>
+        <div><span class="dot done"></span> 详情页可切换题目区域和原图</div>
         <div><span class="dot wait"></span> 后续接入错题分析</div>
       </div>
       <button class="button-primary full" type="button" data-action="go-upload">继续收集</button>
