@@ -158,8 +158,8 @@
                 </div>
               </div>
 
-              <button class="button-primary start-button" type="button" data-action="start-recognition" disabled>
-                开始整理
+              <button class="button-primary start-button" type="button" data-action="start-region-selection" disabled>
+                下一步：选择题目区域
               </button>
             </div>
 
@@ -170,6 +170,50 @@
               </div>
               <div class="record-list compact" id="upload-record-list"></div>
             </section>
+          </div>
+        </section>
+
+        <section class="screen region-screen" data-screen="select-region" aria-labelledby="region-title" hidden>
+          <header class="workspace-header">
+            <div>
+              <h1 id="region-title">选择题目区域</h1>
+              <p>确认本次要识别的一道题，AI 会只整理这个区域</p>
+            </div>
+            <div class="header-actions">
+              <button class="button-secondary" type="button" data-action="go-upload">返回上传</button>
+              <button class="button-primary" type="button" data-action="confirm-region">确认此区域并识别</button>
+            </div>
+          </header>
+
+          <div class="region-layout">
+            <section class="region-canvas-card" aria-labelledby="region-canvas-title">
+              <header>
+                <div>
+                  <h2 id="region-canvas-title">整张原图</h2>
+                  <p>拖动蓝框调整范围，或使用手动画框</p>
+                </div>
+                <div class="canvas-tools" aria-label="画布缩放">
+                  <button class="button-ghost" type="button" data-action="zoom-out">缩小</button>
+                  <button class="button-ghost" type="button" data-action="zoom-fit">适配</button>
+                  <button class="button-ghost" type="button" data-action="zoom-in">放大</button>
+                </div>
+              </header>
+              <div class="region-canvas" id="region-canvas">
+                <img id="region-canvas-image" alt="用于框选题目区域的整张原图" />
+                <div class="region-overlay" id="region-overlay" aria-label="题目候选区域"></div>
+              </div>
+            </section>
+
+            <aside class="region-tools" aria-labelledby="region-tools-title">
+              <h2 id="region-tools-title">选题工具</h2>
+              <p>先选 AI 候选框；如果没有框中，就手动画框。</p>
+              <div class="region-candidate-list" id="region-candidate-list"></div>
+              <div class="region-summary" id="selected-region-summary"></div>
+              <button class="button-primary full" type="button" data-action="confirm-region">确认此区域并识别</button>
+              <button class="button-secondary full" type="button" data-action="manual-region">手动画框</button>
+              <button class="button-secondary full" type="button" data-action="rerun-region-detection">重新自动找题</button>
+              <button class="button-ghost full" type="button" data-action="go-upload">返回上传</button>
+            </aside>
           </div>
         </section>
 
@@ -186,6 +230,20 @@
           </header>
 
           <div class="review-grid">
+            <article class="image-panel selected-region-panel">
+              <header>
+                <div>
+                  <h2>确认区域</h2>
+                  <p>本次只识别这道题</p>
+                </div>
+                <span class="status-chip ai">已确认</span>
+              </header>
+              <img id="review-region-image" alt="已确认的题目区域" />
+              <footer>
+                <span class="status-chip ai">来自选题区域</span>
+              </footer>
+            </article>
+
             <article class="image-panel source-image-panel">
               <header>
                 <div>
