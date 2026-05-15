@@ -1,6 +1,8 @@
 import {
   SUBJECTS,
+  createManualRegion,
   createMockRecognition,
+  createMockRegionCandidates,
   createRecordFromDraft,
   formatTime,
   loadRecords,
@@ -13,6 +15,11 @@ const appState = {
   uploadedImageUri: "",
   uploadedFile: null,
   draft: null,
+  regionCandidates: [],
+  selectedRegionId: null,
+  selectedRegionImageUri: "",
+  regionZoom: 1,
+  dragState: null,
   records: loadRecords(),
   selectedRecordId: null,
   detailMode: "clean",
@@ -30,12 +37,18 @@ const els = {
   previewName: document.querySelector("#preview-name"),
   previewMeta: document.querySelector("#preview-meta"),
   uploadError: document.querySelector("#upload-error"),
-  startButton: document.querySelector("[data-action='start-recognition']"),
+  startButton: document.querySelector("[data-action='start-region-selection']"),
+  regionCanvas: document.querySelector("#region-canvas"),
+  regionCanvasImage: document.querySelector("#region-canvas-image"),
+  regionOverlay: document.querySelector("#region-overlay"),
+  regionCandidateList: document.querySelector("#region-candidate-list"),
+  selectedRegionSummary: document.querySelector("#selected-region-summary"),
   hubRecordList: document.querySelector("#hub-record-list"),
   uploadRecordList: document.querySelector("#upload-record-list"),
   recordsList: document.querySelector("#records-list"),
   recordsCount: document.querySelector("#records-count"),
   reviewOriginalImage: document.querySelector("#review-original-image"),
+  reviewRegionImage: document.querySelector("#review-region-image"),
   reviewCleanImage: document.querySelector("#review-clean-image"),
   form: document.querySelector("#record-form"),
   fieldSubject: document.querySelector("#field-subject"),
@@ -69,7 +82,14 @@ function bindEvents() {
       "go-upload": () => setScreen("upload"),
       "go-records": () => setScreen("records"),
       "replace-image": () => els.imageInput.click(),
+      "start-region-selection": startRegionSelection,
       "start-recognition": startRecognition,
+      "confirm-region": confirmSelectedRegion,
+      "manual-region": useManualRegion,
+      "rerun-region-detection": rerunRegionDetection,
+      "zoom-in": () => setRegionZoom(Math.min(1.8, appState.regionZoom + 0.1)),
+      "zoom-out": () => setRegionZoom(Math.max(0.7, appState.regionZoom - 0.1)),
+      "zoom-fit": () => setRegionZoom(1),
       "save-record": saveCurrentRecord,
       "toggle-detail-image": toggleDetailImage,
       "edit-current-record": editCurrentRecord,
@@ -148,6 +168,9 @@ function handleFile(file) {
     appState.uploadedFile = file;
     appState.uploadedImageUri = reader.result;
     appState.draft = null;
+    appState.regionCandidates = [];
+    appState.selectedRegionId = null;
+    appState.selectedRegionImageUri = "";
     els.uploadError.textContent = "";
     renderUploadPreview();
   });
@@ -162,18 +185,95 @@ function showUploadError(message) {
   els.startButton.disabled = true;
 }
 
-function startRecognition() {
+function startRegionSelection() {
   if (!appState.uploadedImageUri) {
     showUploadError("请先上传一张错题照片。");
     return;
   }
 
+  appState.regionCandidates = createMockRegionCandidates();
+  appState.selectedRegionId = appState.regionCandidates[1]?.id ?? appState.regionCandidates[0]?.id ?? null;
+  appState.selectedRegionImageUri = "";
+  appState.regionZoom = 1;
+  setScreen("select-region");
+}
+
+function startRecognition() {
+  confirmSelectedRegion();
+}
+
+async function confirmSelectedRegion() {
+  const selectedRegion = getSelectedRegion();
+  if (!appState.uploadedImageUri || !selectedRegion) {
+    showUploadError("请先选择或手动画出一道题目区域。");
+    return;
+  }
+
   const subject = appState.selectedSubject === "auto" ? "math" : appState.selectedSubject;
+  const selectedRegionImageUri = await createSelectedRegionImage(appState.uploadedImageUri, selectedRegion);
+  appState.selectedRegionImageUri = selectedRegionImageUri;
   appState.draft = createMockRecognition({
     subject,
     imageUri: appState.uploadedImageUri,
+    selectedRegion,
+    selectedRegionImageUri,
   });
   setScreen("review");
+}
+
+function getSelectedRegion() {
+  return appState.regionCandidates.find((region) => region.id === appState.selectedRegionId) ?? null;
+}
+
+function useManualRegion() {
+  const manualRegion = createManualRegion();
+  appState.regionCandidates = [
+    manualRegion,
+    ...appState.regionCandidates.filter((region) => region.source !== "manual"),
+  ];
+  appState.selectedRegionId = manualRegion.id;
+  renderRegionSelection();
+}
+
+function rerunRegionDetection() {
+  appState.regionCandidates = createMockRegionCandidates();
+  appState.selectedRegionId = appState.regionCandidates[1]?.id ?? appState.regionCandidates[0]?.id ?? null;
+  renderRegionSelection();
+}
+
+function setRegionZoom(value) {
+  appState.regionZoom = Number(value.toFixed(2));
+  renderRegionSelection();
+}
+
+function createSelectedRegionImage(imageUri, region) {
+  return new Promise((resolve) => {
+    const image = new Image();
+    image.addEventListener("load", () => {
+      const canvas = document.createElement("canvas");
+      const sourceX = Math.max(0, Math.round(image.naturalWidth * region.x));
+      const sourceY = Math.max(0, Math.round(image.naturalHeight * region.y));
+      const sourceWidth = Math.max(1, Math.round(image.naturalWidth * region.width));
+      const sourceHeight = Math.max(1, Math.round(image.naturalHeight * region.height));
+      canvas.width = sourceWidth;
+      canvas.height = sourceHeight;
+      const context = canvas.getContext("2d");
+      context.drawImage(
+        image,
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
+        0,
+        0,
+        sourceWidth,
+        sourceHeight,
+      );
+      resolve(canvas.toDataURL("image/png"));
+    });
+    image.addEventListener("error", () => resolve(imageUri));
+    image.src = imageUri;
+  });
 }
 
 function saveCurrentRecord() {
@@ -219,7 +319,7 @@ function render() {
     link.classList.toggle(
       "is-active",
       (appState.screen === "hub" && action === "go-hub") ||
-        (["upload", "review"].includes(appState.screen) && action === "go-upload") ||
+        (["upload", "select-region", "review"].includes(appState.screen) && action === "go-upload") ||
         (["records", "detail"].includes(appState.screen) && action === "go-records"),
     );
   });
@@ -228,6 +328,7 @@ function render() {
   renderSidePanel();
 
   if (appState.screen === "upload") renderUploadPreview();
+  if (appState.screen === "select-region") renderRegionSelection();
   if (appState.screen === "review") renderReview();
   if (appState.screen === "records") renderRecords();
   if (appState.screen === "detail") renderDetail();
@@ -249,10 +350,131 @@ function renderUploadPreview() {
   els.dropzoneCopy.textContent = "可以替换图片或开始整理";
 }
 
+function renderRegionSelection() {
+  if (!appState.uploadedImageUri) {
+    setScreen("upload");
+    return;
+  }
+
+  els.regionCanvasImage.src = appState.uploadedImageUri;
+  els.regionCanvas.style.setProperty("--region-zoom", appState.regionZoom);
+
+  const selectedRegion = getSelectedRegion();
+  els.regionOverlay.innerHTML = appState.regionCandidates
+    .map((region) => renderRegionFrame(region, region.id === appState.selectedRegionId))
+    .join("");
+
+  els.regionCandidateList.innerHTML = appState.regionCandidates
+    .map(
+      (region) => `
+        <button class="region-candidate ${region.id === appState.selectedRegionId ? "is-selected" : ""}" type="button" data-region-id="${region.id}">
+          <strong>${escapeHtml(region.label)}</strong>
+          <span>${region.source === "manual" ? "手动画框" : `AI 候选 · ${Math.round((region.confidence ?? 0) * 100)}%`}</span>
+        </button>
+      `,
+    )
+    .join("");
+
+  els.selectedRegionSummary.innerHTML = selectedRegion
+    ? `<strong>当前区域</strong><span>${escapeHtml(selectedRegion.label)} · 宽 ${Math.round(
+        selectedRegion.width * 100,
+      )}% · 高 ${Math.round(selectedRegion.height * 100)}%</span>`
+    : `<strong>未选择区域</strong><span>请选择 AI 候选框或手动画框。</span>`;
+
+  els.regionOverlay.querySelectorAll("[data-region-id]").forEach((frame) => {
+    frame.addEventListener("pointerdown", handleRegionPointerDown);
+  });
+
+  els.regionCandidateList.querySelectorAll("[data-region-id]").forEach((button) => {
+    button.addEventListener("click", () => {
+      appState.selectedRegionId = button.dataset.regionId;
+      renderRegionSelection();
+    });
+  });
+}
+
+function renderRegionFrame(region, selected) {
+  return `
+    <button
+      class="region-frame ${selected ? "is-selected" : ""}"
+      type="button"
+      data-region-id="${region.id}"
+      style="left:${region.x * 100}%;top:${region.y * 100}%;width:${region.width * 100}%;height:${region.height * 100}%"
+      aria-label="${escapeHtml(region.label)}"
+    >
+      <span>${escapeHtml(region.label)}</span>
+      ${selected ? `<i data-handle="se"></i><i data-handle="ne"></i><i data-handle="sw"></i>` : ""}
+    </button>
+  `;
+}
+
+function handleRegionPointerDown(event) {
+  event.preventDefault();
+  const frame = event.currentTarget;
+  appState.selectedRegionId = frame.dataset.regionId;
+  const region = getSelectedRegion();
+  if (!region) return;
+
+  const canvasRect = els.regionOverlay.getBoundingClientRect();
+  appState.dragState = {
+    regionId: region.id,
+    handle: event.target.dataset.handle ?? "move",
+    startX: event.clientX,
+    startY: event.clientY,
+    startRegion: { ...region },
+    canvasWidth: canvasRect.width,
+    canvasHeight: canvasRect.height,
+  };
+
+  frame.setPointerCapture(event.pointerId);
+  window.addEventListener("pointermove", handleRegionPointerMove);
+  window.addEventListener("pointerup", handleRegionPointerUp, { once: true });
+}
+
+function handleRegionPointerMove(event) {
+  if (!appState.dragState) return;
+  const region = appState.regionCandidates.find((item) => item.id === appState.dragState.regionId);
+  if (!region) return;
+
+  const dx = (event.clientX - appState.dragState.startX) / appState.dragState.canvasWidth;
+  const dy = (event.clientY - appState.dragState.startY) / appState.dragState.canvasHeight;
+  const start = appState.dragState.startRegion;
+
+  if (appState.dragState.handle === "move") {
+    region.x = clamp(start.x + dx, 0, 1 - start.width);
+    region.y = clamp(start.y + dy, 0, 1 - start.height);
+  } else if (appState.dragState.handle === "ne") {
+    const nextY = clamp(start.y + dy, 0, start.y + start.height - 0.08);
+    region.y = nextY;
+    region.width = clamp(start.width + dx, 0.08, 1 - start.x);
+    region.height = clamp(start.height + (start.y - nextY), 0.08, 1 - nextY);
+  } else if (appState.dragState.handle === "sw") {
+    const nextX = clamp(start.x + dx, 0, start.x + start.width - 0.08);
+    region.x = nextX;
+    region.width = clamp(start.width + (start.x - nextX), 0.08, 1 - nextX);
+    region.height = clamp(start.height + dy, 0.08, 1 - start.y);
+  } else {
+    region.width = clamp(start.width + dx, 0.08, 1 - start.x);
+    region.height = clamp(start.height + dy, 0.08, 1 - start.y);
+  }
+
+  renderRegionSelection();
+}
+
+function handleRegionPointerUp() {
+  appState.dragState = null;
+  window.removeEventListener("pointermove", handleRegionPointerMove);
+}
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
+}
+
 function renderReview() {
   if (!appState.draft) return;
 
   els.reviewOriginalImage.src = appState.draft.originalImageUri;
+  els.reviewRegionImage.src = appState.draft.selectedRegionImageUri;
   els.reviewCleanImage.src = appState.draft.cleanedQuestionImageUri;
   els.fieldSubject.value = appState.draft.subject;
   els.fieldTitle.value = appState.draft.title;
@@ -331,6 +553,7 @@ function renderSidePanel() {
   const sideContent = {
     hub: renderHubSidePanel,
     upload: renderUploadSidePanel,
+    "select-region": renderRegionSidePanel,
     review: renderReviewSidePanel,
     records: renderRecordsSidePanel,
     detail: renderDetailSidePanel,
@@ -362,11 +585,34 @@ function renderUploadSidePanel() {
       <h2>AI 处理流程</h2>
       <ol class="step-list">
         <li class="is-current"><span>1</span><strong>上传</strong><small>等待上传照片</small></li>
-        <li><span>2</span><strong>识别</strong><small>识别题目内容与版式</small></li>
-        <li><span>3</span><strong>去痕</strong><small>去除手写与批改痕迹</small></li>
-        <li><span>4</span><strong>复核</strong><small>检查识别与去痕结果</small></li>
-        <li><span>5</span><strong>保存</strong><small>保存到错题本</small></li>
+        <li><span>2</span><strong>选题</strong><small>确认本次识别的一道题</small></li>
+        <li><span>3</span><strong>识别</strong><small>识别题目内容与版式</small></li>
+        <li><span>4</span><strong>去痕</strong><small>去除手写与批改痕迹</small></li>
+        <li><span>5</span><strong>复核</strong><small>检查识别与去痕结果</small></li>
+        <li><span>6</span><strong>保存</strong><small>保存到错题本</small></li>
       </ol>
+    </section>
+  `;
+}
+
+function renderRegionSidePanel() {
+  const selectedRegion = getSelectedRegion();
+
+  return `
+    <section class="side-block">
+      <h2>选题区域状态</h2>
+      <div class="draft-block">
+        <span class="status-chip ai">本地 mock 找题</span>
+        <strong>${selectedRegion ? escapeHtml(selectedRegion.label) : "未选择区域"}</strong>
+        <p>确认区域后，识别和去痕只处理这一道题；整张原图仍会保留用于溯源。</p>
+      </div>
+      <div class="status-summary">
+        <div><span>候选框</span><strong>${appState.regionCandidates.length} 个</strong></div>
+        <div><span>当前缩放</span><strong>${Math.round(appState.regionZoom * 100)}%</strong></div>
+        <div><span>区域来源</span><strong>${selectedRegion?.source === "manual" ? "手动画框" : "AI 候选"}</strong></div>
+      </div>
+      <button class="button-primary full" type="button" data-action="confirm-region">确认此区域并识别</button>
+      <button class="button-secondary full" type="button" data-action="manual-region">手动画框</button>
     </section>
   `;
 }
