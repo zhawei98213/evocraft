@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-05-11
+最后更新：2026-05-15
 
 ## 路线图
 
@@ -554,11 +554,44 @@
 
 - 执行 `docs/superpowers/plans/2026-05-13-question-region-mvp.md`：先补静态 MVP 的选题区域页面和数据结构，再考虑真实国内 AI/OCR 接入。
 
+### 2026-05-15：选题区域静态 MVP 实现
+
+本轮任务是什么：
+
+- 执行 `docs/superpowers/plans/2026-05-13-question-region-mvp.md`，实现上传后的独立 `选择题目区域` 步骤，让多题照片可以先确认一道题再识别。
+
+已完成什么：
+
+- 新增 `select-region` 屏幕，将上传页主操作改为 `下一步：选择题目区域`。
+- 实现 mock 候选框、手动画框、拖动/缩放调整、确认后识别。
+- 扩展本地记录数据，保存 `selectedRegion`、`selectedRegionImageUri` 和 mock `modelTraces`。
+- 保存记录同时保留整张原图、确认后的题目区域和干净题面。
+- 详情页支持在干净题面、题目区域和整张原图之间切换。
+- 浏览器验证中发现手动画框与候选框重叠时可能抓错框，已通过提高选中框层级修复。
+
+卡在哪里：
+
+- Browser 插件可加载本地页面并确认页面结构，但当前暴露的 Playwright surface 不支持文件上传；完整上传/拖动/保存闭环已回退到本地 Playwright 验证。
+
+执行的是什么命令：
+
+- `node tests/static-mvp.test.mjs`
+- `node --check app/main.js`
+- `git diff --check`
+- `python3 -m http.server 4173`
+- Browser 插件打开 `http://127.0.0.1:4173/app/index.html` 并检查上传页、`下一步：选择题目区域` 和侧栏流程。
+- 使用 bundled Playwright 运行上传、选题区域、手动画框、拖动、缩放、确认、复核、保存、详情切换和错题本验证脚本，截图输出到 `/tmp/evocraft-region-selection.png`、`/tmp/evocraft-detail-cycle.png`、`/tmp/evocraft-records-region.png`。
+
+下一步的计划：
+
+- 补隐私授权、删除机制和模型调用失败状态。
+- 后续再接阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
+
 ## 下一步
 
-1. 执行 `docs/superpowers/plans/2026-05-13-question-region-mvp.md`，先用 mock 完成候选框、手动画框和题目区域数据闭环。
-2. 补强隐私授权、删除机制、失败恢复和模型调用失败状态。
-3. 后续再决定是否接入阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
+1. 补强隐私授权、删除机制、失败恢复和模型调用失败状态。
+2. 后续再决定是否接入阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
+3. 继续评估是否把静态 MVP 升级为 React/Vite、Electron/Tauri 或带后端的普通 Web 应用。
 
 ## 持续跟踪风险
 
