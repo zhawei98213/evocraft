@@ -28,6 +28,60 @@ const subjectSamples = {
   },
 };
 
+const defaultRegionCandidates = [
+  {
+    id: "candidate-1",
+    label: "候选 1",
+    x: 0.11,
+    y: 0.18,
+    width: 0.78,
+    height: 0.18,
+    unit: "ratio",
+    source: "ai_candidate",
+    confidence: 0.72,
+  },
+  {
+    id: "candidate-2",
+    label: "候选 2",
+    x: 0.1,
+    y: 0.4,
+    width: 0.8,
+    height: 0.28,
+    unit: "ratio",
+    source: "ai_candidate",
+    confidence: 0.9,
+  },
+  {
+    id: "candidate-3",
+    label: "候选 3",
+    x: 0.12,
+    y: 0.72,
+    width: 0.76,
+    height: 0.16,
+    unit: "ratio",
+    source: "ai_candidate",
+    confidence: 0.66,
+  },
+];
+
+export function createMockRegionCandidates() {
+  return defaultRegionCandidates.map((candidate) => ({ ...candidate }));
+}
+
+export function createManualRegion() {
+  return {
+    id: `manual-${Date.now()}`,
+    label: "手动画框",
+    x: 0.18,
+    y: 0.28,
+    width: 0.64,
+    height: 0.34,
+    unit: "ratio",
+    source: "manual",
+    confidence: 1,
+  };
+}
+
 function svgDataUri(svg) {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
@@ -100,10 +154,17 @@ export function createOriginalPlaceholderImage() {
   `);
 }
 
-export function createMockRecognition({ subject = "math", imageUri } = {}) {
+export function createMockRecognition({
+  subject = "math",
+  imageUri,
+  selectedRegion,
+  selectedRegionImageUri,
+} = {}) {
   const normalizedSubject = SUBJECTS[subject] ? subject : "math";
   const sample = subjectSamples[normalizedSubject];
   const now = new Date().toISOString();
+  const fallbackRegion = selectedRegion ?? createMockRegionCandidates()[1];
+  const originalImageUri = imageUri || createOriginalPlaceholderImage();
 
   return {
     id: `draft-${Date.now()}`,
@@ -113,7 +174,9 @@ export function createMockRecognition({ subject = "math", imageUri } = {}) {
     subject: normalizedSubject,
     title: sample.title,
     questionText: sample.question,
-    originalImageUri: imageUri || createOriginalPlaceholderImage(),
+    originalImageUri,
+    selectedRegion: fallbackRegion,
+    selectedRegionImageUri: selectedRegionImageUri || originalImageUri,
     cleanedQuestionImageUri: createCleanQuestionImage(normalizedSubject),
     visualSnippetUri: createCleanQuestionImage(normalizedSubject),
     studentAnswer: "AI 识别到学生作答痕迹，已从干净题面中隐藏，请人工确认是否需要保留到备注。",
@@ -123,6 +186,12 @@ export function createMockRecognition({ subject = "math", imageUri } = {}) {
     recognitionConfidence: 0.92,
     cleanupStatus: "needs_review",
     cleanupConfidence: 0.78,
+    modelTraces: [
+      { provider: "mock", modelId: "local-region-mock", task: "region_detection" },
+      { provider: "mock", modelId: "local-ocr-mock", task: "ocr" },
+      { provider: "mock", modelId: "local-structure-mock", task: "structure" },
+      { provider: "mock", modelId: "local-cleanup-mock", task: "cleanup" },
+    ],
     reviewItems: [
       { label: "题干文字已识别", status: "可信" },
       { label: "学生作答已隐藏", status: "请检查" },
