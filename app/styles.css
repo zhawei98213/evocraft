@@ -737,6 +737,7 @@ body[data-screen="detail"] .ai-review-panel {
 
 .region-frame {
   position: absolute;
+  z-index: 1;
   border: 2px dashed var(--hairline-strong);
   border-radius: var(--radius-md);
   background: rgba(255, 255, 255, 0.18);
@@ -747,6 +748,7 @@ body[data-screen="detail"] .ai-review-panel {
 }
 
 .region-frame.is-selected {
+  z-index: 2;
   border: 3px solid var(--primary);
   background: rgba(232, 240, 255, 0.46);
   box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
