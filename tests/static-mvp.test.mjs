@@ -16,11 +16,18 @@ const html = readFileSync("app/index.html", "utf8");
 for (const marker of [
   "data-screen=\"hub\"",
   "data-screen=\"upload\"",
+  "data-screen=\"select-region\"",
   "data-screen=\"review\"",
   "data-screen=\"records\"",
   "data-screen=\"detail\"",
   "id=\"image-input\"",
+  "id=\"region-canvas-image\"",
+  "id=\"region-overlay\"",
+  "id=\"region-candidate-list\"",
   "id=\"records-list\"",
+  "data-action=\"start-region-selection\"",
+  "data-action=\"confirm-region\"",
+  "data-action=\"manual-region\"",
   "data-action=\"go-records\"",
 ]) {
   assert.ok(html.includes(marker), `index.html should include ${marker}`);
@@ -28,9 +35,18 @@ for (const marker of [
 
 const state = await import("../app/state.js");
 
+const candidates = state.createMockRegionCandidates();
+assert.equal(candidates.length, 3);
+assert.equal(candidates[0].unit, "ratio");
+assert.equal(candidates[0].source, "ai_candidate");
+assert.ok(candidates[0].width > 0);
+assert.ok(candidates[0].height > 0);
+
 const draft = state.createMockRecognition({
   subject: "math",
   imageUri: "data:image/png;base64,seed",
+  selectedRegion: candidates[1],
+  selectedRegionImageUri: "data:image/png;base64,region",
 });
 
 assert.equal(draft.appId, "wrong_question_capture");
@@ -39,6 +55,11 @@ assert.equal(draft.recognitionStatus, "needs_review");
 assert.equal(draft.cleanupStatus, "needs_review");
 assert.ok(draft.questionText.includes("如图"));
 assert.ok(draft.cleanedQuestionImageUri.startsWith("data:image/svg+xml"));
+assert.deepEqual(draft.selectedRegion, candidates[1]);
+assert.equal(draft.selectedRegionImageUri, "data:image/png;base64,region");
+assert.equal(draft.modelTraces[0].provider, "mock");
+assert.equal(draft.modelTraces[0].task, "region_detection");
+assert.equal(draft.modelTraces[1].task, "ocr");
 
 const record = state.createRecordFromDraft(draft, {
   title: "一次函数图像与坐标综合题",
@@ -53,3 +74,6 @@ assert.equal(record.recognitionStatus, "reviewed");
 assert.equal(record.cleanupStatus, "reviewed");
 assert.ok(record.originalImageUri);
 assert.ok(record.cleanedQuestionImageUri);
+assert.deepEqual(record.selectedRegion, candidates[1]);
+assert.equal(record.selectedRegionImageUri, "data:image/png;base64,region");
+assert.ok(Array.isArray(record.modelTraces));
