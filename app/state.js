@@ -82,6 +82,30 @@ export function createManualRegion() {
   };
 }
 
+export function deleteRegionCandidate(regionCandidates, regionId, selectedRegionId) {
+  const deleteIndex = regionCandidates.findIndex((candidate) => candidate.id === regionId);
+  if (deleteIndex === -1) {
+    return {
+      regionCandidates: regionCandidates.map((candidate) => ({ ...candidate })),
+      selectedRegionId,
+    };
+  }
+
+  const nextCandidates = regionCandidates.filter((candidate) => candidate.id !== regionId);
+  if (selectedRegionId !== regionId) {
+    return {
+      regionCandidates: nextCandidates,
+      selectedRegionId,
+    };
+  }
+
+  const nextSelection = nextCandidates[deleteIndex]?.id ?? nextCandidates[deleteIndex - 1]?.id ?? null;
+  return {
+    regionCandidates: nextCandidates,
+    selectedRegionId: nextSelection,
+  };
+}
+
 function svgDataUri(svg) {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }

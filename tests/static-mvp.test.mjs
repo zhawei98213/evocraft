@@ -13,6 +13,7 @@ for (const file of requiredFiles) {
 }
 
 const html = readFileSync("app/index.html", "utf8");
+const main = readFileSync("app/main.js", "utf8");
 for (const marker of [
   "data-screen=\"hub\"",
   "data-screen=\"upload\"",
@@ -33,6 +34,8 @@ for (const marker of [
   assert.ok(html.includes(marker), `index.html should include ${marker}`);
 }
 
+assert.ok(main.includes("delete-region"), "main.js should render delete-region controls");
+
 const state = await import("../app/state.js");
 
 const candidates = state.createMockRegionCandidates();
@@ -41,6 +44,22 @@ assert.equal(candidates[0].unit, "ratio");
 assert.equal(candidates[0].source, "ai_candidate");
 assert.ok(candidates[0].width > 0);
 assert.ok(candidates[0].height > 0);
+
+const deletedCurrent = state.deleteRegionCandidate(candidates, "candidate-2", "candidate-2");
+assert.equal(deletedCurrent.regionCandidates.length, 2);
+assert.equal(deletedCurrent.selectedRegionId, "candidate-3");
+
+const deletedLast = state.deleteRegionCandidate(deletedCurrent.regionCandidates, "candidate-3", "candidate-3");
+assert.equal(deletedLast.regionCandidates.length, 1);
+assert.equal(deletedLast.selectedRegionId, "candidate-1");
+
+const deletedAll = state.deleteRegionCandidate(deletedLast.regionCandidates, "candidate-1", "candidate-1");
+assert.deepEqual(deletedAll.regionCandidates, []);
+assert.equal(deletedAll.selectedRegionId, null);
+
+const deleteUnselected = state.deleteRegionCandidate(candidates, "candidate-1", "candidate-2");
+assert.equal(deleteUnselected.regionCandidates.length, 2);
+assert.equal(deleteUnselected.selectedRegionId, "candidate-2");
 
 const draft = state.createMockRecognition({
   subject: "math",

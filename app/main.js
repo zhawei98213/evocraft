@@ -4,6 +4,7 @@ import {
   createMockRecognition,
   createMockRegionCandidates,
   createRecordFromDraft,
+  deleteRegionCandidate,
   formatTime,
   loadRecords,
   persistRecords,
@@ -85,6 +86,7 @@ function bindEvents() {
       "start-region-selection": startRegionSelection,
       "start-recognition": startRecognition,
       "confirm-region": confirmSelectedRegion,
+      "delete-region": deleteRegion,
       "manual-region": useManualRegion,
       "rerun-region-detection": rerunRegionDetection,
       "zoom-in": () => setRegionZoom(Math.min(1.8, appState.regionZoom + 0.1)),
@@ -96,7 +98,7 @@ function bindEvents() {
       "show-records": () => setScreen("records"),
     };
 
-    actions[action]?.();
+    actions[action]?.(button);
   });
 
   document.querySelectorAll("[data-subject]").forEach((button) => {
@@ -233,17 +235,30 @@ function useManualRegion() {
   ];
   appState.selectedRegionId = manualRegion.id;
   renderRegionSelection();
+  renderSidePanel();
 }
 
 function rerunRegionDetection() {
   appState.regionCandidates = createMockRegionCandidates();
   appState.selectedRegionId = appState.regionCandidates[1]?.id ?? appState.regionCandidates[0]?.id ?? null;
   renderRegionSelection();
+  renderSidePanel();
+}
+
+function deleteRegion(button) {
+  const regionId = button.dataset.regionId;
+  const result = deleteRegionCandidate(appState.regionCandidates, regionId, appState.selectedRegionId);
+  appState.regionCandidates = result.regionCandidates;
+  appState.selectedRegionId = result.selectedRegionId;
+  appState.dragState = null;
+  renderRegionSelection();
+  renderSidePanel();
 }
 
 function setRegionZoom(value) {
   appState.regionZoom = Number(value.toFixed(2));
   renderRegionSelection();
+  renderSidePanel();
 }
 
 function createSelectedRegionImage(imageUri, region) {
@@ -366,28 +381,39 @@ function renderRegionSelection() {
     .map((region) => renderRegionFrame(region, region.id === appState.selectedRegionId))
     .join("");
 
-  els.regionCandidateList.innerHTML = appState.regionCandidates
-    .map(
-      (region) => `
-        <button class="region-candidate ${region.id === appState.selectedRegionId ? "is-selected" : ""}" type="button" data-region-id="${region.id}">
-          <strong>${escapeHtml(region.label)}</strong>
-          <span>${region.source === "manual" ? "手动画框" : `AI 候选 · ${Math.round((region.confidence ?? 0) * 100)}%`}</span>
-        </button>
+  els.regionCandidateList.innerHTML = appState.regionCandidates.length
+    ? appState.regionCandidates
+        .map(
+          (region) => `
+        <div class="region-candidate ${region.id === appState.selectedRegionId ? "is-selected" : ""}" data-region-id="${region.id}">
+          <button class="region-candidate-main" type="button" data-region-id="${region.id}">
+            <strong>${escapeHtml(region.label)}</strong>
+            <span>${region.source === "manual" ? "手动画框" : `AI 候选 · ${Math.round((region.confidence ?? 0) * 100)}%`}</span>
+          </button>
+          <button class="region-delete-button" type="button" data-action="delete-region" data-region-id="${region.id}" aria-label="删除${escapeHtml(
+            region.label,
+          )}">删除</button>
+        </div>
       `,
-    )
-    .join("");
+        )
+        .join("")
+    : `<div class="region-empty-state"><strong>候选框已清空</strong><span>可以手动画框，或重新自动找题。</span></div>`;
 
   els.selectedRegionSummary.innerHTML = selectedRegion
     ? `<strong>当前区域</strong><span>${escapeHtml(selectedRegion.label)} · 宽 ${Math.round(
         selectedRegion.width * 100,
       )}% · 高 ${Math.round(selectedRegion.height * 100)}%</span>`
-    : `<strong>未选择区域</strong><span>请选择 AI 候选框或手动画框。</span>`;
+    : `<strong>未选择区域</strong><span>AI 候选框已删除，可手动画框或重新自动找题。</span>`;
 
-  els.regionOverlay.querySelectorAll("[data-region-id]").forEach((frame) => {
+  document.querySelectorAll("[data-action='confirm-region']").forEach((button) => {
+    button.disabled = !selectedRegion;
+  });
+
+  els.regionOverlay.querySelectorAll(".region-frame").forEach((frame) => {
     frame.addEventListener("pointerdown", handleRegionPointerDown);
   });
 
-  els.regionCandidateList.querySelectorAll("[data-region-id]").forEach((button) => {
+  els.regionCandidateList.querySelectorAll(".region-candidate-main").forEach((button) => {
     button.addEventListener("click", () => {
       appState.selectedRegionId = button.dataset.regionId;
       renderRegionSelection();
@@ -397,21 +423,30 @@ function renderRegionSelection() {
 
 function renderRegionFrame(region, selected) {
   return `
-    <button
+    <div
       class="region-frame ${selected ? "is-selected" : ""}"
-      type="button"
+      role="button"
+      tabindex="0"
       data-region-id="${region.id}"
       style="left:${region.x * 100}%;top:${region.y * 100}%;width:${region.width * 100}%;height:${region.height * 100}%"
       aria-label="${escapeHtml(region.label)}"
     >
       <span>${escapeHtml(region.label)}</span>
+      ${
+        selected
+          ? `<button class="region-frame-delete" type="button" data-action="delete-region" data-region-id="${region.id}" aria-label="删除${escapeHtml(
+              region.label,
+            )}">删除</button>`
+          : ""
+      }
       ${selected ? `<i data-handle="se"></i><i data-handle="ne"></i><i data-handle="sw"></i>` : ""}
-    </button>
+    </div>
   `;
 }
 
 function handleRegionPointerDown(event) {
   event.preventDefault();
+  if (event.target.closest("[data-action='delete-region']")) return;
   const frame = event.currentTarget;
   appState.selectedRegionId = frame.dataset.regionId;
   const region = getSelectedRegion();
@@ -632,10 +667,11 @@ function renderRegionSidePanel() {
       <div class="status-summary">
         <div><span>候选框</span><strong>${appState.regionCandidates.length} 个</strong></div>
         <div><span>当前缩放</span><strong>${Math.round(appState.regionZoom * 100)}%</strong></div>
-        <div><span>区域来源</span><strong>${selectedRegion?.source === "manual" ? "手动画框" : "AI 候选"}</strong></div>
+        <div><span>区域来源</span><strong>${selectedRegion ? (selectedRegion.source === "manual" ? "手动画框" : "AI 候选") : "未选择"}</strong></div>
       </div>
-      <button class="button-primary full" type="button" data-action="confirm-region">确认此区域并识别</button>
+      <button class="button-primary full" type="button" data-action="confirm-region" ${selectedRegion ? "" : "disabled"}>确认此区域并识别</button>
       <button class="button-secondary full" type="button" data-action="manual-region">手动画框</button>
+      <button class="button-secondary full" type="button" data-action="rerun-region-detection">重新自动找题</button>
     </section>
   `;
 }
