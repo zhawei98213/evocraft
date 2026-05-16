@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-05-11
+最后更新：2026-05-16
 
 ## 路线图
 
@@ -83,6 +83,44 @@
 如果没有卡点，写 `无`。命令不需要粘贴完整输出，但要保留足够复现的命令名称或关键命令。
 
 ## 当前进度
+
+### 2026-05-16：PRD 编写规范调研与沉淀
+
+本轮任务是什么：
+
+- 调研主流 PRD 撰写规范和需求工程检查规则，形成 EvoCraft 可复用的 PRD 编写规范 Markdown 文件。
+
+已完成什么：
+
+- 参考 Atlassian、Aha!、Productboard、Pendo、Miro 的 PRD 模板和指南，以及 NASA 需求编写与软件需求检查规则。
+- 新增 `docs/prd/2026-05-16-prd-writing-standards.md`，沉淀 PRD 分层、标准结构、需求语句规则、优先级规则、EvoCraft 专用检查清单、评审流程和可复制模板。
+- 更新 `docs/README.md`，把 PRD 编写规范加入文档索引。
+- 更新 `docs/planning/evocraft-project-memory.md`，将 PRD 编写规范作为后续 PRD 写作和评审的统一参考。
+
+卡在哪里：
+
+- 无。当前工作区已有若干 Figma 相关文件处于删除状态，本轮未触碰这些删除项。
+
+执行的是什么命令：
+
+- `sed -n '1,220p' /Users/zha/.codex/superpowers/skills/using-superpowers/SKILL.md`
+- `sed -n '1,220p' /Users/zha/.codex/superpowers/skills/brainstorming/SKILL.md`
+- `sed -n '1,220p' docs/planning/evocraft-project-memory.md`
+- `sed -n '1,260p' docs/planning/evocraft-roadmap-progress.md`
+- `sed -n '1,220p' docs/ideas/2026-05-10-evocraft-seed-capsule.md`
+- `rg --files docs | sort`
+- `git status --short --branch`
+- `apply_patch` 新增 PRD 编写规范并同步文档索引、项目记忆、路线图进度
+- `git diff --check`
+- `rg -n "TBD|TODO|待定|待补|后续再说" docs/prd/2026-05-16-prd-writing-standards.md docs/README.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md`
+- `git add docs/prd/2026-05-16-prd-writing-standards.md docs/README.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md`
+- `git commit ...`
+- `git push`
+- Web 调研：Atlassian、Aha!、Productboard、Pendo、Miro、NASA PRD/需求编写资料
+
+下一步的计划：
+
+- 后续新建或重大更新 PRD 时，按 `docs/prd/2026-05-16-prd-writing-standards.md` 的结构与检查清单执行，并在涉及产品想法或 PRD 边界变化时同步想法胶囊。
 
 ### 2026-05-10：产品文档基础与 PRD v1.0
 
