@@ -715,6 +715,37 @@
 
 - 按 PRD 编写规范补 AI adapter / OCR 链路 PRD，明确输入输出、失败降级、隐私授权、模型分层、供应商数据边界和 contract tests。
 
+### 2026-05-16：技能产物入库铁律
+
+本轮任务是什么：
+
+- 根据用户明确要求，把 `@superpowers` 或任何技能/工具 workflow 产生的项目相关结果必须放入项目目录的规则写入仓库级 `AGENTS.md`，并同步长期记忆。
+
+已完成什么：
+
+- 在 `AGENTS.md` 新增 `Iron Rule: Skill Outputs Live In Project / 技能产物入库铁律`。
+- 明确技能产物不能只留在聊天、临时目录、浏览器状态、外部工具或 scratch 位置。
+- 明确 specs、plans、screenshots、diagrams、research summaries、generated assets、verification artifacts、handoff notes 等项目相关结果必须保存到项目目录中的合适位置，并随目标提交保存。
+- 更新 README 和项目记忆，把该规则纳入后续工作入口。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `sed -n` 读取 `AGENTS.md`、项目记忆、路线图进度、想法胶囊和 Superpowers 使用说明。
+- `apply_patch` 更新 `AGENTS.md`、`docs/README.md`、`docs/planning/evocraft-project-memory.md` 和 `docs/planning/evocraft-roadmap-progress.md`。
+- `git diff --check`
+- `npm test`
+- `rg -n "Skill Outputs Live In Project|技能产物入库|技能产物|superpowers|workflow" AGENTS.md docs/README.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md`
+- `rg -n "TBD|TODO|待定|待补|后续再说|PLACEHOLDER|implement later" AGENTS.md docs/README.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md`
+
+下一步的计划：
+
+- 后续使用任何技能产出项目相关内容时，先确认 durable 输出路径，完成后再提交和推送。
+
 ## 下一步
 
 1. 按 PRD 编写规范设计 AI adapter / OCR 链路 PRD，明确输入输出、失败降级、隐私授权、模型分层和 contract tests。

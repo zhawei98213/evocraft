@@ -26,6 +26,22 @@ The PRD is the structured requirement artifact. The idea capsule is the chronolo
 
 PRD 负责结构化需求；想法胶囊负责按时间线记录提炼后的产品观点和意图演化。
 
+## Iron Rule: Skill Outputs Live In Project / 技能产物入库铁律
+
+Any result produced with `@superpowers`, Superpowers skills, or any other Codex skill/tool workflow must be stored under this project directory when it is relevant to the project.
+
+任何通过 `@superpowers`、Superpowers 技能，或其他 Codex 技能/工具流程产生的项目相关结果，都必须放到本项目目录下面。
+
+Required behavior:
+
+- Do not leave project deliverables only in chat messages, temporary folders, browser state, external tool state, or local scratch locations.
+- Save reusable outputs into the repository path that matches their purpose, for example `docs/superpowers/specs/`, `docs/superpowers/plans/`, `docs/design/`, `docs/planning/`, `docs/prd/`, `app/`, or `tests/`.
+- If a skill creates screenshots, diagrams, specs, plans, review notes, research summaries, generated assets, verification artifacts, or implementation handoff notes, copy or generate the durable version inside the project directory in the same change set.
+- Runtime cache, temporary profiles, transient logs, and tool scratch files should stay out of git, but any durable conclusion or asset derived from them must be written into the project tree.
+- Do not finish, commit, or push skill-driven work until the project-relevant skill outputs have been saved under the project directory and included in the intended commit.
+
+技能产物不能只存在于对话、临时目录、浏览器状态、外部工具或本地 scratch 中。凡是会影响后续产品、设计、技术决策、实现、测试、验证或交接的结果，都必须在同一次变更中进入项目目录，并随目标提交一起保存。
+
 ## PRD Writing Standards / PRD 编写规范
 
 All future PRDs, materially updated PRDs, and PRD changes caused by product-gap feedback must follow:
