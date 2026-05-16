@@ -650,9 +650,41 @@
 
 - 进入 AI adapter 设计：定义区域检测、OCR、结构化整理、去痕和失败状态的 provider-agnostic contract，并继续用 mock contract tests 保护真实 Qwen 接入前的业务边界。
 
+### 2026-05-16：PRD 编写规范与 MVP PRD 对齐
+
+本轮任务是什么：
+
+- 根据 `docs/prd/2026-05-16-prd-writing-standards.md` 重整错题收集 MVP PRD；同时把原 PRD 中规范未提炼但应复用的结构和原则反向补进 PRD 编写规范，并把后续 PRD 必须遵循规范写入 `AGENTS.md`。
+
+已完成什么：
+
+- 将 `docs/prd/2026-05-10-wrong-question-capture-mvp-prd.md` 更新为 v1.5，按规范补齐元信息、相关文档、变更摘要、目标用户与场景、默认决策与决策边界、功能需求表、非功能需求、风险/依赖/开放问题、设计与实现交接摘要。
+- 将原 PRD 中的应用集合定位、产品反馈同步、技术路线决策、国内模型策略、UI 生成输入摘要、本地删除/清空和失败恢复等内容提炼回 `docs/prd/2026-05-16-prd-writing-standards.md`，更新为 v1.1。
+- 在 `AGENTS.md` 新增 PRD 编写规范原则，要求后续新建或重大更新 PRD 都遵循规范，并在发现规范缺口时同步更新规范。
+- 更新文档索引、项目记忆和想法胶囊，记录 PRD 标准成为后续需求工作的强制入口。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `rg --files | rg '2026-05-16-prd-writing-standards|wrong-question-capture|AGENTS|project-memory|roadmap-progress|seed-capsule|README.md'`
+- `sed -n` 读取 PRD 编写规范、错题收集 MVP PRD、项目记忆、路线图进度、想法胶囊、AGENTS 和 README。
+- `rg -n "^#|^##|^###|文档状态|版本|责任|相关文档|MVP 默认|产品反馈|UI 生成|后续决策|风险|非功能"` 对比规范与 PRD 结构。
+- `rg -n "TBD|TODO|待定|待补|后续再说"` 检查占位词。
+- `rg -n "PRD v1[.]4|编写规范 v1[.]0|PRD 编写规范 v1[.]0" AGENTS.md docs`
+- `npm test`
+- `git diff --check`
+
+下一步的计划：
+
+- 进入 AI adapter 设计前，先以 PRD 编写规范为入口，补一份独立的 AI adapter / OCR 链路 PRD 或功能 PRD，再进入实现计划。
+
 ## 下一步
 
-1. 设计 AI adapter 和 mock contract tests，为真实 Qwen OCR/视觉链路做准备。
+1. 按 PRD 编写规范设计 AI adapter / OCR 链路 PRD，明确输入输出、失败降级、隐私授权、模型分层和 contract tests。
 2. 后续再接阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
 3. 继续观察 React/Vite 迁移触发点；Electron/Tauri、后端 Web、账号和云同步暂缓。
 

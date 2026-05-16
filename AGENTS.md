@@ -26,6 +26,22 @@ The PRD is the structured requirement artifact. The idea capsule is the chronolo
 
 PRD 负责结构化需求；想法胶囊负责按时间线记录提炼后的产品观点和意图演化。
 
+## PRD Writing Standards / PRD 编写规范
+
+All future PRDs, materially updated PRDs, and PRD changes caused by product-gap feedback must follow:
+
+- `docs/prd/2026-05-16-prd-writing-standards.md`
+
+Required behavior:
+
+- Before creating or materially updating a PRD, read the PRD writing standards and structure the PRD against them.
+- If an existing PRD contains a useful section, product principle, verification rule, AI/privacy/data boundary, or handoff pattern that the standards have not extracted yet, update the PRD writing standards in the same change set.
+- Do not flatten or delete existing PRD substance just because the standards do not mention it yet; first decide whether it should be preserved and generalized into the standards.
+- Keep PRD, PRD writing standards, idea capsule, project memory, roadmap progress, and document index synchronized when the change affects product direction, scope, AI behavior, privacy posture, data shape, UI direction, or process rules.
+- Do not finish, commit, or push a PRD-related change until the PRD standards compliance check has been done and any needed standards update is included.
+
+后续所有新的 PRD、重要更新的 PRD，以及因产品缺口反馈触发的 PRD 更新，都必须遵循 `docs/prd/2026-05-16-prd-writing-standards.md`。如果既有 PRD 中有规范尚未提炼但应复用的结构或原则，必须在同一次变更中更新规范，不能因为规范暂未覆盖就删掉或弱化原 PRD 的有效内容。
+
 ## Feature Gap Feedback Protocol / 缺失功能反馈协议
 
 When the user explicitly says a feature is missing, asks to add or 补 a feature, asks where an expected feature is, or otherwise points out a product gap:
