@@ -1,4 +1,5 @@
 .omx/
 .superpowers/
+.tmp-ui-capture-profile/
 .DS_Store
 docs/.DS_Store

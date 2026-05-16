@@ -996,8 +996,12 @@ body[data-screen="detail"] .ai-review-panel {
 }
 
 .records-list .record-row {
-  grid-template-columns: 148px 1fr auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   padding: 12px;
+}
+
+.records-list .record-open {
+  grid-template-columns: 148px minmax(0, 1fr) auto;
 }
 
 .records-list .record-row img {

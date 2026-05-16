@@ -14,6 +14,7 @@ for (const file of requiredFiles) {
 
 const html = readFileSync("app/index.html", "utf8");
 const main = readFileSync("app/main.js", "utf8");
+const css = readFileSync("app/styles.css", "utf8");
 for (const marker of [
   "data-screen=\"hub\"",
   "data-screen=\"upload\"",
@@ -42,6 +43,11 @@ for (const marker of [
 assert.ok(main.includes("delete-region"), "main.js should render delete-region controls");
 assert.ok(main.includes("privacyAcknowledged"), "main.js should gate processing behind privacy acknowledgement");
 assert.ok(main.includes("storageStatus"), "main.js should surface local storage success and failure states");
+assert.ok(
+  css.includes(".records-list .record-open") &&
+    css.includes("grid-template-columns: 148px minmax(0, 1fr) auto;"),
+  "records list should keep image, text, and open affordance inside the record-open grid",
+);
 
 const state = await import("../app/state.js");
 

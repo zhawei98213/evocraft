@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="820" viewBox="0 0 1200 820">
+  <rect width="1200" height="820" fill="#fffdf7"/>
+  <rect x="48" y="42" width="1104" height="732" rx="18" fill="#fff" stroke="#ead8c2" stroke-width="2"/>
+  <text x="90" y="115" fill="#17212b" font-family="Arial, sans-serif" font-size="34" font-weight="700">23. 二次函数图像与面积综合题</text>
+  <text x="90" y="178" fill="#24313d" font-family="Arial, sans-serif" font-size="27">如图，抛物线与 x 轴交于 A(-1,0)、B(3,0)，与 y 轴交于 C(0,3)。</text>
+  <text x="90" y="230" fill="#24313d" font-family="Arial, sans-serif" font-size="27">(1) 求抛物线的解析式；</text>
+  <text x="90" y="282" fill="#24313d" font-family="Arial, sans-serif" font-size="27">(2) 当点 P 的横坐标为 1 时，求三角形 POC 的面积；</text>
+  <text x="90" y="334" fill="#24313d" font-family="Arial, sans-serif" font-size="27">(3) 当 CP 垂直 OP 时，求点 P 的坐标。</text>
+  <g transform="translate(170 430)">
+    <line x1="0" y1="210" x2="470" y2="210" stroke="#17212b" stroke-width="4"/>
+    <line x1="120" y1="250" x2="120" y2="0" stroke="#17212b" stroke-width="4"/>
+    <path d="M48 210 C120 20 285 8 410 210" fill="none" stroke="#17212b" stroke-width="5"/>
+    <line x1="120" y1="210" x2="318" y2="86" stroke="#17212b" stroke-width="4"/>
+    <circle cx="48" cy="210" r="6" fill="#17212b"/>
+    <circle cx="410" cy="210" r="6" fill="#17212b"/>
+    <circle cx="120" cy="210" r="6" fill="#17212b"/>
+    <circle cx="318" cy="86" r="7" fill="#17212b"/>
+    <text x="28" y="250" fill="#17212b" font-size="27">A</text>
+    <text x="400" y="250" fill="#17212b" font-size="27">B</text>
+    <text x="92" y="28" fill="#17212b" font-size="27">C</text>
+    <text x="335" y="80" fill="#17212b" font-size="27">P</text>
+    <text x="135" y="250" fill="#17212b" font-size="27">O</text>
+  </g>
+  <path d="M744 286 c48 28 98 24 130 -18" fill="none" stroke="#e85d75" stroke-width="10" stroke-linecap="round"/>
+  <path d="M748 396 l35 39 l106 -132" fill="none" stroke="#e85d75" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="760" y="505" fill="#e85d75" font-family="Arial, sans-serif" font-size="42" font-weight="700" transform="rotate(-8 760 505)">老师批注：思路对</text>
+  <text x="786" y="588" fill="#e85d75" font-family="Arial, sans-serif" font-size="34" font-weight="700">学生草稿：a=-1, b=2</text>
+</svg>

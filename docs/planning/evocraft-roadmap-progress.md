@@ -682,6 +682,39 @@
 
 - 进入 AI adapter 设计前，先以 PRD 编写规范为入口，补一份独立的 AI adapter / OCR 链路 PRD 或功能 PRD，再进入实现计划。
 
+### 2026-05-16：已实现 MVP UI 设计图与技术路线决策
+
+本轮任务是什么：
+
+- 在进入技术路线决策前，把当前静态 Web MVP 的真实实现保存为 UI 设计图；随后基于 PRD v1.5、UI 基线和当前代码复杂度更新技术路线决策。
+
+已完成什么：
+
+- 新增 `docs/design/implemented-mvp/capture-ui.mjs`，用当前 `app/` 实现自动跑通 App Hub、上传隐私确认、选题区域、复核、保存、详情和错题本流程。
+- 生成并保存 `docs/design/implemented-mvp/screens/01-app-hub.png` 到 `06-records-notebook.png` 六张 UI 设计图，并新增 `docs/design/implemented-mvp/2026-05-16-implemented-mvp-ui-design.md` 作为设计图索引。
+- 截图检查中发现错题本列表布局回归：父级记录行被设为三列导致标题竖排。已先写失败测试，再修复 `.records-list .record-open` 的内部三列布局。
+- 重写 `docs/planning/2026-05-16-mvp-technical-route-decision.md`，确认当前继续静态 Web，下一步先做 provider-agnostic AI adapter 与 mock contract tests；React/Vite 设置为复杂度触发后的迁移目标；Electron/Tauri、后端、账号和云同步延后。
+- 更新 README、项目记忆和想法胶囊，把已实现 UI 设计图和技术路线决策作为后续 AI adapter 前的基线。
+
+卡在哪里：
+
+- 无。Browser 插件可打开本地页面，但当前页面上下文不适合预置本地存储数据；已改用可复现的 Chrome headless 截图脚本生成 UI 设计图。
+
+执行的是什么命令：
+
+- `sed -n` 读取 Superpowers 技能、项目记忆、路线图进度、想法胶囊、PRD、技术路线文档、app 源码和测试文件。
+- `python3 -m http.server 4174 --bind 127.0.0.1`
+- Browser 插件打开 `http://127.0.0.1:4174/app/index.html` 并尝试预置截图数据。
+- `node docs/design/implemented-mvp/capture-ui.mjs`
+- `view_image` 查看 `03-region-selection.png`、`04-recognition-review.png`、`05-saved-record-detail.png`、`06-records-notebook.png`。
+- `npm test`
+- `git diff --check`
+- Web 检索 React、Vite、Tauri、Electron 官方文档用于技术路线外部参考。
+
+下一步的计划：
+
+- 按 PRD 编写规范补 AI adapter / OCR 链路 PRD，明确输入输出、失败降级、隐私授权、模型分层、供应商数据边界和 contract tests。
+
 ## 下一步
 
 1. 按 PRD 编写规范设计 AI adapter / OCR 链路 PRD，明确输入输出、失败降级、隐私授权、模型分层和 contract tests。
