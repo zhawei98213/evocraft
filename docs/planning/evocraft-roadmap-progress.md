@@ -84,44 +84,6 @@
 
 ## 当前进度
 
-### 2026-05-16：PRD 编写规范调研与沉淀
-
-本轮任务是什么：
-
-- 调研主流 PRD 撰写规范和需求工程检查规则，形成 EvoCraft 可复用的 PRD 编写规范 Markdown 文件。
-
-已完成什么：
-
-- 参考 Atlassian、Aha!、Productboard、Pendo、Miro 的 PRD 模板和指南，以及 NASA 需求编写与软件需求检查规则。
-- 新增 `docs/prd/2026-05-16-prd-writing-standards.md`，沉淀 PRD 分层、标准结构、需求语句规则、优先级规则、EvoCraft 专用检查清单、评审流程和可复制模板。
-- 更新 `docs/README.md`，把 PRD 编写规范加入文档索引。
-- 更新 `docs/planning/evocraft-project-memory.md`，将 PRD 编写规范作为后续 PRD 写作和评审的统一参考。
-
-卡在哪里：
-
-- 无。当前工作区已有若干 Figma 相关文件处于删除状态，本轮未触碰这些删除项。
-
-执行的是什么命令：
-
-- `sed -n '1,220p' /Users/zha/.codex/superpowers/skills/using-superpowers/SKILL.md`
-- `sed -n '1,220p' /Users/zha/.codex/superpowers/skills/brainstorming/SKILL.md`
-- `sed -n '1,220p' docs/planning/evocraft-project-memory.md`
-- `sed -n '1,260p' docs/planning/evocraft-roadmap-progress.md`
-- `sed -n '1,220p' docs/ideas/2026-05-10-evocraft-seed-capsule.md`
-- `rg --files docs | sort`
-- `git status --short --branch`
-- `apply_patch` 新增 PRD 编写规范并同步文档索引、项目记忆、路线图进度
-- `git diff --check`
-- `rg -n "TBD|TODO|待定|待补|后续再说" docs/prd/2026-05-16-prd-writing-standards.md docs/README.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md`
-- `git add docs/prd/2026-05-16-prd-writing-standards.md docs/README.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md`
-- `git commit ...`
-- `git push`
-- Web 调研：Atlassian、Aha!、Productboard、Pendo、Miro、NASA PRD/需求编写资料
-
-下一步的计划：
-
-- 后续新建或重大更新 PRD 时，按 `docs/prd/2026-05-16-prd-writing-standards.md` 的结构与检查清单执行，并在涉及产品想法或 PRD 边界变化时同步想法胶囊。
-
 ### 2026-05-10：产品文档基础与 PRD v1.0
 
 本轮任务是什么：
@@ -592,11 +554,234 @@
 
 - 执行 `docs/superpowers/plans/2026-05-13-question-region-mvp.md`：先补静态 MVP 的选题区域页面和数据结构，再考虑真实国内 AI/OCR 接入。
 
+### 2026-05-15：选题区域静态 MVP 实现
+
+本轮任务是什么：
+
+- 执行 `docs/superpowers/plans/2026-05-13-question-region-mvp.md`，实现上传后的独立 `选择题目区域` 步骤，让多题照片可以先确认一道题再识别。
+
+已完成什么：
+
+- 新增 `select-region` 屏幕，将上传页主操作改为 `下一步：选择题目区域`。
+- 实现 mock 候选框、手动画框、拖动/缩放调整、确认后识别。
+- 扩展本地记录数据，保存 `selectedRegion`、`selectedRegionImageUri` 和 mock `modelTraces`。
+- 保存记录同时保留整张原图、确认后的题目区域和干净题面。
+- 详情页支持在干净题面、题目区域和整张原图之间切换。
+- 浏览器验证中发现手动画框与候选框重叠时可能抓错框，已通过提高选中框层级修复。
+
+卡在哪里：
+
+- Browser 插件可加载本地页面并确认页面结构，但当前暴露的 Playwright surface 不支持文件上传；完整上传/拖动/保存闭环已回退到本地 Playwright 验证。
+
+执行的是什么命令：
+
+- `node tests/static-mvp.test.mjs`
+- `node --check app/main.js`
+- `git diff --check`
+- `python3 -m http.server 4173`
+- Browser 插件打开 `http://127.0.0.1:4173/app/index.html` 并检查上传页、`下一步：选择题目区域` 和侧栏流程。
+- 使用 bundled Playwright 运行上传、选题区域、手动画框、拖动、缩放、确认、复核、保存、详情切换和错题本验证脚本，截图输出到 `/tmp/evocraft-region-selection.png`、`/tmp/evocraft-detail-cycle.png`、`/tmp/evocraft-records-region.png`。
+
+下一步的计划：
+
+- 补隐私授权、删除机制和模型调用失败状态。
+- 后续再接阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
+
+### 2026-05-15：补候选框删除逻辑
+
+本轮任务是什么：
+
+- 根据用户反馈，为 `选择题目区域` 补候选框删除逻辑，避免 AI 候选框和后续手动画框重叠时造成操作混乱。
+
+已完成什么：
+
+- 在区域数据层新增候选框删除 helper，并用测试锁住删除当前框、删除末尾框、删光候选框和删除非选中框的选中态迁移。
+- 在候选列表和当前选中框上新增删除入口。
+- 删除当前选中框后自动选择剩余候选框；删除全部候选框后进入未选择状态，确认识别不可用。
+- 保留 `手动画框` 和 `重新自动找题` 恢复路径。
+- 将 PRD 更新为 v1.3，补充候选框删除需求、验收标准和 UI 摘要。
+- 更新想法胶囊、项目记忆和文档索引，记录候选框删除是选题区域可控性的组成部分。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `node tests/static-mvp.test.mjs`
+- `node --check app/main.js`
+- `git diff --check`
+- 使用 bundled Playwright 运行删除候选框、删光候选框、确认按钮禁用、手动画框恢复、删除手动画框、重新自动找题恢复和确认识别验证脚本，截图输出到 `/tmp/evocraft-region-delete-empty.png`、`/tmp/evocraft-region-delete-rerun.png`。
+
+下一步的计划：
+
+- 继续补隐私授权、删除机制和模型调用失败状态。
+
+### 2026-05-16：MVP 收尾加固与技术路线决策
+
+本轮任务是什么：
+
+- 按照“先把 MVP 收尾加固做好，再快速进入技术路线决策”的方向，补齐隐私确认、本地删除/清空、失败恢复，并落档当前技术路线。
+
+已完成什么：
+
+- 上传页新增本地隐私确认；未确认前不能进入 `选择题目区域`。
+- 错题本新增单条记录删除和清空本地数据入口；详情页新增删除当前记录入口。
+- 选题区域新增未选择/候选框清空的错误提示，保存失败会停留在复核页提示本地存储问题。
+- `app/state.js` 新增 `deleteRecord`、`persistRecords` 结果返回和 `clearStoredRecords`，并用测试锁定删除选中态迁移、存储写入失败和清空逻辑。
+- PRD 更新为 v1.4，想法胶囊记录 MVP 收尾原则，项目记忆同步当前技术路线。
+- 新增 `docs/planning/2026-05-16-mvp-technical-route-decision.md`，决策当前继续静态 Web，下一阶段先做 AI adapter，React/Vite 等复杂度触发后迁移，Electron/Tauri 和后端延后。
+- 新增 `docs/superpowers/specs/2026-05-16-mvp-hardening-tech-route-design.md` 和 `docs/superpowers/plans/2026-05-16-mvp-hardening.md`，沉淀本轮设计与执行计划。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `npm test`
+- `node --check app/main.js`
+- `node --check app/state.js`
+- `git diff --check`
+- 使用 bundled Playwright 验证隐私确认 gate、上传、选区确认、保存、详情删除、错题本清空和空状态恢复。
+
+下一步的计划：
+
+- 进入 AI adapter 设计：定义区域检测、OCR、结构化整理、去痕和失败状态的 provider-agnostic contract，并继续用 mock contract tests 保护真实 Qwen 接入前的业务边界。
+
+### 2026-05-16：PRD 编写规范与 MVP PRD 对齐
+
+本轮任务是什么：
+
+- 根据 `docs/prd/2026-05-16-prd-writing-standards.md` 重整错题收集 MVP PRD；同时把原 PRD 中规范未提炼但应复用的结构和原则反向补进 PRD 编写规范，并把后续 PRD 必须遵循规范写入 `AGENTS.md`。
+
+已完成什么：
+
+- 将 `docs/prd/2026-05-10-wrong-question-capture-mvp-prd.md` 更新为 v1.5，按规范补齐元信息、相关文档、变更摘要、目标用户与场景、默认决策与决策边界、功能需求表、非功能需求、风险/依赖/开放问题、设计与实现交接摘要。
+- 将原 PRD 中的应用集合定位、产品反馈同步、技术路线决策、国内模型策略、UI 生成输入摘要、本地删除/清空和失败恢复等内容提炼回 `docs/prd/2026-05-16-prd-writing-standards.md`，更新为 v1.1。
+- 在 `AGENTS.md` 新增 PRD 编写规范原则，要求后续新建或重大更新 PRD 都遵循规范，并在发现规范缺口时同步更新规范。
+- 更新文档索引、项目记忆和想法胶囊，记录 PRD 标准成为后续需求工作的强制入口。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `rg --files | rg '2026-05-16-prd-writing-standards|wrong-question-capture|AGENTS|project-memory|roadmap-progress|seed-capsule|README.md'`
+- `sed -n` 读取 PRD 编写规范、错题收集 MVP PRD、项目记忆、路线图进度、想法胶囊、AGENTS 和 README。
+- `rg -n "^#|^##|^###|文档状态|版本|责任|相关文档|MVP 默认|产品反馈|UI 生成|后续决策|风险|非功能"` 对比规范与 PRD 结构。
+- `rg -n "TBD|TODO|待定|待补|后续再说"` 检查占位词。
+- `rg -n "PRD v1[.]4|编写规范 v1[.]0|PRD 编写规范 v1[.]0" AGENTS.md docs`
+- `npm test`
+- `git diff --check`
+
+下一步的计划：
+
+- 进入 AI adapter 设计前，先以 PRD 编写规范为入口，补一份独立的 AI adapter / OCR 链路 PRD 或功能 PRD，再进入实现计划。
+
+### 2026-05-16：已实现 MVP UI 设计图与技术路线决策
+
+本轮任务是什么：
+
+- 在进入技术路线决策前，把当前静态 Web MVP 的真实实现保存为 UI 设计图；随后基于 PRD v1.5、UI 基线和当前代码复杂度更新技术路线决策。
+
+已完成什么：
+
+- 新增 `docs/design/implemented-mvp/capture-ui.mjs`，用当前 `app/` 实现自动跑通 App Hub、上传隐私确认、选题区域、复核、保存、详情和错题本流程。
+- 生成并保存 `docs/design/implemented-mvp/screens/01-app-hub.png` 到 `06-records-notebook.png` 六张 UI 设计图，并新增 `docs/design/implemented-mvp/2026-05-16-implemented-mvp-ui-design.md` 作为设计图索引。
+- 截图检查中发现错题本列表布局回归：父级记录行被设为三列导致标题竖排。已先写失败测试，再修复 `.records-list .record-open` 的内部三列布局。
+- 重写 `docs/planning/2026-05-16-mvp-technical-route-decision.md`，确认当前继续静态 Web，下一步先做 provider-agnostic AI adapter 与 mock contract tests；React/Vite 设置为复杂度触发后的迁移目标；Electron/Tauri、后端、账号和云同步延后。
+- 更新 README、项目记忆和想法胶囊，把已实现 UI 设计图和技术路线决策作为后续 AI adapter 前的基线。
+
+卡在哪里：
+
+- 无。Browser 插件可打开本地页面，但当前页面上下文不适合预置本地存储数据；已改用可复现的 Chrome headless 截图脚本生成 UI 设计图。
+
+执行的是什么命令：
+
+- `sed -n` 读取 Superpowers 技能、项目记忆、路线图进度、想法胶囊、PRD、技术路线文档、app 源码和测试文件。
+- `python3 -m http.server 4174 --bind 127.0.0.1`
+- Browser 插件打开 `http://127.0.0.1:4174/app/index.html` 并尝试预置截图数据。
+- `node docs/design/implemented-mvp/capture-ui.mjs`
+- `view_image` 查看 `03-region-selection.png`、`04-recognition-review.png`、`05-saved-record-detail.png`、`06-records-notebook.png`。
+- `npm test`
+- `git diff --check`
+- Web 检索 React、Vite、Tauri、Electron 官方文档用于技术路线外部参考。
+
+下一步的计划：
+
+- 按 PRD 编写规范补 AI adapter / OCR 链路 PRD，明确输入输出、失败降级、隐私授权、模型分层、供应商数据边界和 contract tests。
+
+### 2026-05-16：技能产物入库铁律
+
+本轮任务是什么：
+
+- 根据用户明确要求，把 `@superpowers` 或任何技能/工具 workflow 产生的项目相关结果必须放入项目目录的规则写入仓库级 `AGENTS.md`，并同步长期记忆。
+
+已完成什么：
+
+- 在 `AGENTS.md` 新增 `Iron Rule: Skill Outputs Live In Project / 技能产物入库铁律`。
+- 明确技能产物不能只留在聊天、临时目录、浏览器状态、外部工具或 scratch 位置。
+- 明确 specs、plans、screenshots、diagrams、research summaries、generated assets、verification artifacts、handoff notes 等项目相关结果必须保存到项目目录中的合适位置，并随目标提交保存。
+- 更新 README 和项目记忆，把该规则纳入后续工作入口。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `sed -n` 读取 `AGENTS.md`、项目记忆、路线图进度、想法胶囊和 Superpowers 使用说明。
+- `apply_patch` 更新 `AGENTS.md`、`docs/README.md`、`docs/planning/evocraft-project-memory.md` 和 `docs/planning/evocraft-roadmap-progress.md`。
+- `git diff --check`
+- `npm test`
+- `rg -n "Skill Outputs Live In Project|技能产物入库|技能产物|superpowers|workflow" AGENTS.md docs/README.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md`
+- `rg -n "TBD|TODO|待定|待补|后续再说|PLACEHOLDER|implement later" AGENTS.md docs/README.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md`
+
+下一步的计划：
+
+- 后续使用任何技能产出项目相关内容时，先确认 durable 输出路径，完成后再提交和推送。
+
+### 2026-05-16：同步技能产物到主项目目录
+
+本轮任务是什么：
+
+- 根据用户纠正，明确“项目目录”不是 Superpowers worktree，而是 `/Users/zha/Documents/CodeSpaces/evo-craft`，并把上一轮 `@superpowers` 产物同步回主项目目录。
+
+已完成什么：
+
+- 将 `origin/codex/question-region-mvp` 中的 MVP 实现、PRD 规范同步、UI 设计图、截图脚本、技术路线决策、Superpowers specs/plans、测试和长期文档定向恢复到 `/Users/zha/Documents/CodeSpaces/evo-craft`。
+- 保留主目录中既有的 `docs/design/figma/*` 删除状态，未恢复或改动这些用户已有变更。
+- 更新 `AGENTS.md`，把技能产物入库铁律中的 canonical project directory 明确写成 `/Users/zha/Documents/CodeSpaces/evo-craft`。
+- 更新 README 和项目记忆，明确技能产物不能只留在 worktree、聊天、临时目录或外部工具状态里。
+
+卡在哪里：
+
+- `main` 不能 fast-forward 到 `origin/codex/question-region-mvp`，因为 `main` 上已有独立提交 `ba85667`；已改用定向恢复文件的方式同步成果。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git merge --ff-only origin/codex/question-region-mvp`
+- `git merge-base main origin/codex/question-region-mvp`
+- `git log --oneline --left-right --cherry-pick main...origin/codex/question-region-mvp`
+- `git diff --name-status main..origin/codex/question-region-mvp`
+- `git restore --source=origin/codex/question-region-mvp -- ...`
+- `apply_patch` 更新 `AGENTS.md`、README、项目记忆和进度记录。
+
+下一步的计划：
+
+- 在主项目目录完成验证、提交并推送；后续不再把项目相关技能成果只留在 `/Users/zha/.config/superpowers/worktrees/...`。
+
 ## 下一步
 
-1. 执行 `docs/superpowers/plans/2026-05-13-question-region-mvp.md`，先用 mock 完成候选框、手动画框和题目区域数据闭环。
-2. 补强隐私授权、删除机制、失败恢复和模型调用失败状态。
-3. 后续再决定是否接入阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
+1. 按 PRD 编写规范设计 AI adapter / OCR 链路 PRD，明确输入输出、失败降级、隐私授权、模型分层和 contract tests。
+2. 后续再接阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
+3. 继续观察 React/Vite 迁移触发点；Electron/Tauri、后端 Web、账号和云同步暂缓。
 
 ## 持续跟踪风险
 
