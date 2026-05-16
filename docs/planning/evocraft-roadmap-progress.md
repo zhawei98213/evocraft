@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-05-15
+最后更新：2026-05-16
 
 ## 路线图
 
@@ -617,11 +617,44 @@
 
 - 继续补隐私授权、删除机制和模型调用失败状态。
 
+### 2026-05-16：MVP 收尾加固与技术路线决策
+
+本轮任务是什么：
+
+- 按照“先把 MVP 收尾加固做好，再快速进入技术路线决策”的方向，补齐隐私确认、本地删除/清空、失败恢复，并落档当前技术路线。
+
+已完成什么：
+
+- 上传页新增本地隐私确认；未确认前不能进入 `选择题目区域`。
+- 错题本新增单条记录删除和清空本地数据入口；详情页新增删除当前记录入口。
+- 选题区域新增未选择/候选框清空的错误提示，保存失败会停留在复核页提示本地存储问题。
+- `app/state.js` 新增 `deleteRecord`、`persistRecords` 结果返回和 `clearStoredRecords`，并用测试锁定删除选中态迁移、存储写入失败和清空逻辑。
+- PRD 更新为 v1.4，想法胶囊记录 MVP 收尾原则，项目记忆同步当前技术路线。
+- 新增 `docs/planning/2026-05-16-mvp-technical-route-decision.md`，决策当前继续静态 Web，下一阶段先做 AI adapter，React/Vite 等复杂度触发后迁移，Electron/Tauri 和后端延后。
+- 新增 `docs/superpowers/specs/2026-05-16-mvp-hardening-tech-route-design.md` 和 `docs/superpowers/plans/2026-05-16-mvp-hardening.md`，沉淀本轮设计与执行计划。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `npm test`
+- `node --check app/main.js`
+- `node --check app/state.js`
+- `git diff --check`
+- 使用 bundled Playwright 验证隐私确认 gate、上传、选区确认、保存、详情删除、错题本清空和空状态恢复。
+
+下一步的计划：
+
+- 进入 AI adapter 设计：定义区域检测、OCR、结构化整理、去痕和失败状态的 provider-agnostic contract，并继续用 mock contract tests 保护真实 Qwen 接入前的业务边界。
+
 ## 下一步
 
-1. 补强隐私授权、删除机制、失败恢复和模型调用失败状态。
-2. 后续再决定是否接入阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
-3. 继续评估是否把静态 MVP 升级为 React/Vite、Electron/Tauri 或带后端的普通 Web 应用。
+1. 设计 AI adapter 和 mock contract tests，为真实 Qwen OCR/视觉链路做准备。
+2. 后续再接阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
+3. 继续观察 React/Vite 迁移触发点；Electron/Tauri、后端 Web、账号和云同步暂缓。
 
 ## 持续跟踪风险
 

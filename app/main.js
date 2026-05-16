@@ -1,9 +1,11 @@
 import {
   SUBJECTS,
+  clearStoredRecords,
   createManualRegion,
   createMockRecognition,
   createMockRegionCandidates,
   createRecordFromDraft,
+  deleteRecord as deleteSavedRecord,
   deleteRegionCandidate,
   formatTime,
   loadRecords,
@@ -13,6 +15,7 @@ import {
 const appState = {
   screen: "hub",
   selectedSubject: "auto",
+  privacyAcknowledged: false,
   uploadedImageUri: "",
   uploadedFile: null,
   draft: null,
@@ -20,16 +23,20 @@ const appState = {
   selectedRegionId: null,
   selectedRegionImageUri: "",
   regionZoom: 1,
+  regionError: "",
   dragState: null,
   records: loadRecords(),
   selectedRecordId: null,
   detailMode: "clean",
+  saveError: "",
+  storageStatus: "",
 };
 
 const els = {
   screens: [...document.querySelectorAll("[data-screen]")],
   sidePanel: document.querySelector("#side-panel"),
   imageInput: document.querySelector("#image-input"),
+  privacyConsent: document.querySelector("#privacy-consent"),
   dropzone: document.querySelector("#dropzone"),
   dropzoneTitle: document.querySelector("#dropzone-title"),
   dropzoneCopy: document.querySelector("#dropzone-copy"),
@@ -44,6 +51,7 @@ const els = {
   regionOverlay: document.querySelector("#region-overlay"),
   regionCandidateList: document.querySelector("#region-candidate-list"),
   selectedRegionSummary: document.querySelector("#selected-region-summary"),
+  regionError: document.querySelector("#region-error"),
   hubRecordList: document.querySelector("#hub-record-list"),
   uploadRecordList: document.querySelector("#upload-record-list"),
   recordsList: document.querySelector("#records-list"),
@@ -58,6 +66,7 @@ const els = {
   fieldStudentAnswer: document.querySelector("#field-student-answer"),
   fieldCorrectAnswer: document.querySelector("#field-correct-answer"),
   fieldNotes: document.querySelector("#field-notes"),
+  saveError: document.querySelector("#save-error"),
   detailImage: document.querySelector("#detail-image"),
   detailRecordTitle: document.querySelector("#detail-record-title"),
   detailRecordSubtitle: document.querySelector("#detail-record-subtitle"),
@@ -93,6 +102,8 @@ function bindEvents() {
       "zoom-out": () => setRegionZoom(Math.max(0.7, appState.regionZoom - 0.1)),
       "zoom-fit": () => setRegionZoom(1),
       "save-record": saveCurrentRecord,
+      "delete-record": deleteRecord,
+      "clear-records": clearRecords,
       "toggle-detail-image": toggleDetailImage,
       "edit-current-record": editCurrentRecord,
       "show-records": () => setScreen("records"),
@@ -114,6 +125,15 @@ function bindEvents() {
   els.imageInput.addEventListener("change", () => {
     const [file] = els.imageInput.files;
     if (file) handleFile(file);
+  });
+
+  els.privacyConsent.addEventListener("change", () => {
+    appState.privacyAcknowledged = els.privacyConsent.checked;
+    if (appState.privacyAcknowledged && appState.uploadedImageUri) {
+      els.uploadError.textContent = "";
+    }
+    renderUploadPreview();
+    renderSidePanel();
   });
 
   ["dragenter", "dragover"].forEach((type) => {
@@ -155,6 +175,11 @@ function handleFile(file) {
   const isImage = file.type.startsWith("image/") || file.name.toLowerCase().endsWith(".heic");
   const maxBytes = 20 * 1024 * 1024;
 
+  if (!file.size) {
+    showUploadError("图片为空或读取不到内容，请重新选择一张照片。");
+    return;
+  }
+
   if (!isImage) {
     showUploadError("文件格式不支持，请上传 JPG、PNG、BMP 或 HEIC 图片。");
     return;
@@ -173,8 +198,12 @@ function handleFile(file) {
     appState.regionCandidates = [];
     appState.selectedRegionId = null;
     appState.selectedRegionImageUri = "";
+    appState.regionError = "";
+    appState.saveError = "";
+    appState.storageStatus = "";
     els.uploadError.textContent = "";
     renderUploadPreview();
+    renderSidePanel();
   });
   reader.addEventListener("error", () => {
     showUploadError("图片读取失败，请重新选择一张照片。");
@@ -193,10 +222,25 @@ function startRegionSelection() {
     return;
   }
 
-  appState.regionCandidates = createMockRegionCandidates();
+  if (!appState.privacyAcknowledged) {
+    showUploadError("请先确认本地隐私说明，再继续选择题目区域。");
+    return;
+  }
+
+  let candidates = [];
+  try {
+    candidates = createMockRegionCandidates();
+  } catch {
+    appState.regionError = "自动找题失败，请手动画框或返回上传页重试。";
+  }
+
+  appState.regionCandidates = candidates;
   appState.selectedRegionId = appState.regionCandidates[1]?.id ?? appState.regionCandidates[0]?.id ?? null;
   appState.selectedRegionImageUri = "";
   appState.regionZoom = 1;
+  appState.regionError = appState.regionCandidates.length
+    ? ""
+    : appState.regionError || "没有找到可用候选框，请手动画框或重新自动找题。";
   setScreen("select-region");
 }
 
@@ -207,13 +251,16 @@ function startRecognition() {
 async function confirmSelectedRegion() {
   const selectedRegion = getSelectedRegion();
   if (!appState.uploadedImageUri || !selectedRegion) {
-    showUploadError("请先选择或手动画出一道题目区域。");
+    appState.regionError = "请先选择或手动画出一道题目区域。";
+    renderRegionSelection();
+    renderSidePanel();
     return;
   }
 
   const subject = appState.selectedSubject === "auto" ? "math" : appState.selectedSubject;
   const selectedRegionImageUri = await createSelectedRegionImage(appState.uploadedImageUri, selectedRegion);
   appState.selectedRegionImageUri = selectedRegionImageUri;
+  appState.regionError = "";
   appState.draft = createMockRecognition({
     subject,
     imageUri: appState.uploadedImageUri,
@@ -234,12 +281,19 @@ function useManualRegion() {
     ...appState.regionCandidates.filter((region) => region.source !== "manual"),
   ];
   appState.selectedRegionId = manualRegion.id;
+  appState.regionError = "";
   renderRegionSelection();
   renderSidePanel();
 }
 
 function rerunRegionDetection() {
-  appState.regionCandidates = createMockRegionCandidates();
+  try {
+    appState.regionCandidates = createMockRegionCandidates();
+    appState.regionError = "";
+  } catch {
+    appState.regionCandidates = [];
+    appState.regionError = "自动找题失败，请手动画框或返回上传页重试。";
+  }
   appState.selectedRegionId = appState.regionCandidates[1]?.id ?? appState.regionCandidates[0]?.id ?? null;
   renderRegionSelection();
   renderSidePanel();
@@ -250,6 +304,9 @@ function deleteRegion(button) {
   const result = deleteRegionCandidate(appState.regionCandidates, regionId, appState.selectedRegionId);
   appState.regionCandidates = result.regionCandidates;
   appState.selectedRegionId = result.selectedRegionId;
+  appState.regionError = appState.selectedRegionId
+    ? ""
+    : "候选框已清空，请手动画框或重新自动找题。";
   appState.dragState = null;
   renderRegionSelection();
   renderSidePanel();
@@ -303,11 +360,66 @@ function saveCurrentRecord() {
     notes: els.fieldNotes.value.trim(),
   });
 
-  appState.records = [record, ...appState.records.filter((item) => item.id !== record.id)];
+  const nextRecords = [record, ...appState.records.filter((item) => item.id !== record.id)];
+  const persistResult = persistRecords(nextRecords);
+  if (!persistResult.ok) {
+    appState.saveError = getStorageErrorMessage(persistResult.reason);
+    renderReview();
+    renderSidePanel();
+    return;
+  }
+
+  appState.records = nextRecords;
   appState.selectedRecordId = record.id;
   appState.detailMode = "clean";
-  persistRecords(appState.records);
+  appState.saveError = "";
+  appState.storageStatus = "已保存到本地错题本。";
   setScreen("detail");
+}
+
+function deleteRecord(button) {
+  const recordId = button.dataset.recordId || appState.selectedRecordId;
+  const record = appState.records.find((item) => item.id === recordId);
+  if (!record) return;
+
+  if (!window.confirm(`删除「${record.title}」？此操作只会移除本地记录。`)) return;
+
+  const nextState = deleteSavedRecord(appState.records, recordId, appState.selectedRecordId);
+  const persistResult = persistRecords(nextState.records);
+  if (!persistResult.ok) {
+    appState.storageStatus = getStorageErrorMessage(persistResult.reason);
+    render();
+    return;
+  }
+
+  appState.records = nextState.records;
+  appState.selectedRecordId = nextState.selectedRecordId;
+  appState.detailMode = "clean";
+  appState.storageStatus = "已删除本地错题记录。";
+  setScreen("records");
+}
+
+function clearRecords() {
+  if (!appState.records.length) {
+    appState.storageStatus = "当前没有可清空的本地记录。";
+    render();
+    return;
+  }
+
+  if (!window.confirm("清空本地错题本？此操作会移除当前浏览器里的所有错题记录。")) return;
+
+  const clearResult = clearStoredRecords();
+  if (!clearResult.ok) {
+    appState.storageStatus = getStorageErrorMessage(clearResult.reason);
+    render();
+    return;
+  }
+
+  appState.records = [];
+  appState.selectedRecordId = null;
+  appState.detailMode = "clean";
+  appState.storageStatus = "本地错题记录已清空。";
+  setScreen("records");
 }
 
 function toggleDetailImage() {
@@ -354,7 +466,8 @@ function render() {
 function renderUploadPreview() {
   const hasImage = Boolean(appState.uploadedImageUri);
   els.uploadPreview.hidden = !hasImage;
-  els.startButton.disabled = !hasImage;
+  els.privacyConsent.checked = appState.privacyAcknowledged;
+  els.startButton.disabled = !hasImage || !appState.privacyAcknowledged;
 
   if (!hasImage) return;
 
@@ -404,6 +517,7 @@ function renderRegionSelection() {
         selectedRegion.width * 100,
       )}% · 高 ${Math.round(selectedRegion.height * 100)}%</span>`
     : `<strong>未选择区域</strong><span>AI 候选框已删除，可手动画框或重新自动找题。</span>`;
+  els.regionError.textContent = appState.regionError;
 
   document.querySelectorAll("[data-action='confirm-region']").forEach((button) => {
     button.disabled = !selectedRegion;
@@ -519,6 +633,7 @@ function renderReview() {
   els.fieldStudentAnswer.value = appState.draft.studentAnswer || "";
   els.fieldCorrectAnswer.value = appState.draft.correctAnswer || "";
   els.fieldNotes.value = appState.draft.notes || "";
+  els.saveError.textContent = appState.saveError;
 }
 
 function renderDetail() {
@@ -586,19 +701,28 @@ function renderRecordList(container, records, compact) {
   container.innerHTML = records
     .map(
       (record) => `
-        <button class="record-row ${compact ? "is-compact" : ""}" type="button" data-record-id="${record.id}">
-          <img src="${record.cleanedQuestionImageUri}" alt="" />
-          <span>
-            <strong>${escapeHtml(record.title)}</strong>
-            <small>${SUBJECTS[record.subject] ?? record.subject} · ${formatTime(record.createdAt)} · 已确认题目区域</small>
-          </span>
-          <em>打开</em>
-        </button>
+        <div class="record-row ${compact ? "is-compact" : ""}" data-record-id="${record.id}">
+          <button class="record-open" type="button" data-action="open-record" data-record-id="${record.id}">
+            <img src="${record.cleanedQuestionImageUri}" alt="" />
+            <span>
+              <strong>${escapeHtml(record.title)}</strong>
+              <small>${SUBJECTS[record.subject] ?? record.subject} · ${formatTime(record.createdAt)} · 已确认题目区域</small>
+            </span>
+            <em>打开</em>
+          </button>
+          ${
+            compact
+              ? ""
+              : `<button class="record-delete-button" type="button" data-action="delete-record" data-record-id="${record.id}" aria-label="删除${escapeHtml(
+                  record.title,
+                )}">删除</button>`
+          }
+        </div>
       `,
     )
     .join("");
 
-  container.querySelectorAll("[data-record-id]").forEach((button) => {
+  container.querySelectorAll("[data-action='open-record']").forEach((button) => {
     button.addEventListener("click", () => {
       appState.selectedRecordId = button.dataset.recordId;
       appState.detailMode = "clean";
@@ -633,6 +757,7 @@ function renderHubSidePanel() {
         <div><span class="dot wait"></span> 后续可接入 AI 分析</div>
         <div><span class="dot wait"></span> 背单词与奖励规划中</div>
       </div>
+      ${renderStorageStatus()}
     </section>
   `;
 }
@@ -649,6 +774,11 @@ function renderUploadSidePanel() {
         <li><span>5</span><strong>复核</strong><small>检查识别与去痕结果</small></li>
         <li><span>6</span><strong>保存</strong><small>保存到错题本</small></li>
       </ol>
+      <div class="draft-block">
+        <span class="status-chip clean">隐私</span>
+        <strong>${appState.privacyAcknowledged ? "已确认本地保存" : "等待确认"}</strong>
+        <p>当前 MVP 不把真实照片上传到外部 AI 服务；未来接入前会单独授权。</p>
+      </div>
     </section>
   `;
 }
@@ -672,6 +802,7 @@ function renderRegionSidePanel() {
       <button class="button-primary full" type="button" data-action="confirm-region" ${selectedRegion ? "" : "disabled"}>确认此区域并识别</button>
       <button class="button-secondary full" type="button" data-action="manual-region">手动画框</button>
       <button class="button-secondary full" type="button" data-action="rerun-region-detection">重新自动找题</button>
+      ${appState.regionError ? `<p class="side-error">${escapeHtml(appState.regionError)}</p>` : ""}
     </section>
   `;
 }
@@ -705,6 +836,7 @@ function renderReviewSidePanel() {
       </div>
       <button class="button-primary full" type="button" data-action="save-record">复核后保存</button>
       <button class="button-secondary full" type="button" data-action="go-upload">返回重传</button>
+      ${appState.saveError ? `<p class="side-error">${escapeHtml(appState.saveError)}</p>` : ""}
     </section>
   `;
 }
@@ -726,6 +858,8 @@ function renderDetailSidePanel() {
         <p>后续分析入口已预留，当前 MVP 先完成收集闭环。</p>
       </div>
       <button class="button-primary full" type="button" data-action="go-upload">继续收集</button>
+      <button class="button-secondary danger-action full" type="button" data-action="delete-record" data-record-id="${record.id}">删除记录</button>
+      ${renderStorageStatus()}
     </section>
   `;
 }
@@ -744,6 +878,8 @@ function renderRecordsSidePanel() {
         <div><span class="dot wait"></span> 后续接入错题分析</div>
       </div>
       <button class="button-primary full" type="button" data-action="go-upload">继续收集</button>
+      <button class="button-secondary danger-action full" type="button" data-action="clear-records">清空本地数据</button>
+      ${renderStorageStatus()}
     </section>
   `;
 }
@@ -763,4 +899,19 @@ function escapeHtml(value) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+}
+
+function getStorageErrorMessage(reason) {
+  const messages = {
+    storage_unavailable: "当前浏览器无法访问本地存储，请检查隐私模式或浏览器设置。",
+    storage_write_failed: "本地保存失败，可能是浏览器存储空间已满，请删除旧记录后再试。",
+    storage_clear_failed: "本地数据清空失败，请检查浏览器存储权限后重试。",
+  };
+  return messages[reason] ?? "本地存储操作失败，请稍后重试。";
+}
+
+function renderStorageStatus() {
+  if (!appState.storageStatus) return "";
+  const isError = appState.storageStatus.includes("失败") || appState.storageStatus.includes("无法");
+  return `<p class="storage-status ${isError ? "is-error" : "is-success"}">${escapeHtml(appState.storageStatus)}</p>`;
 }

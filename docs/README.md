@@ -8,7 +8,9 @@
 - [路线图与进度](planning/evocraft-roadmap-progress.md)：长期路线、当前阶段、进度记录。
 - [应用集合架构](planning/evocraft-app-collection-architecture.md)：EvoCraft 作为 AI 学习助手应用集合的顶层结构。
 - [想法胶囊](ideas/2026-05-10-evocraft-seed-capsule.md)：原始想法碎片和产品方向。
-- [MVP PRD v1.3](prd/2026-05-10-wrong-question-capture-mvp-prd.md)：用于生成 UI 图和指导开发的错题收集 MVP 产品需求文档。
+- [MVP PRD v1.4](prd/2026-05-10-wrong-question-capture-mvp-prd.md)：用于生成 UI 图和指导开发的错题收集 MVP 产品需求文档。
+- [MVP 技术路线决策](planning/2026-05-16-mvp-technical-route-decision.md)：收尾阶段继续静态 Web、后续 React/Vite 迁移触发点、Electron/Tauri 和后端延后条件。
+- [MVP 收尾加固设计](superpowers/specs/2026-05-16-mvp-hardening-tech-route-design.md)：隐私确认、本地删除、失败恢复和技术路线的实现设计。
 - [MVP UI 原型简报](design/2026-05-10-mvp-ui-prototype-brief.md)：基于 PRD v1.0 的第一版 UI 原型生成说明。
 - [UI 风格探索简报](design/2026-05-10-ui-style-options-brief.md)：用于生成多套视觉风格方向供选择。
 - [B 方案设计基线](design/desgin.md)：选定 `未来学习工作台` 后的 EvoCraft MVP 视觉与组件规范。

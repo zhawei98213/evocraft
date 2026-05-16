@@ -158,6 +158,14 @@
                 </div>
               </div>
 
+              <label class="privacy-consent">
+                <input id="privacy-consent" type="checkbox" />
+                <span>
+                  <strong>本地隐私确认</strong>
+                  <small>当前照片和错题记录只保存在此浏览器；未来外部 AI 识别会单独授权。</small>
+                </span>
+              </label>
+
               <button class="button-primary start-button" type="button" data-action="start-region-selection" disabled>
                 下一步：选择题目区域
               </button>
@@ -209,6 +217,7 @@
               <p>先选 AI 候选框；如果没有框中，就手动画框。</p>
               <div class="region-candidate-list" id="region-candidate-list"></div>
               <div class="region-summary" id="selected-region-summary"></div>
+              <p class="form-error" id="region-error" role="alert"></p>
               <button class="button-primary full" type="button" data-action="confirm-region">确认此区域并识别</button>
               <button class="button-secondary full" type="button" data-action="manual-region">手动画框</button>
               <button class="button-secondary full" type="button" data-action="rerun-region-detection">重新自动找题</button>
@@ -309,6 +318,7 @@
               <span>备注</span>
               <textarea name="notes" id="field-notes" rows="3"></textarea>
             </label>
+            <p class="form-error" id="save-error" role="alert"></p>
           </form>
         </section>
 
@@ -319,7 +329,10 @@
               <h1 id="records-title">错题本</h1>
               <p>这里集中查看已经保存的错题记录，默认展示干净题面，点开后可查看原图。</p>
             </div>
-            <button class="button-primary" type="button" data-action="go-upload">继续收集</button>
+            <div class="header-actions">
+              <button class="button-secondary" type="button" data-action="clear-records">清空本地数据</button>
+              <button class="button-primary" type="button" data-action="go-upload">继续收集</button>
+            </div>
           </header>
 
           <div class="records-layout">
@@ -363,6 +376,7 @@
             <div class="header-actions">
               <button class="button-secondary" type="button" data-action="toggle-detail-image">切换题面 / 区域 / 原图</button>
               <button class="button-secondary" type="button" data-action="edit-current-record">编辑题面</button>
+              <button class="button-secondary danger-action" type="button" data-action="delete-record">删除记录</button>
               <button class="button-primary" type="button" data-action="go-upload">继续收集</button>
             </div>
           </header>

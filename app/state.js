@@ -106,6 +106,28 @@ export function deleteRegionCandidate(regionCandidates, regionId, selectedRegion
   };
 }
 
+export function deleteRecord(records, recordId, selectedRecordId) {
+  const deleteIndex = records.findIndex((record) => record.id === recordId);
+  if (deleteIndex === -1) {
+    return {
+      records: records.map(cloneRecord),
+      selectedRecordId,
+    };
+  }
+
+  const nextRecords = records.filter((record) => record.id !== recordId);
+  const selectedStillExists = nextRecords.some((record) => record.id === selectedRecordId);
+  const nextSelectedRecordId =
+    selectedRecordId === recordId || !selectedStillExists
+      ? nextRecords[deleteIndex]?.id ?? nextRecords[deleteIndex - 1]?.id ?? null
+      : selectedRecordId;
+
+  return {
+    records: nextRecords,
+    selectedRecordId: nextSelectedRecordId,
+  };
+}
+
 function svgDataUri(svg) {
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
@@ -256,8 +278,29 @@ export function loadRecords(storage = globalThis.localStorage) {
 }
 
 export function persistRecords(records, storage = globalThis.localStorage) {
-  if (!storage) return;
-  storage.setItem(STORAGE_KEY, JSON.stringify(records));
+  if (!storage) {
+    return { ok: false, reason: "storage_unavailable" };
+  }
+
+  try {
+    storage.setItem(STORAGE_KEY, JSON.stringify(records));
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "storage_write_failed" };
+  }
+}
+
+export function clearStoredRecords(storage = globalThis.localStorage) {
+  if (!storage) {
+    return { ok: false, reason: "storage_unavailable" };
+  }
+
+  try {
+    storage.removeItem(STORAGE_KEY);
+    return { ok: true };
+  } catch {
+    return { ok: false, reason: "storage_clear_failed" };
+  }
 }
 
 export function formatTime(value) {
@@ -278,4 +321,13 @@ function escapeSvg(value) {
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
+}
+
+function cloneRecord(record) {
+  return {
+    ...record,
+    selectedRegion: record.selectedRegion ? { ...record.selectedRegion } : record.selectedRegion,
+    modelTraces: record.modelTraces?.map((trace) => ({ ...trace })),
+    reviewItems: record.reviewItems?.map((item) => ({ ...item })),
+  };
 }

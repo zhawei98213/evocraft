@@ -22,19 +22,26 @@ for (const marker of [
   "data-screen=\"records\"",
   "data-screen=\"detail\"",
   "id=\"image-input\"",
+  "id=\"privacy-consent\"",
   "id=\"region-canvas-image\"",
   "id=\"region-overlay\"",
   "id=\"region-candidate-list\"",
+  "id=\"region-error\"",
   "id=\"records-list\"",
+  "id=\"save-error\"",
   "data-action=\"start-region-selection\"",
   "data-action=\"confirm-region\"",
   "data-action=\"manual-region\"",
   "data-action=\"go-records\"",
+  "data-action=\"delete-record\"",
+  "data-action=\"clear-records\"",
 ]) {
   assert.ok(html.includes(marker), `index.html should include ${marker}`);
 }
 
 assert.ok(main.includes("delete-region"), "main.js should render delete-region controls");
+assert.ok(main.includes("privacyAcknowledged"), "main.js should gate processing behind privacy acknowledgement");
+assert.ok(main.includes("storageStatus"), "main.js should surface local storage success and failure states");
 
 const state = await import("../app/state.js");
 
@@ -84,6 +91,16 @@ const record = state.createRecordFromDraft(draft, {
   title: "一次函数图像与坐标综合题",
   now: "2026-05-10T08:00:00.000Z",
 });
+const englishDraft = state.createMockRecognition({
+  subject: "english",
+  imageUri: "data:image/png;base64,seed-2",
+  selectedRegion: candidates[0],
+  selectedRegionImageUri: "data:image/png;base64,region-2",
+});
+const secondRecord = state.createRecordFromDraft(englishDraft, {
+  id: "wq-second",
+  now: "2026-05-11T08:00:00.000Z",
+});
 
 assert.equal(record.appId, "wrong_question_capture");
 assert.equal(record.title, "一次函数图像与坐标综合题");
@@ -96,3 +113,54 @@ assert.ok(record.cleanedQuestionImageUri);
 assert.deepEqual(record.selectedRegion, candidates[1]);
 assert.equal(record.selectedRegionImageUri, "data:image/png;base64,region");
 assert.ok(Array.isArray(record.modelTraces));
+
+const deleteSelected = state.deleteRecord([record, secondRecord], record.id, record.id);
+assert.equal(deleteSelected.records.length, 1);
+assert.equal(deleteSelected.records[0].id, "wq-second");
+assert.equal(deleteSelected.selectedRecordId, "wq-second");
+
+const deleteUnselectedRecord = state.deleteRecord([record, secondRecord], record.id, secondRecord.id);
+assert.equal(deleteUnselectedRecord.records.length, 1);
+assert.equal(deleteUnselectedRecord.selectedRecordId, "wq-second");
+
+const deleteOnlyRecord = state.deleteRecord([record], record.id, record.id);
+assert.deepEqual(deleteOnlyRecord.records, []);
+assert.equal(deleteOnlyRecord.selectedRecordId, null);
+
+const deleteMissingRecord = state.deleteRecord([record], "missing", record.id);
+assert.equal(deleteMissingRecord.records.length, 1);
+assert.notEqual(deleteMissingRecord.records[0], record);
+assert.equal(deleteMissingRecord.selectedRecordId, record.id);
+
+const memoryStorage = createMemoryStorage();
+const persistResult = state.persistRecords([record], memoryStorage);
+assert.deepEqual(persistResult, { ok: true });
+assert.equal(JSON.parse(memoryStorage.getItem(state.STORAGE_KEY)).length, 1);
+
+const failingStorage = {
+  setItem() {
+    throw new Error("quota exceeded");
+  },
+};
+const failingPersist = state.persistRecords([record], failingStorage);
+assert.equal(failingPersist.ok, false);
+assert.equal(failingPersist.reason, "storage_write_failed");
+
+const clearResult = state.clearStoredRecords(memoryStorage);
+assert.deepEqual(clearResult, { ok: true });
+assert.equal(memoryStorage.getItem(state.STORAGE_KEY), null);
+
+function createMemoryStorage() {
+  const values = new Map();
+  return {
+    getItem(key) {
+      return values.has(key) ? values.get(key) : null;
+    },
+    setItem(key, value) {
+      values.set(key, value);
+    },
+    removeItem(key) {
+      values.delete(key);
+    },
+  };
+}
