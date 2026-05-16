@@ -777,11 +777,45 @@
 
 - 在主项目目录完成验证、提交并推送；后续不再把项目相关技能成果只留在 `/Users/zha/.config/superpowers/worktrees/...`。
 
+### 2026-05-16：桌面优先技术选型
+
+本轮任务是什么：
+
+- 根据用户确认“按建议来”，把下一阶段技术路线从“继续观察是否迁移”更新为“桌面版优先”：先迁移 `React + Vite + TypeScript` 工程主干，抽 AI adapter 和 contract tests，再接入 `Tauri 2` 桌面壳。
+
+已完成什么：
+
+- 新增 `docs/superpowers/specs/2026-05-16-desktop-first-technical-selection-design.md`，明确桌面优先技术栈、平台功能分工、Tauri 优先理由、Electron fallback 条件和迁移路径。
+- 更新 `docs/planning/2026-05-16-mvp-technical-route-decision.md`，把旧的“桌面壳延后”改为“React/Vite 主干稳定后接入 Tauri 2”。
+- 更新项目记忆、应用集合架构、想法胶囊和文档索引，确保桌面版优先、Web 保留基线、平板/手机后续按场景区分的结论一致。
+- 复核 React、Vite、Tauri、Electron 官方文档作为技术选型外部参考。
+
+卡在哪里：
+
+- 无。当前工作树中已有 `docs/design/figma/*` 删除状态不是本轮产生，本轮未恢复、未修改、未纳入技术选型变更。当前 shell 没有 `npm` 命令，本轮用 Codex 自带 `node` 直接运行现有测试。
+
+执行的是什么命令：
+
+- `sed -n` 读取 Superpowers brainstorming 技能、项目记忆、路线图进度、想法胶囊、技术路线决策、应用集合架构和 README。
+- `rg -n "desktop|桌面|Electron|Tauri|平台|MVP|技术选型|architecture|架构"` 检索现有技术路线和平台相关记录。
+- Web 打开 React、Vite、Tauri、Tauri + Vite、Electron 官方文档。
+- `apply_patch` 新增桌面优先技术选型 spec，并更新技术路线、项目记忆、想法胶囊、应用集合架构、README 和进度记录。
+- `command -v node && node --version`
+- `command -v npm && npm --version`
+- `rg -n "桌面壳延后|Electron/Tauri.*延后|React/Vite.*触发|继续观察 React/Vite|TBD|TODO|待定|待补|PLACEHOLDER|后续再说" ...`
+- `node tests/static-mvp.test.mjs`
+- `git diff --check`
+
+下一步的计划：
+
+- 用户 review 桌面优先技术选型 spec 后，进入 implementation plan：拆分 React/Vite/TypeScript 迁移、AI adapter contract tests 和 Tauri shell 三条实施线。
+
 ## 下一步
 
-1. 按 PRD 编写规范设计 AI adapter / OCR 链路 PRD，明确输入输出、失败降级、隐私授权、模型分层和 contract tests。
-2. 后续再接阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
-3. 继续观察 React/Vite 迁移触发点；Electron/Tauri、后端 Web、账号和云同步暂缓。
+1. 评审 `docs/superpowers/specs/2026-05-16-desktop-first-technical-selection-design.md`。
+2. 写桌面优先 implementation plan，拆分 React/Vite/TypeScript 迁移、AI adapter contract tests 和 Tauri shell 三条实施线。
+3. 后续再接阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
+4. 平板和手机版本先补独立场景/信息架构 PRD，再决定 PWA、原生、React Native 或其他路线。
 
 ## 持续跟踪风险
 
