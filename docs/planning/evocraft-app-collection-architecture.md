@@ -41,7 +41,7 @@ EvoCraft Platform
 ├── Desktop App（下一阶段主交付）
 │   ├── React + Vite + TypeScript 前端主干
 │   ├── Provider-agnostic AI adapter
-│   └── Tauri 2 桌面壳
+│   └── Electron 桌面壳
 ├── Desktop Web（试用与演示）
 │   └── 复用前端核心的轻量形态
 ├── Tablet（后续）

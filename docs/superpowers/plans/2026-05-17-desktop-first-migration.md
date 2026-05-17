@@ -2,11 +2,11 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Move the completed static Web MVP onto a React/Vite/TypeScript trunk, protect the AI boundary with contract tests, and add the first Tauri 2 desktop shell without changing product scope.
+**Goal:** Move the completed static Web MVP onto a React/Vite/TypeScript trunk, protect the AI boundary with contract tests, and add the first Electron desktop shell without changing product scope.
 
-**Architecture:** Keep `app/` as the static MVP baseline and create a new `src/` React app as the future engineering trunk. Move pure wrong-question domain behavior into typed modules, route UI through a provider-agnostic AI adapter, and introduce Tauri only after the React build is stable.
+**Architecture:** Keep `app/` as the static MVP baseline and create a new `src/` React app as the future engineering trunk. Move pure wrong-question domain behavior into typed modules, route UI through a provider-agnostic AI adapter, and introduce Electron only after the React build is stable. Electron code uses main/preload/renderer boundaries: renderer has no direct Node access, preload exposes a small API, and main owns filesystem access.
 
-**Tech Stack:** React, Vite, TypeScript, Vitest, Testing Library, Tauri 2, existing Node static tests.
+**Tech Stack:** React, Vite, TypeScript, Vitest, Testing Library, Electron, existing Node static tests.
 
 ---
 
@@ -16,7 +16,7 @@ This plan intentionally covers one sequential desktop-first migration. The work 
 
 1. React/Vite/TypeScript trunk.
 2. AI adapter contract tests and mock implementation.
-3. Tauri shell around the stable frontend build.
+3. Electron shell around the stable frontend build.
 
 Do not start real Qwen/Doubao provider integration, account systems, cloud sync, automatic updates, production signing, or mobile/tablet implementation in this plan.
 
@@ -52,12 +52,10 @@ Create the new trunk:
 
 Add desktop shell after the web build passes:
 
-- `src-tauri/tauri.conf.json`: Tauri app configuration.
-- `src-tauri/Cargo.toml`: Rust package and Tauri dependencies.
-- `src-tauri/build.rs`: Tauri build hook.
-- `src-tauri/src/main.rs`: desktop app entry.
-- `src-tauri/src/lib.rs`: Tauri plugin registration.
-- `tests/tauri-config.test.mjs`: lightweight config regression test.
+- `electron/main.cjs`: Electron main process and BrowserWindow creation.
+- `electron/preload.cjs`: context-bridged renderer API.
+- `src/services/desktopBridge.ts`: renderer-side adapter for Electron preload API.
+- `tests/electron-config.test.mjs`: lightweight Electron security/config regression test.
 
 ## Task 0: Toolchain Preflight
 
@@ -1417,45 +1415,48 @@ git commit -m "Capture the React desktop trunk UI" \
   -m "Co-authored-by: OmX <omx@oh-my-codex.dev>"
 ```
 
-## Task 8: Add The Minimal Tauri 2 Shell
+## Task 8: Add The Minimal Electron Shell
 
 **Files:**
 - Modify: `package.json`
-- Create: `src-tauri/tauri.conf.json`
-- Create: `src-tauri/Cargo.toml`
-- Create: `src-tauri/build.rs`
-- Create: `src-tauri/src/main.rs`
-- Create: `src-tauri/src/lib.rs`
-- Create: `tests/tauri-config.test.mjs`
-- Test: `tests/tauri-config.test.mjs`
+- Create: `electron/main.cjs`
+- Create: `electron/preload.cjs`
+- Create: `src/services/desktopBridge.ts`
+- Create: `tests/electron-config.test.mjs`
+- Test: `tests/electron-config.test.mjs`
 
-- [ ] **Step 1: Write the failing Tauri config test**
+- [ ] **Step 1: Write the failing Electron config test**
 
-Create `tests/tauri-config.test.mjs`:
+Create `tests/electron-config.test.mjs`:
 
 ```js
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 
-assert.ok(existsSync("src-tauri/tauri.conf.json"), "tauri.conf.json should exist");
-assert.ok(existsSync("src-tauri/Cargo.toml"), "Cargo.toml should exist");
-assert.ok(existsSync("src-tauri/src/main.rs"), "main.rs should exist");
-assert.ok(existsSync("src-tauri/src/lib.rs"), "lib.rs should exist");
+assert.ok(existsSync("electron/main.cjs"), "electron/main.cjs should exist");
+assert.ok(existsSync("electron/preload.cjs"), "electron/preload.cjs should exist");
+assert.ok(existsSync("src/services/desktopBridge.ts"), "desktopBridge should exist");
 
-const config = JSON.parse(readFileSync("src-tauri/tauri.conf.json", "utf8"));
-assert.equal(config.productName, "EvoCraft");
-assert.equal(config.identifier, "com.evocraft.app");
-assert.equal(config.build.beforeBuildCommand, "npm run build");
-assert.equal(config.build.frontendDist, "../dist");
-assert.equal(config.app.windows[0].title, "EvoCraft");
-assert.ok(config.app.windows[0].width >= 1200);
-assert.ok(config.app.windows[0].height >= 760);
+const pkg = JSON.parse(readFileSync("package.json", "utf8"));
+assert.equal(pkg.main, "electron/main.cjs");
+assert.equal(pkg.scripts["desktop:dev"], "concurrently -k \"npm run dev\" \"npm run electron:dev\"");
+assert.equal(pkg.scripts["desktop:build"], "npm run build && electron-builder --dir");
+assert.ok(pkg.devDependencies.electron, "electron should be a dev dependency");
+assert.ok(pkg.devDependencies["electron-builder"], "electron-builder should be a dev dependency");
 
-const cargo = readFileSync("src-tauri/Cargo.toml", "utf8");
-assert.match(cargo, /tauri = \\{ version = "2"/);
-assert.match(cargo, /tauri-plugin-dialog = "2"/);
-assert.match(cargo, /tauri-plugin-fs = "2"/);
-assert.match(cargo, /tauri-plugin-store = "2"/);
+const main = readFileSync("electron/main.cjs", "utf8");
+assert.match(main, /nodeIntegration:\\s*false/);
+assert.match(main, /contextIsolation:\\s*true/);
+assert.match(main, /sandbox:\\s*true/);
+assert.match(main, /setWindowOpenHandler/);
+assert.match(main, /will-navigate/);
+assert.match(main, /ipcMain\\.handle\\(\"dialog:select-image\"/);
+
+const preload = readFileSync("electron/preload.cjs", "utf8");
+assert.match(preload, /contextBridge\\.exposeInMainWorld\\(\"evocraft\"/);
+assert.doesNotMatch(preload, /ipcRenderer\\.send\\(/);
+assert.match(preload, /selectImage/);
+assert.match(preload, /readImageAsDataUrl/);
 ```
 
 - [ ] **Step 2: Run the test to verify it fails**
@@ -1463,170 +1464,213 @@ assert.match(cargo, /tauri-plugin-store = "2"/);
 Run:
 
 ```bash
-node tests/tauri-config.test.mjs
+node tests/electron-config.test.mjs
 ```
 
 Expected:
 
 ```text
-FAIL because src-tauri files do not exist yet.
+FAIL because Electron files do not exist yet.
 ```
 
-- [ ] **Step 3: Install Tauri JS packages**
+- [ ] **Step 3: Install Electron packages**
 
 Run:
 
 ```bash
 export PATH="/usr/local/bin:$PATH"
-npm install @tauri-apps/api @tauri-apps/plugin-dialog @tauri-apps/plugin-fs @tauri-apps/plugin-store
-npm install --save-dev @tauri-apps/cli
+npm install --save-dev electron electron-builder concurrently wait-on
 ```
 
-Modify `package.json` scripts to add:
+Modify `package.json` to add:
 
 ```json
 {
-  "tauri": "tauri",
-  "desktop:dev": "tauri dev",
-  "desktop:build": "tauri build",
-  "test:tauri-config": "node tests/tauri-config.test.mjs"
+  "main": "electron/main.cjs",
+  "scripts": {
+    "electron:dev": "wait-on http://127.0.0.1:5173 && ELECTRON_RENDERER_URL=http://127.0.0.1:5173 electron .",
+    "desktop:dev": "concurrently -k \"npm run dev\" \"npm run electron:dev\"",
+    "desktop:build": "npm run build && electron-builder --dir",
+    "test:electron-config": "node tests/electron-config.test.mjs"
+  },
+  "build": {
+    "appId": "com.evocraft.app",
+    "productName": "EvoCraft",
+    "files": ["dist/**", "electron/**", "package.json"],
+    "directories": {
+      "output": "release"
+    }
+  }
 }
 ```
 
 Keep the existing scripts from Task 1.
 
-- [ ] **Step 4: Create Tauri configuration**
+- [ ] **Step 4: Add Electron main process**
 
-Create `src-tauri/tauri.conf.json`:
+Create `electron/main.cjs`:
 
-```json
-{
-  "$schema": "https://schema.tauri.app/config/2",
-  "productName": "EvoCraft",
-  "version": "0.1.0",
-  "identifier": "com.evocraft.app",
-  "build": {
-    "beforeDevCommand": "npm run dev",
-    "devUrl": "http://127.0.0.1:5173",
-    "beforeBuildCommand": "npm run build",
-    "frontendDist": "../dist"
-  },
-  "app": {
-    "windows": [
-      {
-        "title": "EvoCraft",
-        "width": 1440,
-        "height": 980,
-        "minWidth": 1180,
-        "minHeight": 760
-      }
-    ],
-    "security": {
-      "csp": null
-    }
-  },
-  "bundle": {
-    "active": true,
-    "targets": "all",
-    "icon": []
+```js
+const { app, BrowserWindow, dialog, ipcMain, session } = require("electron");
+const { readFile } = require("node:fs/promises");
+const { extname, join } = require("node:path");
+
+const isDev = Boolean(process.env.ELECTRON_RENDERER_URL);
+
+function createWindow() {
+  const window = new BrowserWindow({
+    title: "EvoCraft",
+    width: 1440,
+    height: 980,
+    minWidth: 1180,
+    minHeight: 760,
+    webPreferences: {
+      preload: join(__dirname, "preload.js"),
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: true,
+    },
+  });
+
+  window.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  window.webContents.on("will-navigate", (event, url) => {
+    const allowed = isDev
+      ? url.startsWith("http://127.0.0.1:5173")
+      : url.startsWith("file://");
+    if (!allowed) event.preventDefault();
+  });
+
+  if (isDev) {
+    void window.loadURL(process.env.ELECTRON_RENDERER_URL ?? "http://127.0.0.1:5173");
+    window.webContents.openDevTools({ mode: "detach" });
+  } else {
+    void window.loadFile(join(__dirname, "../dist/index.html"));
   }
 }
+
+app.whenReady().then(() => {
+  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+    callback({
+      responseHeaders: {
+        ...details.responseHeaders,
+        "Content-Security-Policy": [
+          "default-src 'self'; img-src 'self' data: blob: file:; style-src 'self' 'unsafe-inline'; script-src 'self'; connect-src 'self' http://127.0.0.1:5173 ws://127.0.0.1:5173;",
+        ],
+      },
+    });
+  });
+
+  createWindow();
+});
+
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") app.quit();
+});
+
+app.on("activate", () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+});
+
+ipcMain.handle("dialog:select-image", async () => {
+  const result = await dialog.showOpenDialog({
+    title: "选择错题照片",
+    properties: ["openFile"],
+    filters: [
+      { name: "Images", extensions: ["png", "jpg", "jpeg", "webp", "bmp", "heic"] },
+    ],
+  });
+
+  if (result.canceled || result.filePaths.length === 0) return null;
+  return result.filePaths[0];
+});
+
+ipcMain.handle("file:read-image-data-url", async (_event, filePath) => {
+  if (typeof filePath !== "string" || filePath.length === 0) {
+    throw new Error("Invalid file path");
+  }
+
+  const extension = extname(filePath).toLowerCase().replace(".", "");
+  const mime =
+    extension === "jpg" || extension === "jpeg"
+      ? "image/jpeg"
+      : extension === "webp"
+        ? "image/webp"
+        : extension === "bmp"
+          ? "image/bmp"
+          : extension === "heic"
+            ? "image/heic"
+            : "image/png";
+  const bytes = await readFile(filePath);
+  return `data:${mime};base64,${bytes.toString("base64")}`;
+});
 ```
 
-Create `src-tauri/Cargo.toml`:
+- [ ] **Step 5: Add Electron preload and renderer bridge**
 
-```toml
-[package]
-name = "evocraft"
-version = "0.1.0"
-description = "EvoCraft desktop app"
-authors = ["EvoCraft"]
-edition = "2021"
+Create `electron/preload.cjs`:
 
-[lib]
-name = "evocraft_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
+```js
+const { contextBridge, ipcRenderer } = require("electron");
 
-[build-dependencies]
-tauri-build = { version = "2", features = [] }
+const api = {
+  selectImage: () => ipcRenderer.invoke("dialog:select-image"),
+  readImageAsDataUrl: (filePath) => ipcRenderer.invoke("file:read-image-data-url", filePath),
+};
 
-[dependencies]
-tauri = { version = "2", features = [] }
-tauri-plugin-dialog = "2"
-tauri-plugin-fs = "2"
-tauri-plugin-store = "2"
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
+contextBridge.exposeInMainWorld("evocraft", api);
 ```
 
-Create `src-tauri/build.rs`:
+Create `src/services/desktopBridge.ts`:
 
-```rust
-fn main() {
-    tauri_build::build()
+```ts
+export interface EvoCraftDesktopApi {
+  selectImage(): Promise<string | null>;
+  readImageAsDataUrl(filePath: string): Promise<string>;
+}
+
+declare global {
+  interface Window {
+    evocraft?: EvoCraftDesktopApi;
+  }
+}
+
+export function getDesktopBridge() {
+  return window.evocraft ?? null;
 }
 ```
 
-Create `src-tauri/src/main.rs`:
-
-```rust
-fn main() {
-    evocraft_lib::run();
-}
-```
-
-Create `src-tauri/src/lib.rs`:
-
-```rust
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    tauri::Builder::default()
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_fs::init())
-        .plugin(tauri_plugin_store::Builder::new().build())
-        .run(tauri::generate_context!())
-        .expect("error while running EvoCraft");
-}
-```
-
-- [ ] **Step 5: Run config and build verification**
+- [ ] **Step 6: Run config and build verification**
 
 Run:
 
 ```bash
 export PATH="/usr/local/bin:$PATH"
-node tests/tauri-config.test.mjs
+node tests/electron-config.test.mjs
 npm run build
-```
-
-If Rust is available, also run:
-
-```bash
-cargo --version
-npm run tauri -- info
+npm run desktop:build
 ```
 
 Expected:
 
 ```text
-Tauri config test passes.
+Electron config test passes.
 Vite build passes.
-If Rust is available, tauri info prints environment details.
+electron-builder dry directory build passes.
 ```
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 Run:
 
 ```bash
-git add package.json package-lock.json src-tauri tests/tauri-config.test.mjs
-git commit -m "Add the first Tauri desktop shell" \
-  -m "The React trunk can now be launched through a minimal desktop wrapper without adding database or updater scope." \
-  -m "Constraint: Only include desktop capabilities required for the first shell" \
+git add package.json package-lock.json electron src/services/desktopBridge.ts tests/electron-config.test.mjs
+git commit -m "Add the first Electron desktop shell" \
+  -m "The React trunk can now be launched through a minimal Electron wrapper with explicit main, preload, and renderer boundaries." \
+  -m "Constraint: Renderer must not receive direct Node access" \
   -m "Rejected: Add updater and signing now | those need release process decisions" \
   -m "Confidence: medium" \
   -m "Scope-risk: moderate" \
-  -m "Tested: node tests/tauri-config.test.mjs; npm run build; npm run tauri -- info when Rust is available" \
+  -m "Tested: node tests/electron-config.test.mjs; npm run build; npm run desktop:build" \
   -m "Co-authored-by: OmX <omx@oh-my-codex.dev>"
 ```
 
@@ -1643,7 +1687,7 @@ git commit -m "Add the first Tauri desktop shell" \
 Modify `docs/README.md` to add:
 
 ```md
-- [桌面优先迁移实施计划](superpowers/plans/2026-05-17-desktop-first-migration.md)：把桌面优先技术选型拆成 React/Vite/TypeScript 迁移、AI adapter contract tests 和 Tauri shell 的可执行任务。
+- [桌面优先迁移实施计划](superpowers/plans/2026-05-17-desktop-first-migration.md)：把桌面优先技术选型拆成 React/Vite/TypeScript 迁移、AI adapter contract tests 和 Electron shell 的可执行任务。
 ```
 
 - [ ] **Step 2: Update project memory after implementation**
@@ -1651,7 +1695,7 @@ Modify `docs/README.md` to add:
 Modify `docs/planning/evocraft-project-memory.md` after the implementation work is complete:
 
 ```md
-- 桌面优先迁移已完成第一阶段工程落地：React/Vite/TypeScript 主干、typed wrong-question domain、mock AI adapter contract、storage port 和 Tauri 2 shell。
+- 桌面优先迁移已完成第一阶段工程落地：React/Vite/TypeScript 主干、typed wrong-question domain、mock AI adapter contract、storage port 和 Electron shell。
 ```
 
 Only add this line after Tasks 1 through 8 have passed.
@@ -1665,11 +1709,11 @@ Append a progress entry to `docs/planning/evocraft-roadmap-progress.md` with the
 
 本轮任务是什么：
 
-- 执行桌面优先迁移计划，建立 React/Vite/TypeScript 主干、AI adapter contract tests 和 Tauri 2 桌面壳。
+- 执行桌面优先迁移计划，建立 React/Vite/TypeScript 主干、AI adapter contract tests 和 Electron 桌面壳。
 
 已完成什么：
 
-- 完成 React/Vite/TypeScript 主干、typed wrong-question domain、mock AI adapter contract、storage port、React UI 迁移、桌面 trunk 截图验证和 Tauri 2 shell。
+- 完成 React/Vite/TypeScript 主干、typed wrong-question domain、mock AI adapter contract、storage port、React UI 迁移、桌面 trunk 截图验证和 Electron shell。
 
 卡在哪里：
 
@@ -1681,8 +1725,8 @@ Append a progress entry to `docs/planning/evocraft-roadmap-progress.md` with the
 - `npm test`
 - `npm run build`
 - `node docs/design/desktop-trunk/capture-react-ui.mjs`
-- `node tests/tauri-config.test.mjs`
-- `npm run tauri -- info`
+- `node tests/electron-config.test.mjs`
+- `npm run desktop:build`
 - `git diff --check`
 
 下一步的计划：
@@ -1704,7 +1748,7 @@ git diff --check
 Expected:
 
 ```text
-No matches from rg.
+No placeholder output from the node scan.
 git diff --check exits 0.
 ```
 
@@ -1716,7 +1760,8 @@ Run:
 export PATH="/usr/local/bin:$PATH"
 npm test
 npm run build
-node tests/tauri-config.test.mjs
+node tests/electron-config.test.mjs
+npm run desktop:build
 ```
 
 Expected:
@@ -1724,7 +1769,8 @@ Expected:
 ```text
 All tests pass.
 Vite build passes.
-Tauri config test passes.
+Electron config test passes.
+Electron directory build passes.
 ```
 
 - [ ] **Step 6: Commit**
@@ -1734,17 +1780,17 @@ Run:
 ```bash
 git add docs/README.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md docs/superpowers/plans/2026-05-17-desktop-first-migration.md
 git commit -m "Record the desktop migration implementation state" \
-  -m "The project memory now reflects the React trunk, AI adapter boundary, and desktop shell implementation status." \
+  -m "The project memory now reflects the React trunk, AI adapter boundary, and Electron shell implementation status." \
   -m "Constraint: Durable Superpowers outputs must live under the main project directory" \
   -m "Confidence: high" \
   -m "Scope-risk: narrow" \
-  -m "Tested: npm test; npm run build; node tests/tauri-config.test.mjs; git diff --check" \
+  -m "Tested: npm test; npm run build; node tests/electron-config.test.mjs; npm run desktop:build; git diff --check" \
   -m "Co-authored-by: OmX <omx@oh-my-codex.dev>"
 ```
 
 ## Self-Review
 
-- Spec coverage: This plan covers React/Vite/TypeScript trunk setup, typed domain migration, AI adapter contract tests, storage boundary, React UI migration, screenshot verification, Tauri shell, and durable project records.
+- Spec coverage: This plan covers React/Vite/TypeScript trunk setup, typed domain migration, AI adapter contract tests, storage boundary, React UI migration, screenshot verification, Electron shell, and durable project records.
 - Out of scope: Real provider integration, account/cloud sync, automatic updates, production signing, mobile/tablet implementation.
-- Dependency order: Task 1 enables React tests and build. Tasks 2 through 5 create typed business boundaries. Task 6 migrates UI. Task 7 captures visual evidence. Task 8 adds Tauri after web build stability. Task 9 records completion.
+- Dependency order: Task 1 enables React tests and build. Tasks 2 through 5 create typed business boundaries. Task 6 migrates UI. Task 7 captures visual evidence. Task 8 adds Electron after web build stability. Task 9 records completion.
 - Known execution risk: The current Codex shell may not include `npm` in PATH. Use `export PATH="/usr/local/bin:$PATH"` before npm commands.

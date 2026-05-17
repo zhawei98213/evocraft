@@ -844,12 +844,43 @@
 
 - 由用户选择执行方式：Subagent-Driven 或 Inline Execution，然后按计划从 Task 0 开始执行。
 
+### 2026-05-17：桌面壳路线调整为 Electron
+
+本轮任务是什么：
+
+- 根据用户明确决策，把桌面壳技术路线从 Tauri-first 调整为 Electron-first，并暂停已开始的 Subagent-Driven 执行。
+
+已完成什么：
+
+- 关闭执行 Task 1 的子代理，确认其只在隔离 worktree `/Users/zha/.config/superpowers/worktrees/evo-craft/desktop-first-migration` 留下未提交半成品，未进入主项目提交。
+- 更新 `docs/superpowers/specs/2026-05-16-desktop-first-technical-selection-design.md`，将第一版桌面壳改为 Electron，并补充 main/preload/renderer 安全边界。
+- 更新 `docs/planning/2026-05-16-mvp-technical-route-decision.md`，将 Tauri 改为未来轻量化备选，Electron 成为当前桌面壳实施路线。
+- 更新 `docs/superpowers/plans/2026-05-17-desktop-first-migration.md`，将 Task 8 从 Tauri shell 改为 Electron shell，并改用 Electron config test、main/preload、desktop bridge 和 electron-builder 验证。
+- 更新 README、项目记忆、应用集合架构和想法胶囊，确保当前路线一致为 `React + Vite + TypeScript` 主干后接 Electron。
+- 复核 Electron 官方进程模型和安全指南，确认 Electron 路线必须默认启用 context isolation、禁用 renderer Node integration，并通过 preload + IPC 白名单暴露桌面能力。
+
+卡在哪里：
+
+- 无。隔离 worktree 仍有上一轮被中断的未提交半成品：`package.json`、`package-lock.json`、`node_modules/`、`src/`。主项目 `main` 未包含这些半成品。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `rg -n "Tauri|Electron|desktop shell|桌面壳|桌面版|React/Vite" docs/planning docs/superpowers docs/ideas docs/README.md package.json`
+- Web 打开 Electron 官方文档、进程模型和安全指南。
+- `apply_patch` 更新桌面优先 spec、技术路线决策、项目记忆、想法胶囊、应用集合架构、README 和迁移实施计划。
+
+下一步的计划：
+
+- 清理或重建隔离 worktree 后，按更新后的 Electron-first 计划重新从 Task 1 执行；不要复用已中断的 Tauri-era 半成品。
+
 ## 下一步
 
-1. 执行 `docs/superpowers/plans/2026-05-17-desktop-first-migration.md`。
+1. 清理或重建 `/Users/zha/.config/superpowers/worktrees/evo-craft/desktop-first-migration`，再执行 `docs/superpowers/plans/2026-05-17-desktop-first-migration.md`。
 2. 优先完成 Task 0 到 Task 4：工具链、React/Vite/TypeScript scaffold、typed domain、AI adapter contract 和 storage port。
-3. 后续再接阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
-4. 平板和手机版本先补独立场景/信息架构 PRD，再决定 PWA、原生、React Native 或其他路线。
+3. React/Vite 主干稳定后接入 Electron shell，并执行 Electron config/security test。
+4. 后续再接阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
+5. 平板和手机版本先补独立场景/信息架构 PRD，再决定 PWA、原生、React Native 或其他路线。
 
 ## 持续跟踪风险
 
