@@ -242,6 +242,7 @@ export function App() {
                   <small>支持 JPG / PNG / BMP / HEIC，单张不超过 20MB</small>
                 </label>
                 <input
+                  hidden
                   id="image-input"
                   aria-label="选择错题照片"
                   type="file"
