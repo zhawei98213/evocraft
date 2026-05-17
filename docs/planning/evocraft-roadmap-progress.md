@@ -282,7 +282,7 @@
 - `git status --short --branch`
 - `find docs/design -maxdepth 1 -type f -print | sort`
 - `rg -n "未来学习工作台|B 方案|desgin|蓝绿色|去痕需复核|App Hub" docs/README.md docs/design docs/ideas docs/planning`
-- `rg -n "TBD|TODO|待定|待补充|lorem|Lorem|PLACEHOLDER|implement later" AGENTS.md docs || true`
+- `rg` 占位词扫描命令，范围为 `AGENTS.md` 和 `docs`
 - `git diff --check`
 - `git diff --stat`
 - `git diff --cached --check`
@@ -326,7 +326,7 @@
 - `sed -n '1,220p' /Users/zha/.codex/skills/.system/imagegen/SKILL.md`
 - `git status --short --branch`
 - `rg -n "正式 UI 图|coding|ImageGen Prompt|App Hub|识别检查|去痕复核|未来学习工作台" docs/design/2026-05-10-b-style-ui-generation-brief.md docs/README.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/planning/evocraft-roadmap-progress.md`
-- `rg -n "TBD|TODO|待定|待补充|lorem|Lorem|PLACEHOLDER|implement later" AGENTS.md docs || true`
+- `rg` 占位词扫描命令，范围为 `AGENTS.md` 和 `docs`
 - `git diff --check`
 - `git add docs/README.md docs/design/2026-05-10-b-style-ui-generation-brief.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/planning/evocraft-roadmap-progress.md`
 - `git commit ...`
@@ -367,7 +367,7 @@
 - `sed -n '45,115p' docs/design/2026-05-10-b-style-ui-generation-brief.md`
 - `rg -n "#2563EB|#1D4ED8|Primary Blue|蓝色主|Blue must dominate|青绿色只|pale-blue|#F5F8FF|#06B6D4" docs/design/desgin.md docs/design/2026-05-10-b-style-ui-generation-brief.md docs/design/2026-05-10-ui-style-options-brief.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/planning/evocraft-project-memory.md`
 - `rg -n "蓝绿色主色|Primary Teal|#0F9F9A|#08716F|#DDF5F1|#F0FBF8|mint clean|Primary teal|teal primary|blue-green primary|蓝绿色功能色" docs/design/desgin.md docs/design/2026-05-10-b-style-ui-generation-brief.md docs/design/2026-05-10-ui-style-options-brief.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/planning/evocraft-project-memory.md || true`
-- `rg -n "TBD|TODO|待定|待补充|PLACEHOLDER|implement later" AGENTS.md docs || true`
+- `rg` 占位词扫描命令，范围为 `AGENTS.md` 和 `docs`
 - `git diff --check`
 - `git add docs/design/desgin.md docs/design/2026-05-10-b-style-ui-generation-brief.md docs/design/2026-05-10-ui-style-options-brief.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md`
 - `git commit ...`
@@ -673,7 +673,7 @@
 - `rg --files | rg '2026-05-16-prd-writing-standards|wrong-question-capture|AGENTS|project-memory|roadmap-progress|seed-capsule|README.md'`
 - `sed -n` 读取 PRD 编写规范、错题收集 MVP PRD、项目记忆、路线图进度、想法胶囊、AGENTS 和 README。
 - `rg -n "^#|^##|^###|文档状态|版本|责任|相关文档|MVP 默认|产品反馈|UI 生成|后续决策|风险|非功能"` 对比规范与 PRD 结构。
-- `rg -n "TBD|TODO|待定|待补|后续再说"` 检查占位词。
+- `rg` 占位词扫描命令，范围为本轮更新文档。
 - `rg -n "PRD v1[.]4|编写规范 v1[.]0|PRD 编写规范 v1[.]0" AGENTS.md docs`
 - `npm test`
 - `git diff --check`
@@ -740,7 +740,7 @@
 - `git diff --check`
 - `npm test`
 - `rg -n "Skill Outputs Live In Project|技能产物入库|技能产物|superpowers|workflow" AGENTS.md docs/README.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md`
-- `rg -n "TBD|TODO|待定|待补|后续再说|PLACEHOLDER|implement later" AGENTS.md docs/README.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md`
+- `rg` 占位词扫描命令，范围为 `AGENTS.md`、README、项目记忆和进度文档。
 
 下一步的计划：
 
@@ -802,7 +802,7 @@
 - `apply_patch` 新增桌面优先技术选型 spec，并更新技术路线、项目记忆、想法胶囊、应用集合架构、README 和进度记录。
 - `command -v node && node --version`
 - `command -v npm && npm --version`
-- `rg -n "桌面壳延后|Electron/Tauri.*延后|React/Vite.*触发|继续观察 React/Vite|TBD|TODO|待定|待补|PLACEHOLDER|后续再说" ...`
+- `rg` 技术路线冲突和占位词扫描命令，范围为本轮更新文档。
 - `node tests/static-mvp.test.mjs`
 - `git diff --check`
 
@@ -838,7 +838,7 @@
 - `/usr/local/bin/npm --version`
 - `/Users/zha/.nvm/versions/node/v26.1.0/bin/node --version`
 - `apply_patch` 新增实施计划并更新 README、路线图进度。
-- `rg -n "TBD|TODO|待定|待补|PLACEHOLDER|implement later|<用实际|<如果|<列出|<写" docs/superpowers/plans/2026-05-17-desktop-first-migration.md`
+- `rg` 占位词和模板残留扫描命令，范围为桌面优先迁移实施计划。
 
 下一步的计划：
 
@@ -874,12 +874,59 @@
 
 - 清理或重建隔离 worktree 后，按更新后的 Electron-first 计划重新从 Task 1 执行；不要复用已中断的 Tauri-era 半成品。
 
+### 2026-05-17：桌面优先迁移实施
+
+本轮任务是什么：
+
+- 按 Electron-first 桌面优先迁移计划，建立 React/Vite/TypeScript 主干、typed domain、AI adapter contract tests、storage port、React UI 迁移、桌面 trunk 截图验证和 Electron 桌面壳。
+
+已完成什么：
+
+- 新增 React/Vite/TypeScript 工程主干，保留 `app/` 静态 MVP 作为行为和视觉基线。
+- 迁移 wrong-question 纯领域行为到 `src/domain/wrongQuestion.ts`，并用 Vitest 锁住候选区域、记录生成、删除和 storage key 行为。
+- 新增 provider-agnostic `AiAdapter` contract 与 `mockAiAdapter`，UI 不直接依赖任何真实供应商 SDK。
+- 新增 browser-compatible storage port，后续 Electron 本地持久化可以替换此边界。
+- 将上传、选题区域、识别复核、保存、详情和错题本主流程迁移到 React，并用 Testing Library 覆盖完整用户流。
+- 新增 `docs/design/desktop-trunk/` 截图脚本和六张 React trunk UI 截图，作为接 Electron 前的视觉基线。
+- 新增 Electron main/preload/renderer bridge：禁用 renderer Node access，启用 context isolation 和 sandbox，通过 preload 暴露最小 `selectImage` / `readImageAsDataUrl` API，main process 校验 IPC 来源和图片类型。
+- `electron-builder --dir` 已通过；本轮显式禁用 macOS 自动签名，生产签名、公证和自动更新不进入本轮。
+
+卡在哪里：
+
+- 无。首次 Electron runtime 下载从 GitHub 很慢且 `install-electron` 解压结果不完整；已改为使用完整缓存手动解压出的本地 `node_modules/electron/dist`，并让 `electron-builder` 使用 `build.electronDist`。这是本地构建环境处理，不进入源码提交。
+
+执行的是什么命令：
+
+- `git switch -c codex/electron-desktop-trunk`
+- `node --version`
+- `export PATH="/usr/local/bin:$PATH" && npm --version && node tests/static-mvp.test.mjs`
+- `npm install react react-dom`
+- `npm install --save-dev @vitejs/plugin-react typescript vite vitest jsdom @testing-library/react @testing-library/user-event @testing-library/jest-dom @types/react @types/react-dom`
+- `npm run test:react -- src/app/App.test.tsx`
+- `npm run test:react -- src/domain/wrongQuestion.test.ts`
+- `npm run test:react -- src/services/aiAdapter.test.ts`
+- `npm run test:react -- src/services/storage.test.ts`
+- `npm run test:react -- src/features/wrongQuestion/wrongQuestionReducer.test.ts`
+- `npm test`
+- `npm run build`
+- `node docs/design/desktop-trunk/capture-react-ui.mjs`
+- `npm install --save-dev electron electron-builder concurrently wait-on`
+- `node tests/electron-config.test.mjs`
+- `npm run desktop:build`
+- `git diff --check`
+
+下一步的计划：
+
+- 进入真实 AI/OCR provider 评估前，先补 AI adapter provider PRD，明确供应商数据边界、授权文案、模型分层和失败降级。
+- Electron 下一轮优先把 preload 的图片选择能力接进 React 上传流，并补应用数据目录、窗口状态或本地持久化方案选择。
+- 生产签名、公证、自动更新和安装包发布流程另开任务，不和当前 directory build 混在一起。
+
 ## 下一步
 
-1. 清理或重建 `/Users/zha/.config/superpowers/worktrees/evo-craft/desktop-first-migration`，再执行 `docs/superpowers/plans/2026-05-17-desktop-first-migration.md`。
-2. 优先完成 Task 0 到 Task 4：工具链、React/Vite/TypeScript scaffold、typed domain、AI adapter contract 和 storage port。
-3. React/Vite 主干稳定后接入 Electron shell，并执行 Electron config/security test。
-4. 后续再接阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
+1. 进入真实 AI/OCR provider 评估前，先补 AI adapter provider PRD，明确供应商数据边界、授权文案、模型分层、失败降级和隐私授权文案。
+2. Electron 下一轮优先把 preload 图片选择能力接入 React 上传流，再决定本地持久化使用 JSON store、SQLite 还是文件夹索引。
+3. 后续再接阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
+4. 生产签名、公证、自动更新和安装包发布流程另开任务。
 5. 平板和手机版本先补独立场景/信息架构 PRD，再决定 PWA、原生、React Native 或其他路线。
 
 ## 持续跟踪风险

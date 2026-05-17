@@ -14,6 +14,7 @@
 - [MVP 技术路线决策](planning/2026-05-16-mvp-technical-route-decision.md)：基于 PRD v1.5、已实现 UI 基线和桌面优先方向确认 React/Vite/TypeScript、AI adapter、Electron 桌面壳和后端的推进顺序。
 - [桌面优先技术选型设计](superpowers/specs/2026-05-16-desktop-first-technical-selection-design.md)：确认下一阶段采用 React/Vite/TypeScript 工程主干、provider-agnostic AI adapter 和 Electron 桌面壳。
 - [桌面优先迁移实施计划](superpowers/plans/2026-05-17-desktop-first-migration.md)：把桌面优先技术选型拆成 React/Vite/TypeScript 迁移、AI adapter contract tests 和 Electron shell 的可执行任务。
+- [React 桌面主干 UI 截图](design/desktop-trunk/README.md)：React/Vite 桌面主干跑通后保存的六屏视觉回归基线。
 - [MVP 收尾加固设计](superpowers/specs/2026-05-16-mvp-hardening-tech-route-design.md)：隐私确认、本地删除、失败恢复和技术路线的实现设计。
 - [MVP UI 原型简报](design/2026-05-10-mvp-ui-prototype-brief.md)：基于 PRD v1.0 的第一版 UI 原型生成说明。
 - [UI 风格探索简报](design/2026-05-10-ui-style-options-brief.md)：用于生成多套视觉风格方向供选择。
@@ -21,6 +22,7 @@
 - [B 方案正式 UI 图生成简报](design/2026-05-10-b-style-ui-generation-brief.md)：用于生成可指导 coding 的多屏 UI 图。
 - [B 方案 Figma 导入包](design/figma/README.md)：蓝色主导 UI 的 SVG 总览画板和独立页面稿。
 - [第一版静态 Web MVP](../app/index.html)：基于 PRD 和 B 方案设计基线实现的本地错题收集闭环。
+- [React/Vite 桌面主干](../src/app/App.tsx)：承接静态 MVP 同等流程的桌面版前端主干，后续由 Electron 壳加载。
 
 ## 记忆规则
 

@@ -8,6 +8,8 @@
 
 **Tech Stack:** React, Vite, TypeScript, Vitest, Testing Library, Electron, existing Node static tests.
 
+**Implementation Status (2026-05-17):** Completed on `codex/electron-desktop-trunk` with React/Vite/TypeScript trunk, typed domain, mock AI adapter contract, storage port, React UI migration, screenshot capture, and Electron shell. Electron directory build uses the locally installed Electron runtime because the GitHub runtime download path was too slow in the current environment; macOS signing is explicitly disabled for this non-release build.
+
 ---
 
 ## Scope Check
