@@ -1,5 +1,10 @@
 .omx/
 .superpowers/
 .tmp-ui-capture-profile/
+node_modules/
+dist/
+*.tsbuildinfo
+vite.config.d.ts
+vite.config.js
 .DS_Store
 docs/.DS_Store
