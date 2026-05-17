@@ -4,6 +4,7 @@ import type {
   WrongQuestionDraft,
   WrongQuestionRecord,
 } from "../../domain/wrongQuestion";
+import { deleteRegionCandidate } from "../../domain/wrongQuestion";
 
 export type Screen = "hub" | "upload" | "select-region" | "review" | "records" | "detail";
 
@@ -35,6 +36,10 @@ export type WrongQuestionAction =
   | { type: "REGION_CANDIDATES_READY"; candidates: RegionCandidate[] }
   | { type: "REGION_SELECTION_FAILED"; message: string }
   | { type: "REGION_SELECTED"; regionId: string }
+  | { type: "REGION_DELETED"; regionId: string }
+  | { type: "MANUAL_REGION_ADDED"; region: RegionCandidate }
+  | { type: "REGION_UPDATED"; region: RegionCandidate }
+  | { type: "REGION_ZOOM_CHANGED"; zoom: number }
   | { type: "DRAFT_READY"; draft: WrongQuestionDraft }
   | { type: "RECORD_SAVED"; record: WrongQuestionRecord }
   | { type: "SAVE_FAILED"; message: string };
@@ -135,6 +140,47 @@ export function wrongQuestionReducer(
         ...state,
         selectedRegionId: action.regionId,
         regionError: "",
+      };
+
+    case "REGION_DELETED": {
+      const result = deleteRegionCandidate(
+        state.regionCandidates,
+        action.regionId,
+        state.selectedRegionId,
+      );
+      return {
+        ...state,
+        regionCandidates: result.regionCandidates,
+        selectedRegionId: result.selectedRegionId,
+        regionError: result.selectedRegionId
+          ? ""
+          : "候选框已清空，请手动画框或重新自动找题。",
+      };
+    }
+
+    case "MANUAL_REGION_ADDED":
+      return {
+        ...state,
+        regionCandidates: [
+          action.region,
+          ...state.regionCandidates.filter((region) => region.source !== "manual"),
+        ],
+        selectedRegionId: action.region.id,
+        regionError: "",
+      };
+
+    case "REGION_UPDATED":
+      return {
+        ...state,
+        regionCandidates: state.regionCandidates.map((region) =>
+          region.id === action.region.id ? action.region : region,
+        ),
+      };
+
+    case "REGION_ZOOM_CHANGED":
+      return {
+        ...state,
+        regionZoom: action.zoom,
       };
 
     case "DRAFT_READY":

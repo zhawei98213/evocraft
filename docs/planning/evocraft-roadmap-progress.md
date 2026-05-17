@@ -921,6 +921,45 @@
 - Electron 下一轮优先把 preload 的图片选择能力接进 React 上传流，并补应用数据目录、窗口状态或本地持久化方案选择。
 - 生产签名、公证、自动更新和安装包发布流程另开任务，不和当前 directory build 混在一起。
 
+### 2026-05-17：桌面应用启动纠偏与选题区域补齐
+
+本轮任务是什么：
+
+- 纠正“只打开浏览器而不是桌面应用”的启动方式，并处理用户指出的 React 桌面主干缺口：`选择题目区域` 缺少删除候选框、删光后的恢复路径和手动画框操作；同时删除不应恢复的 `docs/design/figma/` 旧目录。
+
+已完成什么：
+
+- 确认 PRD v1.5、项目记忆和 implemented-mvp 设计基线都已经要求候选框删除、手动画框、删光后恢复提示和确认按钮禁用；当前问题是 React/Electron 迁移漏搬了静态 MVP 行为。
+- 用 Vitest/Testing Library 先补红灯测试，覆盖删除当前候选框后自动选下一框、删光后禁用确认并提示恢复、通过手动画框恢复确认流程。
+- 在 React reducer 和 UI 中补回候选框删除、手动画框、重新自动找题、区域拖动/缩放、删光后的空状态和确认按钮禁用。
+- 删除 `docs/design/figma/` 下旧 Figma SVG 导入包，并更新 README、项目记忆和想法胶囊，明确后续不再恢复该目录，当前设计基线以 `docs/design/implemented-mvp/` 和 `docs/design/desktop-trunk/` 为准。
+- 验证本地 Vite 服务仍在 `http://127.0.0.1:5173/`，并通过 `npm run electron:dev` 启动 Electron 桌面窗口加载 React 桌面主干。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `sed -n` 读取 Superpowers TDD/verification 技能、项目记忆、路线图进度、想法胶囊、PRD、implemented-mvp 设计基线、React App、reducer、测试和 storage。
+- `rg -n "custom|区域|delete|删除|select|选区|implemented"` 检索选区和删除相关实现。
+- `npm run test:react -- src/features/wrongQuestion/wrongQuestionReducer.test.ts src/app/App.test.tsx`
+- `npm test`
+- `npm run build`
+- `npm run test:electron-config`
+- `npm run desktop:build`
+- `git diff --check`
+- `find docs/design/figma -maxdepth 3 -type f -print`
+- `rm -rf docs/design/figma`
+- `curl -I http://127.0.0.1:5173/`
+- `npm run electron:dev`
+- `pgrep -fl "Electron|electron"`
+- `apply_patch` 更新 React 实现、测试、测试 setup、文档索引、项目记忆、想法胶囊和进度记录。
+
+下一步的计划：
+
+- 在桌面窗口中继续手动试用选区删除、手动画框和恢复路径；下一轮优先把 Electron preload 图片选择能力接入 React 上传流。
+
 ## 下一步
 
 1. 进入真实 AI/OCR provider 评估前，先补 AI adapter provider PRD，明确供应商数据边界、授权文案、模型分层、失败降级和隐私授权文案。

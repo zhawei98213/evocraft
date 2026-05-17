@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createManualRegion,
   createMockRecognition,
   createMockRegionCandidates,
   createRecordFromDraft,
@@ -43,6 +44,66 @@ describe("wrongQuestionReducer", () => {
 
     expect(selecting.screen).toBe("select-region");
     expect(selecting.selectedRegionId).toBe("candidate-2");
+  });
+
+  it("deletes the selected region and moves selection to the next available region", () => {
+    const selecting = {
+      ...createInitialWrongQuestionState([]),
+      screen: "select-region" as const,
+      regionCandidates: createMockRegionCandidates(),
+      selectedRegionId: "candidate-2",
+    };
+
+    const deleted = wrongQuestionReducer(selecting, {
+      type: "REGION_DELETED",
+      regionId: "candidate-2",
+    });
+
+    expect(deleted.regionCandidates.map((candidate) => candidate.id)).toEqual([
+      "candidate-1",
+      "candidate-3",
+    ]);
+    expect(deleted.selectedRegionId).toBe("candidate-3");
+    expect(deleted.regionError).toBe("");
+  });
+
+  it("keeps region selection recoverable after every candidate is deleted", () => {
+    const [candidate] = createMockRegionCandidates();
+    const selecting = {
+      ...createInitialWrongQuestionState([]),
+      screen: "select-region" as const,
+      regionCandidates: [candidate],
+      selectedRegionId: candidate.id,
+    };
+
+    const deleted = wrongQuestionReducer(selecting, {
+      type: "REGION_DELETED",
+      regionId: candidate.id,
+    });
+
+    expect(deleted.regionCandidates).toEqual([]);
+    expect(deleted.selectedRegionId).toBeNull();
+    expect(deleted.regionError).toBe("候选框已清空，请手动画框或重新自动找题。");
+  });
+
+  it("adds a manual region as the selected recovery path", () => {
+    const selecting = {
+      ...createInitialWrongQuestionState([]),
+      screen: "select-region" as const,
+      regionCandidates: [],
+      selectedRegionId: null,
+      regionError: "候选框已清空，请手动画框或重新自动找题。",
+    };
+    const manualRegion = createManualRegion();
+
+    const recovered = wrongQuestionReducer(selecting, {
+      type: "MANUAL_REGION_ADDED",
+      region: manualRegion,
+    });
+
+    expect(recovered.regionCandidates).toEqual([manualRegion]);
+    expect(recovered.selectedRegionId).toBe(manualRegion.id);
+    expect(recovered.regionError).toBe("");
   });
 
   it("saves a reviewed draft at the top of the notebook", () => {

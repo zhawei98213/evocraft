@@ -33,4 +33,32 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "错题本" }));
     expect(screen.getByText("共 1 条")).toBeInTheDocument();
   });
+
+  it("lets users delete region candidates and recover with a manual region", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+    const file = new File(["fake-image"], "question.png", { type: "image/png" });
+    await user.upload(screen.getByLabelText("选择错题照片"), file);
+    await user.click(screen.getByRole("checkbox", { name: /本地隐私确认/ }));
+    await user.click(screen.getByRole("button", { name: "下一步：选择题目区域" }));
+
+    expect(screen.getByText("当前选择：候选 2")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "删除候选 2" }));
+
+    expect(screen.getByText("当前选择：候选 3")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "删除候选 1" }));
+    await user.click(screen.getByRole("button", { name: "删除候选 3" }));
+
+    expect(screen.getByText("候选框已清空")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "确认此区域并识别" })).toBeDisabled();
+
+    await user.click(screen.getByRole("button", { name: "手动画框" }));
+
+    expect(screen.getByText("当前选择：手动画框")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "确认此区域并识别" })).toBeEnabled();
+  });
 });

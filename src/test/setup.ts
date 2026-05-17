@@ -1,5 +1,6 @@
 import "@testing-library/jest-dom/vitest";
-import { beforeEach } from "vitest";
+import { cleanup } from "@testing-library/react";
+import { afterEach, beforeEach } from "vitest";
 
 const storage = createMemoryStorage();
 
@@ -10,6 +11,10 @@ Object.defineProperty(window, "localStorage", {
 
 beforeEach(() => {
   storage.clear();
+});
+
+afterEach(() => {
+  cleanup();
 });
 
 function createMemoryStorage(): Storage {

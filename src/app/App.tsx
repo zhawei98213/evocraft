@@ -1,10 +1,20 @@
-import { type ChangeEvent, useEffect, useMemo, useReducer, useState } from "react";
+import {
+  type CSSProperties,
+  type ChangeEvent,
+  type PointerEvent,
+  useEffect,
+  useMemo,
+  useReducer,
+  useState,
+} from "react";
 
 import {
   SUBJECTS,
+  createManualRegion,
   createOriginalPlaceholderImage,
   createRecordFromDraft,
   formatTime,
+  type RegionCandidate,
   type Subject,
   type WrongQuestionDraft,
 } from "../domain/wrongQuestion";
@@ -23,6 +33,16 @@ interface ReviewForm {
   studentAnswer: string;
   correctAnswer: string;
   notes: string;
+}
+
+interface RegionDragState {
+  regionId: string;
+  handle: "move" | "ne" | "sw" | "se";
+  startX: number;
+  startY: number;
+  startRegion: RegionCandidate;
+  canvasWidth: number;
+  canvasHeight: number;
 }
 
 const emptyReviewForm: ReviewForm = {
@@ -45,10 +65,32 @@ export function App() {
     () => createInitialWrongQuestionState(recordStore.load()),
   );
   const [reviewForm, setReviewForm] = useState<ReviewForm>(emptyReviewForm);
+  const [regionDrag, setRegionDrag] = useState<RegionDragState | null>(null);
 
   useEffect(() => {
     document.body.dataset.screen = state.screen;
   }, [state.screen]);
+
+  useEffect(() => {
+    if (!regionDrag) return undefined;
+    const activeDrag = regionDrag;
+
+    function handlePointerMove(event: globalThis.PointerEvent) {
+      dispatch({ type: "REGION_UPDATED", region: getDraggedRegion(activeDrag, event) });
+    }
+
+    function handlePointerUp() {
+      setRegionDrag(null);
+    }
+
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", handlePointerUp, { once: true });
+
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", handlePointerUp);
+    };
+  }, [regionDrag]);
 
   const selectedRegion =
     state.regionCandidates.find((region) => region.id === state.selectedRegionId) ?? null;
@@ -89,17 +131,78 @@ export function App() {
     dispatch({ type: "REGION_CANDIDATES_READY", candidates: result.candidates });
   }
 
+  async function rerunRegionDetection() {
+    if (!state.uploadedImageUri) {
+      dispatch({ type: "REGION_SELECTION_FAILED", message: "请先选择一张错题照片。" });
+      return;
+    }
+
+    const result = await mockAiAdapter.detectRegions({ imageUri: state.uploadedImageUri });
+    if (!result.ok) {
+      dispatch({ type: "REGION_SELECTION_FAILED", message: result.message });
+      return;
+    }
+
+    dispatch({ type: "REGION_CANDIDATES_READY", candidates: result.candidates });
+  }
+
+  function addManualRegion() {
+    dispatch({ type: "MANUAL_REGION_ADDED", region: createManualRegion() });
+  }
+
+  function deleteRegion(regionId: string) {
+    setRegionDrag(null);
+    dispatch({ type: "REGION_DELETED", regionId });
+  }
+
+  function updateRegionZoom(zoom: number) {
+    dispatch({
+      type: "REGION_ZOOM_CHANGED",
+      zoom: Math.min(1.8, Math.max(0.7, Number(zoom.toFixed(2)))),
+    });
+  }
+
+  function startRegionDrag(
+    event: PointerEvent<HTMLElement>,
+    region: RegionCandidate,
+    handle: RegionDragState["handle"],
+  ) {
+    event.preventDefault();
+    event.stopPropagation();
+    dispatch({ type: "REGION_SELECTED", regionId: region.id });
+
+    const overlay = event.currentTarget.closest(".region-overlay");
+    const canvasRect = overlay?.getBoundingClientRect();
+    if (!canvasRect) return;
+
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setRegionDrag({
+      regionId: region.id,
+      handle,
+      startX: event.clientX,
+      startY: event.clientY,
+      startRegion: { ...region },
+      canvasWidth: canvasRect.width,
+      canvasHeight: canvasRect.height,
+    });
+  }
+
   async function confirmSelectedRegion() {
     if (!selectedRegion) {
       dispatch({ type: "REGION_SELECTION_FAILED", message: "请先选择或手动画出一道题目区域。" });
       return;
     }
 
+    const selectedRegionImageUri = await createSelectedRegionImage(
+      state.uploadedImageUri,
+      selectedRegion,
+    );
+
     const result = await mockAiAdapter.recognizeQuestion({
       subject: state.selectedSubject,
       imageUri: state.uploadedImageUri,
       selectedRegion,
-      selectedRegionImageUri: state.uploadedImageUri,
+      selectedRegionImageUri,
     });
     if (!result.ok) {
       dispatch({ type: "REGION_SELECTION_FAILED", message: result.message });
@@ -328,7 +431,12 @@ export function App() {
                 <button className="button-secondary" type="button" onClick={() => goToScreen("upload")}>
                   返回上传
                 </button>
-                <button className="button-primary" type="button" onClick={confirmSelectedRegion}>
+                <button
+                  className="button-primary"
+                  disabled={!selectedRegion}
+                  type="button"
+                  onClick={confirmSelectedRegion}
+                >
                   确认此区域并识别
                 </button>
               </div>
@@ -341,26 +449,86 @@ export function App() {
                     <h2 id="region-canvas-title">整张原图</h2>
                     <p>拖动蓝框调整范围，或使用手动画框</p>
                   </div>
+                  <div className="canvas-tools" aria-label="画布工具">
+                    <button
+                      className="button-ghost"
+                      type="button"
+                      onClick={() => updateRegionZoom(state.regionZoom - 0.1)}
+                    >
+                      缩小
+                    </button>
+                    <button className="button-ghost" type="button" onClick={() => updateRegionZoom(1)}>
+                      适配
+                    </button>
+                    <button
+                      className="button-ghost"
+                      type="button"
+                      onClick={() => updateRegionZoom(state.regionZoom + 0.1)}
+                    >
+                      放大
+                    </button>
+                  </div>
                 </header>
-                <div className="region-canvas">
+                <div
+                  className="region-canvas"
+                  style={{ "--region-zoom": state.regionZoom } as CSSProperties}
+                >
                   <img src={state.uploadedImageUri} alt="用于框选题目区域的整张原图" />
                   <div className="region-overlay" aria-label="题目候选区域">
                     {state.regionCandidates.map((region) => (
-                      <button
+                      <div
                         aria-label={region.label}
                         className={`region-frame ${region.id === state.selectedRegionId ? "is-selected" : ""}`}
                         key={region.id}
                         onClick={() => dispatch({ type: "REGION_SELECTED", regionId: region.id })}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            dispatch({ type: "REGION_SELECTED", regionId: region.id });
+                          }
+                        }}
+                        onPointerDown={(event) => startRegionDrag(event, region, "move")}
+                        role="button"
                         style={{
                           left: `${region.x * 100}%`,
                           top: `${region.y * 100}%`,
                           width: `${region.width * 100}%`,
                           height: `${region.height * 100}%`,
                         }}
-                        type="button"
+                        tabIndex={0}
                       >
                         <span>区域{region.label}</span>
-                      </button>
+                        {region.id === state.selectedRegionId && (
+                          <>
+                            <button
+                              aria-label={`从画布删除${region.label}`}
+                              className="region-frame-delete"
+                              onClick={(event) => {
+                                event.stopPropagation();
+                                deleteRegion(region.id);
+                              }}
+                              type="button"
+                            >
+                              删除
+                            </button>
+                            <i
+                              aria-hidden="true"
+                              data-handle="se"
+                              onPointerDown={(event) => startRegionDrag(event, region, "se")}
+                            ></i>
+                            <i
+                              aria-hidden="true"
+                              data-handle="ne"
+                              onPointerDown={(event) => startRegionDrag(event, region, "ne")}
+                            ></i>
+                            <i
+                              aria-hidden="true"
+                              data-handle="sw"
+                              onPointerDown={(event) => startRegionDrag(event, region, "sw")}
+                            ></i>
+                          </>
+                        )}
+                      </div>
                     ))}
                   </div>
                 </div>
@@ -370,31 +538,58 @@ export function App() {
                 <h2 id="region-tools-title">选题工具</h2>
                 <p>先选 AI 候选框；如果没有框中，就手动画框。</p>
                 <div className="region-candidate-list">
-                  {state.regionCandidates.map((region) => (
-                    <div
-                      className={`region-candidate ${
-                        region.id === state.selectedRegionId ? "is-selected" : ""
-                      }`}
-                      key={region.id}
-                    >
-                      <button
-                        className="region-candidate-main"
-                        onClick={() => dispatch({ type: "REGION_SELECTED", regionId: region.id })}
-                        type="button"
+                  {state.regionCandidates.length ? (
+                    state.regionCandidates.map((region) => (
+                      <div
+                        className={`region-candidate ${
+                          region.id === state.selectedRegionId ? "is-selected" : ""
+                        }`}
+                        key={region.id}
                       >
-                        <strong>{region.label}</strong>
-                        <span>
-                          {region.source === "manual"
-                            ? "手动画框"
-                            : `AI 候选 · ${Math.round(region.confidence * 100)}%`}
-                        </span>
-                      </button>
+                        <button
+                          className="region-candidate-main"
+                          onClick={() => dispatch({ type: "REGION_SELECTED", regionId: region.id })}
+                          type="button"
+                        >
+                          <strong>{region.label}</strong>
+                          <span>
+                            {region.source === "manual"
+                              ? "手动画框"
+                              : `AI 候选 · ${Math.round(region.confidence * 100)}%`}
+                          </span>
+                        </button>
+                        <button
+                          aria-label={`删除${region.label}`}
+                          className="region-delete-button"
+                          onClick={() => deleteRegion(region.id)}
+                          type="button"
+                        >
+                          删除
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="region-empty-state">
+                      <strong>候选框已清空</strong>
+                      <span>可以手动画框，或重新自动找题。</span>
                     </div>
-                  ))}
+                  )}
                 </div>
                 <div className="region-summary">
                   <strong>当前区域</strong>
-                  <span>{selectedRegion ? `当前选择：${selectedRegion.label}` : "未选择区域"}</span>
+                  <span>
+                    {selectedRegion
+                      ? `当前选择：${selectedRegion.label}`
+                      : "未选择区域，请手动画框或重新自动找题"}
+                  </span>
+                </div>
+                <div className="region-action-stack">
+                  <button className="button-secondary full" type="button" onClick={addManualRegion}>
+                    手动画框
+                  </button>
+                  <button className="button-secondary full" type="button" onClick={rerunRegionDetection}>
+                    重新自动找题
+                  </button>
                 </div>
                 <p className="form-error" role="alert">
                   {state.regionError}
@@ -753,6 +948,107 @@ function createReviewForm(draft: WrongQuestionDraft): ReviewForm {
     correctAnswer: draft.correctAnswer,
     notes: draft.notes,
   };
+}
+
+function getDraggedRegion(dragState: RegionDragState, event: globalThis.PointerEvent): RegionCandidate {
+  const dx = (event.clientX - dragState.startX) / dragState.canvasWidth;
+  const dy = (event.clientY - dragState.startY) / dragState.canvasHeight;
+  const start = dragState.startRegion;
+  const next = { ...start };
+
+  if (dragState.handle === "move") {
+    next.x = clamp(start.x + dx, 0, 1 - start.width);
+    next.y = clamp(start.y + dy, 0, 1 - start.height);
+    return next;
+  }
+
+  if (dragState.handle === "ne") {
+    const nextY = clamp(start.y + dy, 0, start.y + start.height - 0.08);
+    next.y = nextY;
+    next.width = clamp(start.width + dx, 0.08, 1 - start.x);
+    next.height = clamp(start.height + (start.y - nextY), 0.08, 1 - nextY);
+    return next;
+  }
+
+  if (dragState.handle === "sw") {
+    const nextX = clamp(start.x + dx, 0, start.x + start.width - 0.08);
+    next.x = nextX;
+    next.width = clamp(start.width + (start.x - nextX), 0.08, 1 - nextX);
+    next.height = clamp(start.height + dy, 0.08, 1 - start.y);
+    return next;
+  }
+
+  next.width = clamp(start.width + dx, 0.08, 1 - start.x);
+  next.height = clamp(start.height + dy, 0.08, 1 - start.y);
+  return next;
+}
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
+
+function createSelectedRegionImage(imageUri: string, region: RegionCandidate) {
+  if (typeof document === "undefined" || typeof Image === "undefined") {
+    return Promise.resolve(imageUri);
+  }
+
+  if (window.navigator.userAgent.toLowerCase().includes("jsdom")) {
+    return Promise.resolve(imageUri);
+  }
+
+  const contextProbe = document.createElement("canvas").getContext("2d");
+  if (!contextProbe) return Promise.resolve(imageUri);
+
+  return new Promise<string>((resolve) => {
+    const image = new Image();
+    const fallbackTimer = window.setTimeout(() => resolve(imageUri), 300);
+
+    image.addEventListener(
+      "load",
+      () => {
+        window.clearTimeout(fallbackTimer);
+        try {
+          const canvas = document.createElement("canvas");
+          const sourceX = Math.max(0, Math.round(image.naturalWidth * region.x));
+          const sourceY = Math.max(0, Math.round(image.naturalHeight * region.y));
+          const sourceWidth = Math.max(1, Math.round(image.naturalWidth * region.width));
+          const sourceHeight = Math.max(1, Math.round(image.naturalHeight * region.height));
+          canvas.width = sourceWidth;
+          canvas.height = sourceHeight;
+          const context = canvas.getContext("2d");
+          if (!context) {
+            resolve(imageUri);
+            return;
+          }
+
+          context.drawImage(
+            image,
+            sourceX,
+            sourceY,
+            sourceWidth,
+            sourceHeight,
+            0,
+            0,
+            sourceWidth,
+            sourceHeight,
+          );
+          resolve(canvas.toDataURL("image/png"));
+        } catch {
+          resolve(imageUri);
+        }
+      },
+      { once: true },
+    );
+    image.addEventListener(
+      "error",
+      () => {
+        window.clearTimeout(fallbackTimer);
+        resolve(imageUri);
+      },
+      { once: true },
+    );
+    image.src = imageUri;
+  });
 }
 
 function getStorageErrorMessage(reason: string) {

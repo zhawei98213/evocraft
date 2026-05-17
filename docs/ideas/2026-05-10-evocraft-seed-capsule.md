@@ -19,6 +19,7 @@
 
 - 桌面壳路线改为 Electron-first：第一版桌面产品优先追求 Chromium 渲染一致性、JS/TS 工程连续性和桌面调试效率，而不是优先压缩安装体积。
 - Electron 的能力必须和安全边界一起设计：renderer 不直接获得 Node 权限，桌面文件访问通过 preload + IPC 白名单进入 main process，儿童学习照片相关能力默认最小暴露。
+- 设计源文件要以当前可运行产品为准：已废弃的 Figma SVG 导入包不再恢复，后续视觉回归和桌面迁移对齐以 implemented-mvp 与 desktop-trunk 截图基线为准。
 
 ### 2026-05-16
 
