@@ -10,6 +10,7 @@
     "electron:dev": "wait-on http://127.0.0.1:5173 && ELECTRON_RENDERER_URL=http://127.0.0.1:5173 electron .",
     "desktop:dev": "concurrently -k \"npm run dev\" \"npm run electron:dev\"",
     "desktop:build": "npm run build && electron-builder --dir",
+    "desktop:open": "npm run desktop:build && open -n release/mac/EvoCraft.app",
     "preview": "vite preview --host 127.0.0.1",
     "test": "node tests/static-mvp.test.mjs && vitest run",
     "test:electron-config": "node tests/electron-config.test.mjs",

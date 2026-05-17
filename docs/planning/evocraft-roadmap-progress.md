@@ -960,6 +960,39 @@
 
 - 在桌面窗口中继续手动试用选区删除、手动画框和恢复路径；下一轮优先把 Electron preload 图片选择能力接入 React 上传流。
 
+### 2026-05-17：桌面打开方式修复
+
+本轮任务是什么：
+
+- 修复“打开应用直接报错”的启动问题；定位并消除由 AppleScript 激活窗口触发的 macOS `System Events` 权限弹窗，改为直接打开打包后的 EvoCraft 桌面应用。
+
+已完成什么：
+
+- 按 systematic debugging 流程抓取当前屏幕和 Electron 进程证据，确认遮挡窗口的是 Codex 通过 AppleScript 控制 `System Events.app` 触发的 macOS 权限提示，不是 EvoCraft renderer 的业务错误。
+- 新增 `desktop:open` 脚本：先执行 Electron directory build，再用 `open -n release/mac/EvoCraft.app` 打开真正的 `EvoCraft.app`，不再依赖 AppleScript 或默认 Electron 空壳。
+- 调整 Electron dev 行为：开发模式默认不再自动打开 detached DevTools；只有显式设置 `ELECTRON_OPEN_DEVTOOLS=1` 时才打开。
+- 更新 Electron 配置测试，锁住 `desktop:open` 脚本和 DevTools 显式开关。
+- 用受控远程调试端口验证打包后的 `EvoCraft.app` 页面已加载：标题为 `EvoCraft Desktop`，URL 指向 `release/mac/EvoCraft.app/.../dist/index.html`，页面状态为 `hub`，无 console exception。
+
+卡在哪里：
+
+- 无。之前遗留的 macOS `System Events` 权限弹窗来自调试时的 AppleScript 激活窗口命令；后续打开路径不再使用 AppleScript。
+
+执行的是什么命令：
+
+- `screencapture -x /tmp/evocraft-debug/screen.png`
+- `killall "System Events"`
+- `npm run test:electron-config`
+- `npm run desktop:open`
+- `ps -axo pid,comm,args | rg "release/mac/EvoCraft.app|EvoCraft.app/Contents/MacOS/EvoCraft"`
+- `release/mac/EvoCraft.app/Contents/MacOS/EvoCraft --remote-debugging-port=9238`
+- `curl -s http://127.0.0.1:9238/json/list`
+- `node --input-type=module` 连接 CDP 并读取 title、URL、body 文本、screen 状态和 console 日志。
+
+下一步的计划：
+
+- 使用 `npm run desktop:open` 作为本地打开桌面应用的标准方式；下一轮再把 Electron preload 图片选择能力接入 React 上传流。
+
 ## 下一步
 
 1. 进入真实 AI/OCR provider 评估前，先补 AI adapter provider PRD，明确供应商数据边界、授权文案、模型分层、失败降级和隐私授权文案。
