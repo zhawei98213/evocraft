@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-05-16
+最后更新：2026-05-17
 
 ## 路线图
 
@@ -810,10 +810,44 @@
 
 - 用户 review 桌面优先技术选型 spec 后，进入 implementation plan：拆分 React/Vite/TypeScript 迁移、AI adapter contract tests 和 Tauri shell 三条实施线。
 
+### 2026-05-17：桌面优先迁移实施计划
+
+本轮任务是什么：
+
+- 按 Superpowers writing-plans 流程，把已确认的桌面优先技术选型 spec 转成可执行 implementation plan。
+
+已完成什么：
+
+- 读取 `superpowers:writing-plans` 技能、项目记忆、路线图进度、想法胶囊和桌面优先技术选型 spec。
+- 新增 `docs/superpowers/plans/2026-05-17-desktop-first-migration.md`，按 React/Vite/TypeScript 主干、typed domain、AI adapter contract、storage port、React UI 迁移、截图验证、Tauri shell 和 durable records 拆成任务。
+- 在计划中记录当前 shell 的工具链事实：Codex bundled `node` 可用，`npm` 需通过 `/usr/local/bin` 加入 PATH。
+- 更新 `docs/README.md`，把桌面优先迁移实施计划加入文档索引。
+
+卡在哪里：
+
+- 无。当前工作树中仍有既有 `docs/design/figma/*` 删除状态，不属于本轮计划产物，本轮未恢复、未暂存。
+
+执行的是什么命令：
+
+- `sed -n` 读取 Superpowers writing-plans 技能、项目记忆、进度、想法胶囊、桌面优先 spec、app 源码和测试。
+- `load_workspace_dependencies`
+- `command -v corepack && corepack --version`
+- `command -v pnpm && pnpm --version`
+- `command -v yarn && yarn --version`
+- `ls -l /usr/local/bin/npm`
+- `/usr/local/bin/npm --version`
+- `/Users/zha/.nvm/versions/node/v26.1.0/bin/node --version`
+- `apply_patch` 新增实施计划并更新 README、路线图进度。
+- `rg -n "TBD|TODO|待定|待补|PLACEHOLDER|implement later|<用实际|<如果|<列出|<写" docs/superpowers/plans/2026-05-17-desktop-first-migration.md`
+
+下一步的计划：
+
+- 由用户选择执行方式：Subagent-Driven 或 Inline Execution，然后按计划从 Task 0 开始执行。
+
 ## 下一步
 
-1. 评审 `docs/superpowers/specs/2026-05-16-desktop-first-technical-selection-design.md`。
-2. 写桌面优先 implementation plan，拆分 React/Vite/TypeScript 迁移、AI adapter contract tests 和 Tauri shell 三条实施线。
+1. 执行 `docs/superpowers/plans/2026-05-17-desktop-first-migration.md`。
+2. 优先完成 Task 0 到 Task 4：工具链、React/Vite/TypeScript scaffold、typed domain、AI adapter contract 和 storage port。
 3. 后续再接阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
 4. 平板和手机版本先补独立场景/信息架构 PRD，再决定 PWA、原生、React Native 或其他路线。
 
