@@ -3,6 +3,7 @@
 .tmp-ui-capture-profile/
 node_modules/
 dist/
+release/
 *.tsbuildinfo
 vite.config.d.ts
 vite.config.js
