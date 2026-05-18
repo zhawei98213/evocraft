@@ -31,6 +31,7 @@ export interface WrongQuestionState {
 export type WrongQuestionAction =
   | { type: "GO_TO_SCREEN"; screen: Screen }
   | { type: "IMAGE_SELECTED"; imageUri: string; fileName: string; fileMeta: string }
+  | { type: "UPLOAD_FAILED"; message: string }
   | { type: "PRIVACY_ACKNOWLEDGED"; acknowledged: boolean }
   | { type: "START_REGION_SELECTION" }
   | { type: "REGION_CANDIDATES_READY"; candidates: RegionCandidate[] }
@@ -85,6 +86,18 @@ export function wrongQuestionReducer(
         uploadedFileMeta: action.fileMeta,
         uploadError: "",
         regionError: "",
+        regionCandidates: [],
+        selectedRegionId: null,
+        draft: null,
+      };
+
+    case "UPLOAD_FAILED":
+      return {
+        ...state,
+        uploadedImageUri: "",
+        uploadedFileName: "",
+        uploadedFileMeta: "",
+        uploadError: action.message,
         regionCandidates: [],
         selectedRegionId: null,
         draft: null,

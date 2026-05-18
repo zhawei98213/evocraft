@@ -23,6 +23,7 @@ import {
   wrongQuestionReducer,
   type Screen,
 } from "../features/wrongQuestion/wrongQuestionReducer";
+import { getDesktopBridge } from "../services/desktopBridge";
 import { mockAiAdapter } from "../services/mockAiAdapter";
 import { createLocalStorageRecordStore } from "../services/storage";
 
@@ -64,6 +65,7 @@ export function App() {
     undefined,
     () => createInitialWrongQuestionState(recordStore.load()),
   );
+  const desktopBridge = getDesktopBridge();
   const [reviewForm, setReviewForm] = useState<ReviewForm>(emptyReviewForm);
   const [regionDrag, setRegionDrag] = useState<RegionDragState | null>(null);
 
@@ -114,6 +116,25 @@ export function App() {
       fileName: file.name,
       fileMeta: `${Math.max(1, Math.round(file.size / 1024))} KB`,
     });
+  }
+
+  async function handleDesktopImageSelected() {
+    if (!desktopBridge) return;
+
+    try {
+      const filePath = await desktopBridge.selectImage();
+      if (!filePath) return;
+
+      const imageUri = await desktopBridge.readImageAsDataUrl(filePath);
+      dispatch({
+        type: "IMAGE_SELECTED",
+        imageUri,
+        fileName: getFileNameFromPath(filePath),
+        fileMeta: "桌面图片",
+      });
+    } catch {
+      dispatch({ type: "UPLOAD_FAILED", message: "桌面图片读取失败，请重新选择图片。" });
+    }
   }
 
   async function startRegionSelection() {
@@ -352,6 +373,16 @@ export function App() {
                   accept="image/png,image/jpeg,image/webp,image/bmp,.heic"
                   onChange={handleFileSelected}
                 />
+
+                {desktopBridge && (
+                  <button
+                    className="button-secondary full desktop-file-button"
+                    type="button"
+                    onClick={handleDesktopImageSelected}
+                  >
+                    从电脑选择图片
+                  </button>
+                )}
 
                 {state.uploadedImageUri && (
                   <div className="upload-preview">
@@ -1058,6 +1089,13 @@ function getStorageErrorMessage(reason: string) {
     storage_clear_failed: "本地数据清空失败，请检查浏览器存储权限后重试。",
   };
   return messages[reason] ?? "本地存储操作失败，请稍后重试。";
+}
+
+function getFileNameFromPath(filePath: string) {
+  const normalizedPath = filePath.replaceAll("\\", "/");
+  const fileName = normalizedPath.split("/").filter(Boolean).pop();
+
+  return fileName ?? "本地图片";
 }
 
 function getBrowserStorage() {

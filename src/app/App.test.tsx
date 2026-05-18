@@ -1,8 +1,13 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { App } from "./App";
+import type { EvoCraftDesktopApi } from "../services/desktopBridge";
+
+afterEach(() => {
+  Reflect.deleteProperty(window, "evocraft");
+});
 
 describe("App", () => {
   it("runs the desktop MVP flow through upload, region selection, review, save, and notebook", async () => {
@@ -61,4 +66,76 @@ describe("App", () => {
     expect(screen.getByText("当前选择：手动画框")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "确认此区域并识别" })).toBeEnabled();
   });
+
+  it("loads an image through the desktop bridge and continues into region selection", async () => {
+    const desktopApi = installDesktopBridge({
+      selectImage: vi.fn().mockResolvedValue("/Users/zha/Desktop/question.png"),
+      readImageAsDataUrl: vi.fn().mockResolvedValue("data:image/png;base64,desktop-image"),
+    });
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+    await user.click(screen.getByRole("button", { name: "从电脑选择图片" }));
+
+    expect(desktopApi.selectImage).toHaveBeenCalledTimes(1);
+    expect(desktopApi.readImageAsDataUrl).toHaveBeenCalledWith("/Users/zha/Desktop/question.png");
+    expect(screen.getByText("question.png")).toBeInTheDocument();
+    expect(screen.getByAltText("已上传的错题原图预览")).toHaveAttribute(
+      "src",
+      "data:image/png;base64,desktop-image",
+    );
+
+    await user.click(screen.getByRole("checkbox", { name: /本地隐私确认/ }));
+    await user.click(screen.getByRole("button", { name: "下一步：选择题目区域" }));
+
+    expect(screen.getByRole("heading", { name: "选择题目区域" })).toBeInTheDocument();
+  });
+
+  it("keeps the upload screen unchanged when desktop image selection is cancelled", async () => {
+    const desktopApi = installDesktopBridge({
+      selectImage: vi.fn().mockResolvedValue(null),
+      readImageAsDataUrl: vi.fn(),
+    });
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+    await user.click(screen.getByRole("button", { name: "从电脑选择图片" }));
+
+    expect(desktopApi.selectImage).toHaveBeenCalledTimes(1);
+    expect(desktopApi.readImageAsDataUrl).not.toHaveBeenCalled();
+    expect(screen.queryByAltText("已上传的错题原图预览")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "下一步：选择题目区域" })).toBeDisabled();
+  });
+
+  it("shows a recoverable message when desktop image reading fails", async () => {
+    installDesktopBridge({
+      selectImage: vi.fn().mockResolvedValue("/Users/zha/Desktop/question.png"),
+      readImageAsDataUrl: vi.fn().mockRejectedValue(new Error("read failed")),
+    });
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+    await user.click(screen.getByRole("button", { name: "从电脑选择图片" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("桌面图片读取失败，请重新选择图片。");
+    expect(screen.getByRole("button", { name: "下一步：选择题目区域" })).toBeDisabled();
+  });
 });
+
+function installDesktopBridge(overrides: Partial<EvoCraftDesktopApi>) {
+  const desktopApi = {
+    selectImage: vi.fn().mockResolvedValue(null),
+    readImageAsDataUrl: vi.fn(),
+    ...overrides,
+  } satisfies EvoCraftDesktopApi;
+
+  Object.defineProperty(window, "evocraft", {
+    configurable: true,
+    value: desktopApi,
+  });
+
+  return desktopApi;
+}

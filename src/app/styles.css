@@ -638,6 +638,10 @@ body[data-screen="detail"] .ai-review-panel {
   padding: 10px;
 }
 
+.desktop-file-button {
+  margin-top: 12px;
+}
+
 .upload-preview img {
   width: 96px;
   height: 64px;

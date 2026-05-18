@@ -993,10 +993,43 @@
 
 - 使用 `npm run desktop:open` 作为本地打开桌面应用的标准方式；下一轮再把 Electron preload 图片选择能力接入 React 上传流。
 
+### 2026-05-18：Electron 图片选择接入 React 上传流
+
+本轮任务是什么：
+
+- 继续桌面迁移，把 Electron preload 暴露的本地图片选择和读取能力接到 React 错题上传流程中，避免桌面版仍只能走浏览器文件输入语义。
+
+已完成什么：
+
+- 先补 React 红灯测试，覆盖桌面选择成功、用户取消文件选择、读取本地图片失败三个分支。
+- 上传页在 Electron 环境下新增 `从电脑选择图片` 按钮，通过 `window.evocraft.selectImage()` 获取本地路径，再用 `readImageAsDataUrl()` 读取为 renderer 可展示的 data URL。
+- 成功读取后沿用 `IMAGE_SELECTED` 状态迁移，显示真实文件名并可继续进入题目区域选择；取消选择时保持上传页原状态。
+- 新增 `UPLOAD_FAILED` 状态迁移，读取失败时清空半成品上传态并提示 `桌面图片读取失败，请重新选择图片。`。
+- `desktopBridge` 增加非浏览器环境保护，避免服务端/测试环境误读 `window`。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `npm run test:react -- src/app/App.test.tsx`
+- `npm test`
+- `npm run build`
+- `npm run test:electron-config`
+- `npm run desktop:build`
+- `npm run desktop:open`
+- `pgrep -fl "EvoCraft.app|Contents/MacOS/EvoCraft"`
+- `git diff --check`
+
+下一步的计划：
+
+- 提交并推送本轮 Electron 上传流接入；下一轮补应用数据目录、窗口状态和本地持久化方案。
+
 ## 下一步
 
 1. 进入真实 AI/OCR provider 评估前，先补 AI adapter provider PRD，明确供应商数据边界、授权文案、模型分层、失败降级和隐私授权文案。
-2. Electron 下一轮优先把 preload 图片选择能力接入 React 上传流，再决定本地持久化使用 JSON store、SQLite 还是文件夹索引。
+2. Electron 下一轮优先补应用数据目录、窗口状态和本地持久化方案，再决定本地持久化使用 JSON store、SQLite 还是文件夹索引。
 3. 后续再接阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
 4. 生产签名、公证、自动更新和安装包发布流程另开任务。
 5. 平板和手机版本先补独立场景/信息架构 PRD，再决定 PWA、原生、React Native 或其他路线。
