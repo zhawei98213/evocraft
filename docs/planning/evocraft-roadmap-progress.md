@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-05-17
+最后更新：2026-05-18
 
 ## 路线图
 
@@ -1025,6 +1025,40 @@
 下一步的计划：
 
 - 提交并推送本轮 Electron 上传流接入；下一轮补应用数据目录、窗口状态和本地持久化方案。
+
+### 2026-05-18：EvoCraft Logo 首轮方向探索
+
+本轮任务是什么：
+
+- 为 EvoCraft app 设计几个 logo 候选方向，并把项目相关设计产物保存到仓库内。
+
+已完成什么：
+
+- 读取项目记忆、路线图进度和想法胶囊，确认当前品牌气质是“可信 AI 学习工作台 + 轻度成长/Craft 感”。
+- 使用内置 imagegen 生成四宫格 logo 方向图。
+- 将生成图保存到 `docs/design/logo/2026-05-18-evocraft-logo-options.png`。
+- 新增 `docs/design/logo/2026-05-18-evocraft-logo-options.md`，解释四个方向、风险和推荐。
+- 更新文档索引、项目记忆和想法胶囊，记录总品牌与子应用图标的区分原则。
+
+卡在哪里：
+
+- 无。当前只是首轮视觉探索，最终生产 logo 仍需矢量化、小尺寸测试和 app icon 导出。
+
+执行的是什么命令：
+
+- `sed -n '1,220p' /Users/zha/.codex/skills/.system/imagegen/SKILL.md`
+- `sed -n '1,220p' /Users/zha/.codex/superpowers/skills/brainstorming/SKILL.md`
+- `sed -n '1,220p' docs/planning/evocraft-project-memory.md`
+- `sed -n '1,220p' docs/planning/evocraft-roadmap-progress.md`
+- `sed -n '1,220p' docs/ideas/2026-05-10-evocraft-seed-capsule.md`
+- `find /Users/zha/.codex/generated_images -type f`
+- `sips -g pixelWidth -g pixelHeight /Users/zha/.codex/generated_images/019e3a6e-732a-7272-aba7-c953c91a703b/ig_0a89ebd0d289b9b6016a0add771918819083ff922e8e2b5240.png`
+- `mkdir -p docs/design/logo`
+- `cp /Users/zha/.codex/generated_images/019e3a6e-732a-7272-aba7-c953c91a703b/ig_0a89ebd0d289b9b6016a0add771918819083ff922e8e2b5240.png docs/design/logo/2026-05-18-evocraft-logo-options.png`
+
+下一步的计划：
+
+- 选择一个总品牌方向后，做矢量化精修、16/32/64/256/512 尺寸可读性测试，并导出 Electron app icon 所需资源。
 
 ## 下一步
 

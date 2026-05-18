@@ -1,0 +1,84 @@
+# EvoCraft Logo Options
+
+日期：2026-05-18
+
+## 目标
+
+为 EvoCraft 探索第一组应用 logo 方向。EvoCraft 当前定位是面向上海孩子和家长的 AI 学习助手应用集合，第一阶段从桌面端错题收集开始。Logo 需要同时表达：
+
+- 可信的 AI 学习工具，而不是普通拍题软件。
+- 应用集合和长期成长空间，而不是只服务一个错题功能。
+- 轻度游戏化和 Craft 感，但不幼稚、不做玩具化吉祥物。
+
+## 方案图
+
+![EvoCraft logo options](2026-05-18-evocraft-logo-options.png)
+
+## 四个候选方向
+
+### A：扫描框 + 打开笔记 + 星光
+
+适合作为 `错题收集` 应用图标。它最直接表达“从照片中整理出干净题面”，和当前 MVP 的核心闭环贴合度最高。
+
+优点：功能识别强、和现有错题收集流程一致、适合放在 App Hub 的第一个应用卡片上。
+
+风险：如果作为 EvoCraft 总品牌，会略显单功能，容易被理解成只做扫描/错题。
+
+### B：成长方块 + 叶片 + 电路线
+
+最适合作为 EvoCraft 总品牌候选。方块表达应用集合和 Craft，叶片表达孩子的成长，电路线表达 AI 能力，整体仍然保持学习工具的可信感。
+
+优点：品牌延展性最好，能覆盖错题、背单词、复习计划、游戏化成长等后续应用。
+
+风险：需要进一步简化内部细节，保证 16px/32px 小尺寸下仍然清楚。
+
+### C：识别镜头 + 纸飞机 + 勾选
+
+适合作为上传、识别、处理成功等流程动作图标。它强调“拍照识别后继续前进”的动作感。
+
+优点：动势强，适合功能按钮或桌面上传入口。
+
+风险：镜头符号太强，作为总 logo 时会把 EvoCraft 拉回“拍题/扫描工具”的单点认知。
+
+### D：模块化 E 字母
+
+适合作为更抽象的 App Hub / 工具箱方向。模块卡片能表达应用集合、知识卡片和可扩展能力。
+
+优点：最简洁，后续矢量化和小尺寸适配成本低，适合做 dock 图标基础形。
+
+风险：学习、AI、成长语义较弱，需要搭配 wordmark 或品牌系统补足含义。
+
+## 推荐
+
+优先推荐 B 作为 EvoCraft 总品牌方向，A 作为 `错题收集` 子应用图标方向。
+
+具体落地建议：
+
+- EvoCraft App logo：采用 B 的“成长方块”方向，进一步简化为一个蓝色圆角立方体、青绿色生长线和一个暖黄色模块点。
+- 错题收集 app icon：采用 A 的“扫描框 + 打开笔记”方向，作为 App Hub 内的第一个应用图标。
+- 上传/识别状态图标：从 C 抽取镜头、框选和勾选元素。
+- App Hub 或桌面侧栏小标识：从 D 抽取模块化 E，用作极小尺寸备用标识。
+
+## 视觉规范建议
+
+- 主色：AI 可信蓝，接近当前 UI 基线。
+- 辅助色：青绿色，用于成长、确认、整理完成。
+- 点缀色：暖黄色，只用于 spark、模块点或成功反馈，不要大面积铺色。
+- 形状：8px 到 16px 圆角的几何块面，避免过圆导致玩具化。
+- 避免：吉祥物、动物、毕业帽、铅笔、复杂手写文字、泛化 AI 脑图标、过强相机隐喻。
+
+## 生成提示词
+
+```text
+Use case: logo-brand
+Asset type: EvoCraft app logo exploration contact sheet, four vector-friendly logo mark options for a desktop-first AI learning assistant app for children and parents.
+Primary request: Create 4 distinct logo mark concepts for EvoCraft, arranged in a clean 2x2 grid on a plain off-white background. No wordmark, no readable text, no tiny labels, no watermark.
+Brand context: EvoCraft is a trustworthy AI learning workspace for Shanghai children. First app captures wrong-question photos and turns them into clean, reusable study records. Tone is serious learning tool with a light growth/craft/game feel, not a toy and not a generic camera app.
+Visual directions:
+1. Spark + open notebook + subtle crop frame: AI helps turn messy homework into clean knowledge.
+2. Rounded cube/seed + circuit leaf: a child builds a growing study world over time.
+3. Lens + paper plane/check mark: capture, organize, and move forward confidently.
+4. Modular E monogram made from tiles/cards: app collection / learning toolbox identity.
+Style: premium but friendly, simple geometric shapes, vector logo aesthetics, app-icon ready, crisp edges, minimal gradients, balanced blue primary with teal/mint accent and a small warm yellow highlight where useful. Avoid dominant purple, beige, dark slate, or brown/orange themes. Avoid mascots, animals, overly childish cartoons, complex scenes, handwriting, textbooks full of text, pencils, graduation caps, and generic AI brain icons.
+Composition: Each mark centered in its own equal square area with generous padding. Use consistent visual weight across the four options. Flat or very subtle depth only. High legibility at small icon size.
+```
