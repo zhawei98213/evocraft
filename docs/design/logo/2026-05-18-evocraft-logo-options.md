@@ -59,6 +59,22 @@
 - 上传/识别状态图标：从 C 抽取镜头、框选和勾选元素。
 - App Hub 或桌面侧栏小标识：从 D 抽取模块化 E，用作极小尺寸备用标识。
 
+## A 方向精修版
+
+用户选择继续沿左上 A 方向优化，因此追加一版更接近可落地 app icon 的稿件：
+
+![EvoCraft scan notebook logo v2](2026-05-18-evocraft-logo-scan-notebook-v2.png)
+
+本版保留“扫描框 + 打开笔记 + 星光 + 勾选”的核心语义，但做了这些收敛：
+
+- 扫描框加粗，减少断点数量，提高小尺寸识别。
+- 笔记本从复杂页面收敛为两页结构，只保留抽象线条和一个内容块。
+- 勾选集中放在右页，表达“整理完成/可保存”。
+- 黄绿色点缀减少为两个星光，保持 AI 整理和孩子成长感，但避免玩具化。
+- 增加浅色圆角 app icon 背板，便于后续评估 dock、App Hub 和 Electron icon 使用。
+
+下一步如果继续用这个方向，应做矢量化重绘，并分别检查 16/32/64/256/512 像素下扫描框、书脊和勾选是否仍然可读。
+
 ## 视觉规范建议
 
 - 主色：AI 可信蓝，接近当前 UI 基线。
@@ -81,4 +97,16 @@ Visual directions:
 4. Modular E monogram made from tiles/cards: app collection / learning toolbox identity.
 Style: premium but friendly, simple geometric shapes, vector logo aesthetics, app-icon ready, crisp edges, minimal gradients, balanced blue primary with teal/mint accent and a small warm yellow highlight where useful. Avoid dominant purple, beige, dark slate, or brown/orange themes. Avoid mascots, animals, overly childish cartoons, complex scenes, handwriting, textbooks full of text, pencils, graduation caps, and generic AI brain icons.
 Composition: Each mark centered in its own equal square area with generous padding. Use consistent visual weight across the four options. Flat or very subtle depth only. High legibility at small icon size.
+```
+
+## A 方向精修版生成提示词
+
+```text
+Use case: logo-brand
+Asset type: single optimized EvoCraft sub-app icon / logo mark based on the previous top-left concept.
+Primary request: Create one polished app-icon-ready logo mark for EvoCraft's wrong-question capture app. The mark should be inspired by the top-left option from the prior contact sheet: a subtle AI crop/scan frame around an open notebook, with one clean check mark and one simple sparkle. No wordmark, no readable text, no labels, no watermark.
+Brand context: EvoCraft is a trustworthy AI learning workspace for Shanghai children and parents. This sub-app captures a wrong-question photo and turns it into a clean reusable study record. It should feel like a serious learning tool with a small warm growth/craft feeling, not a toy and not a generic scanner.
+Composition: Centered single mark inside a soft rounded-square app icon canvas. Use a white or very pale cool background. The notebook should be simplified to two open pages with only abstract short lines and one small visual block, not real text. The scan frame should be blue, thick enough to read at small sizes, and integrated around the notebook without clutter. Add one warm yellow sparkle above the notebook and one small teal sparkle or accent. Keep generous padding.
+Style: modern vector logo aesthetics, crisp geometric edges, simple shapes, app icon ready, high legibility at 16/32/64 px, minimal subtle depth only. Blue primary, teal/mint secondary, tiny warm yellow highlight. Avoid dominant purple, beige, dark slate, brown/orange palettes. Avoid mascots, animals, pencils, graduation caps, realistic paper texture, camera lens, complex documents, handwriting, Chinese or English text, AI brain icons, heavy gradients, and dense line details.
+Output: a single square image, clean centered logo, no surrounding mockup, no multiple options.
 ```

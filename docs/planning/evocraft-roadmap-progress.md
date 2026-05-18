@@ -1060,6 +1060,38 @@
 
 - 选择一个总品牌方向后，做矢量化精修、16/32/64/256/512 尺寸可读性测试，并导出 Electron app icon 所需资源。
 
+### 2026-05-18：EvoCraft 左上扫描笔记 Logo 精修
+
+本轮任务是什么：
+
+- 按用户要求，沿首轮四宫格左上 A 方向继续优化一版 EvoCraft / 错题收集 app logo。
+
+已完成什么：
+
+- 复查 logo 首轮说明、项目记忆、想法胶囊和路线图进度，确认左上 A 方向对应 `错题收集` 子应用图标语义。
+- 使用内置 imagegen 生成单枚精修图标，保留扫描框、打开笔记、星光和勾选，减少页面细节并强化小尺寸识别。
+- 将精修图保存到 `docs/design/logo/2026-05-18-evocraft-logo-scan-notebook-v2.png`。
+- 更新 `docs/design/logo/2026-05-18-evocraft-logo-options.md`，追加 A 方向精修版说明和生成提示词。
+- 更新项目记忆和想法胶囊，记录错题收集子应用图标继续沿扫描笔记方向打磨。
+
+卡在哪里：
+
+- 无。当前仍是生成图阶段，尚未做矢量重绘、透明背景、macOS `.icns` / Electron icon 资源导出。
+
+执行的是什么命令：
+
+- `sed -n '1,160p' /Users/zha/.codex/skills/.system/imagegen/SKILL.md`
+- `sed -n '1,120p' docs/planning/evocraft-project-memory.md`
+- `tail -90 docs/planning/evocraft-roadmap-progress.md`
+- `sed -n '1,80p' docs/ideas/2026-05-10-evocraft-seed-capsule.md`
+- `sed -n '1,140p' docs/design/logo/2026-05-18-evocraft-logo-options.md`
+- `find /Users/zha/.codex/generated_images -type f ...`
+- `cp /Users/zha/.codex/generated_images/019e3a6e-732a-7272-aba7-c953c91a703b/ig_0a89ebd0d289b9b6016a0adf2485748190970f7e0ec7b0c0b9.png docs/design/logo/2026-05-18-evocraft-logo-scan-notebook-v2.png`
+
+下一步的计划：
+
+- 如果确认使用这版，下一步做矢量化重绘、小尺寸截图对比、透明/圆角背景版本和 Electron/macOS icon 导出。
+
 ## 下一步
 
 1. 进入真实 AI/OCR provider 评估前，先补 AI adapter provider PRD，明确供应商数据边界、授权文案、模型分层、失败降级和隐私授权文案。
