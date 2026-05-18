@@ -1165,6 +1165,45 @@
 
 - 提交并推送本轮 logo 接入；后续发布前补矢量重绘、Windows `.ico` 和真实 dock/installer 视觉验收。
 
+### 2026-05-18：Logo 圆角与错题收集入口回退
+
+本轮任务是什么：
+
+- 修正用户指出的两个视觉问题：logo 应该是圆角矩形；App Hub 的错题收集图片不应被品牌 logo 替换。
+
+已完成什么：
+
+- 补回归测试：React 测试锁住错题收集卡片继续显示原来的 `题` 标识；新增 `tests/logo-assets.test.mjs` 检查 logo PNG 是 RGBA，并且四个角透明、中心不透明。
+- 重新导出 `src/assets/evocraft-logo.png`、`public/evocraft-logo.png` 和 `public/favicon.png`，全部改为透明圆角矩形 PNG。
+- 重新生成 `build-resources/icon.icns`，让 Electron macOS app icon 使用同一圆角资源。
+- 恢复 App Hub 中错题收集卡片的原始 `题` 功能标识，品牌 logo 只保留在侧栏品牌位、favicon 和桌面 app icon。
+- 更新 logo 设计说明、项目记忆、想法胶囊和进度记录，明确品牌 logo 不替换已有业务入口图标。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `npm run test:react -- src/app/App.test.tsx`
+- `node tests/logo-assets.test.mjs`
+- `sips -z 256 256 docs/design/logo/2026-05-18-evocraft-logo-scan-notebook-final.png --out /tmp/evocraft-rounded-logo/evocraft-logo-256.png`
+- `sips -z 32 32 docs/design/logo/2026-05-18-evocraft-logo-scan-notebook-final.png --out /tmp/evocraft-rounded-logo/favicon-32.png`
+- `node --input-type=module` 读取 PNG、添加圆角透明 alpha、写回 RGBA PNG。
+- `iconutil -c icns build-resources/icon.iconset -o build-resources/icon.icns`
+- `npm test`
+- `npm run build`
+- `npm run test:electron-config`
+- `npm run desktop:build`
+- `npm run desktop:open`
+- `plutil -p release/mac/EvoCraft.app/Contents/Info.plist | rg "CFBundleIconFile|CFBundleName"`
+- `pgrep -fl "EvoCraft.app|Contents/MacOS/EvoCraft"`
+- `git diff --check`
+
+下一步的计划：
+
+- 提交并推送本轮视觉修正；后续发布前继续补 Windows `.ico` 与真实 dock/installer 视觉验收。
+
 ## 下一步
 
 1. 进入真实 AI/OCR provider 评估前，先补 AI adapter provider PRD，明确供应商数据边界、授权文案、模型分层、失败降级和隐私授权文案。

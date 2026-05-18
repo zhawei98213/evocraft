@@ -309,8 +309,8 @@ export function App() {
 
             <div className="app-grid">
               <article className="app-tile app-tile-active">
-                <div className="tile-icon primary logo-tile-icon" aria-hidden="true">
-                  <img src={evocraftLogoUrl} alt="" />
+                <div className="tile-icon primary" aria-hidden="true">
+                  题
                 </div>
                 <h2>错题收集</h2>
                 <p>拍照上传，AI 去痕整理</p>

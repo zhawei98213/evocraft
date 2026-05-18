@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -17,6 +17,14 @@ describe("App", () => {
       "src",
       expect.stringContaining("evocraft-logo"),
     );
+  });
+
+  it("keeps the wrong-question app tile using its original mark", () => {
+    render(<App />);
+
+    const appTile = screen.getByRole("heading", { name: "错题收集" }).closest("article");
+    expect(appTile).not.toBeNull();
+    expect(within(appTile as HTMLElement).getByText("题")).toBeInTheDocument();
   });
 
   it("runs the desktop MVP flow through upload, region selection, review, save, and notebook", async () => {
