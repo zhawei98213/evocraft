@@ -10,6 +10,15 @@ afterEach(() => {
 });
 
 describe("App", () => {
+  it("uses the selected EvoCraft logo in the app shell", () => {
+    render(<App />);
+
+    expect(screen.getByRole("img", { name: "EvoCraft logo" })).toHaveAttribute(
+      "src",
+      expect.stringContaining("evocraft-logo"),
+    );
+  });
+
   it("runs the desktop MVP flow through upload, region selection, review, save, and notebook", async () => {
     const user = userEvent.setup();
     render(<App />);

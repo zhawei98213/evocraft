@@ -96,7 +96,14 @@
 - `2026-05-18-evocraft-logo-scan-notebook-final-64.png`
 - `2026-05-18-evocraft-logo-scan-notebook-final-128.png`
 
-生产落地前仍建议做一版矢量重绘，再导出透明背景、圆角背板、macOS `.icns`、Windows `.ico` 和 Electron builder 所需 PNG。
+当前选定稿已进入第一轮生产接入：
+
+- React 应用内品牌位和 App Hub 错题收集卡片使用 `src/assets/evocraft-logo.png`。
+- 浏览器/桌面 renderer favicon 使用 `public/favicon.png`。
+- Electron builder 的 macOS app icon 使用 `build-resources/icon.icns`。
+- 公开静态预览图使用 `public/evocraft-logo.png`。
+
+后续发布前仍建议做一版矢量重绘，并补齐透明背景、Windows `.ico`、不同平台安全边距检查和真实 dock/installer 视觉验收。
 
 ## 视觉规范建议
 

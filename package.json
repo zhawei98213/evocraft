@@ -50,6 +50,7 @@
       "output": "release"
     },
     "mac": {
+      "icon": "build-resources/icon.icns",
       "identity": null
     }
   }

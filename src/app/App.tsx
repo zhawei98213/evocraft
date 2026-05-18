@@ -8,6 +8,7 @@ import {
   useState,
 } from "react";
 
+import evocraftLogoUrl from "../assets/evocraft-logo.png";
 import {
   SUBJECTS,
   createManualRegion,
@@ -253,9 +254,7 @@ export function App() {
     <div className="app-shell" data-testid="app-shell">
       <aside className="app-rail" aria-label="EvoCraft 应用集合">
         <div className="brand">
-          <div className="brand-mark" aria-hidden="true">
-            E
-          </div>
+          <img className="brand-mark" src={evocraftLogoUrl} alt="EvoCraft logo" />
           <div>
             <strong>EvoCraft</strong>
             <span>AI 学习助手应用集合</span>
@@ -310,8 +309,8 @@ export function App() {
 
             <div className="app-grid">
               <article className="app-tile app-tile-active">
-                <div className="tile-icon primary" aria-hidden="true">
-                  题
+                <div className="tile-icon primary logo-tile-icon" aria-hidden="true">
+                  <img src={evocraftLogoUrl} alt="" />
                 </div>
                 <h2>错题收集</h2>
                 <p>拍照上传，AI 去痕整理</p>

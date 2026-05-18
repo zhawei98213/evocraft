@@ -12,6 +12,8 @@ assert.equal(pkg.scripts["desktop:build"], "npm run build && electron-builder --
 assert.equal(pkg.scripts["desktop:open"], "npm run desktop:build && open -n release/mac/EvoCraft.app");
 assert.ok(pkg.devDependencies.electron, "electron should be a dev dependency");
 assert.ok(pkg.devDependencies["electron-builder"], "electron-builder should be a dev dependency");
+assert.equal(pkg.build.mac.icon, "build-resources/icon.icns");
+assert.ok(existsSync("build-resources/icon.icns"), "macOS app icon should exist");
 
 const main = readFileSync("electron/main.cjs", "utf8");
 assert.match(main, /nodeIntegration:\s*false/);

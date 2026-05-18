@@ -1127,6 +1127,44 @@
 
 - 进入图标生产化：用选定稿重绘矢量源文件，导出平台图标资源，并接入 Electron app icon 配置。
 
+### 2026-05-18：EvoCraft Logo 生产化接入
+
+本轮任务是什么：
+
+- 按用户要求，把新设计的扫描笔记 logo 从设计产物接入当前 React/Electron 桌面应用。
+
+已完成什么：
+
+- 先补红灯测试，锁住 React 应用壳必须显示真实 `EvoCraft logo` 图片，Electron builder 必须指向 macOS app icon。
+- 从选定稿 `docs/design/logo/2026-05-18-evocraft-logo-scan-notebook-final.png` 导出应用资源：`src/assets/evocraft-logo.png`、`public/evocraft-logo.png`、`public/favicon.png` 和 `build-resources/icon.icns`。
+- React 侧栏品牌位从文字 `E` 替换为真实 logo 图片，App Hub 的错题收集卡片也使用同一图标。
+- `index.html` 接入 favicon，`package.json` 的 Electron builder mac 配置接入 `build-resources/icon.icns`。
+- 更新 logo 设计说明、文档索引、项目记忆和想法胶囊，记录当前 logo 已从设计稿进入产品壳。
+
+卡在哪里：
+
+- 无。仍待后续发布前补矢量重绘、透明背景版本、Windows `.ico` 和真实 dock/installer 视觉验收。
+
+执行的是什么命令：
+
+- `npm run test:react -- src/app/App.test.tsx`
+- `npm run test:electron-config`
+- `sips -z 256 256 docs/design/logo/2026-05-18-evocraft-logo-scan-notebook-final.png --out src/assets/evocraft-logo.png`
+- `sips -z 256 256 docs/design/logo/2026-05-18-evocraft-logo-scan-notebook-final.png --out public/evocraft-logo.png`
+- `sips -z 32 32 docs/design/logo/2026-05-18-evocraft-logo-scan-notebook-final.png --out public/favicon.png`
+- `iconutil -c icns build-resources/icon.iconset -o build-resources/icon.icns`
+- `npm test`
+- `npm run build`
+- `npm run desktop:build`
+- `npm run desktop:open`
+- `plutil -p release/mac/EvoCraft.app/Contents/Info.plist | rg "CFBundleIconFile|CFBundleName"`
+- `pgrep -fl "EvoCraft.app|Contents/MacOS/EvoCraft"`
+- `git diff --check`
+
+下一步的计划：
+
+- 提交并推送本轮 logo 接入；后续发布前补矢量重绘、Windows `.ico` 和真实 dock/installer 视觉验收。
+
 ## 下一步
 
 1. 进入真实 AI/OCR provider 评估前，先补 AI adapter provider PRD，明确供应商数据边界、授权文案、模型分层、失败降级和隐私授权文案。
