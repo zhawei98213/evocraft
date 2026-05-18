@@ -1092,6 +1092,41 @@
 
 - 如果确认使用这版，下一步做矢量化重绘、小尺寸截图对比、透明/圆角背景版本和 Electron/macOS icon 导出。
 
+### 2026-05-18：EvoCraft 扫描笔记 Logo 选定稿
+
+本轮任务是什么：
+
+- 按用户“精修一轮，就是它了”的要求，对扫描笔记 logo 再做最后一轮精修，并把它记录为当前选定稿。
+
+已完成什么：
+
+- 以 `docs/design/logo/2026-05-18-evocraft-logo-scan-notebook-v2.png` 为参考，使用内置 imagegen 精修最终候选图。
+- 将选定稿保存为 `docs/design/logo/2026-05-18-evocraft-logo-scan-notebook-final.png`。
+- 生成 16/32/64/128 小尺寸预览，保存到 `docs/design/logo/previews/`。
+- 更新 `docs/design/logo/2026-05-18-evocraft-logo-options.md`，追加选定稿、调整点、预览文件和生成提示词。
+- 更新项目记忆和想法胶囊，记录扫描笔记方向已成为当前 logo 选定方向。
+
+卡在哪里：
+
+- 无。仍待下一轮生产化：矢量化重绘、透明/圆角版本、macOS `.icns`、Windows `.ico` 和 Electron builder 图标接入。
+
+执行的是什么命令：
+
+- `sed -n '1,150p' /Users/zha/.codex/skills/.system/imagegen/SKILL.md`
+- `sed -n '1,130p' docs/planning/evocraft-project-memory.md`
+- `tail -100 docs/planning/evocraft-roadmap-progress.md`
+- `sed -n '1,80p' docs/ideas/2026-05-10-evocraft-seed-capsule.md`
+- `sed -n '55,135p' docs/design/logo/2026-05-18-evocraft-logo-options.md`
+- `cp /Users/zha/.codex/generated_images/019e3a6e-732a-7272-aba7-c953c91a703b/ig_0a89ebd0d289b9b6016a0ae05ec7e88190a936f0c503022cbd.png docs/design/logo/2026-05-18-evocraft-logo-scan-notebook-final.png`
+- `sips -z 16 16 docs/design/logo/previews/2026-05-18-evocraft-logo-scan-notebook-final-16.png`
+- `sips -z 32 32 docs/design/logo/previews/2026-05-18-evocraft-logo-scan-notebook-final-32.png`
+- `sips -z 64 64 docs/design/logo/previews/2026-05-18-evocraft-logo-scan-notebook-final-64.png`
+- `sips -z 128 128 docs/design/logo/previews/2026-05-18-evocraft-logo-scan-notebook-final-128.png`
+
+下一步的计划：
+
+- 进入图标生产化：用选定稿重绘矢量源文件，导出平台图标资源，并接入 Electron app icon 配置。
+
 ## 下一步
 
 1. 进入真实 AI/OCR provider 评估前，先补 AI adapter provider PRD，明确供应商数据边界、授权文案、模型分层、失败降级和隐私授权文案。

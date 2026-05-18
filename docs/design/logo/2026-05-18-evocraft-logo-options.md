@@ -75,6 +75,29 @@
 
 下一步如果继续用这个方向，应做矢量化重绘，并分别检查 16/32/64/256/512 像素下扫描框、书脊和勾选是否仍然可读。
 
+## 选定稿：扫描笔记 Final Candidate
+
+用户确认继续使用扫描笔记方向，并要求“就是它了”。基于 v2 再做一轮比例、线条和留白精修后，当前选定稿如下：
+
+![EvoCraft scan notebook logo final](2026-05-18-evocraft-logo-scan-notebook-final.png)
+
+相比 v2，本版调整重点：
+
+- 扫描框四角的比例更均衡，端点没有继续加重，避免在小尺寸里糊成一块。
+- 书本中轴、底部弧线和右页外轮廓更清楚，图标语义更稳定。
+- 右页只保留三条抽象内容线和一个勾选，降低真实文字感。
+- 星光整体收敛，保留 AI 整理的轻微仪式感，但不让图标显得幼稚。
+- 画面重心更居中，适合作为 App Hub、桌面 dock 和后续 Electron icon 的基础图。
+
+基础小尺寸预览已导出到 `docs/design/logo/previews/`：
+
+- `2026-05-18-evocraft-logo-scan-notebook-final-16.png`
+- `2026-05-18-evocraft-logo-scan-notebook-final-32.png`
+- `2026-05-18-evocraft-logo-scan-notebook-final-64.png`
+- `2026-05-18-evocraft-logo-scan-notebook-final-128.png`
+
+生产落地前仍建议做一版矢量重绘，再导出透明背景、圆角背板、macOS `.icns`、Windows `.ico` 和 Electron builder 所需 PNG。
+
 ## 视觉规范建议
 
 - 主色：AI 可信蓝，接近当前 UI 基线。
@@ -109,4 +132,17 @@ Brand context: EvoCraft is a trustworthy AI learning workspace for Shanghai chil
 Composition: Centered single mark inside a soft rounded-square app icon canvas. Use a white or very pale cool background. The notebook should be simplified to two open pages with only abstract short lines and one small visual block, not real text. The scan frame should be blue, thick enough to read at small sizes, and integrated around the notebook without clutter. Add one warm yellow sparkle above the notebook and one small teal sparkle or accent. Keep generous padding.
 Style: modern vector logo aesthetics, crisp geometric edges, simple shapes, app icon ready, high legibility at 16/32/64 px, minimal subtle depth only. Blue primary, teal/mint secondary, tiny warm yellow highlight. Avoid dominant purple, beige, dark slate, brown/orange palettes. Avoid mascots, animals, pencils, graduation caps, realistic paper texture, camera lens, complex documents, handwriting, Chinese or English text, AI brain icons, heavy gradients, and dense line details.
 Output: a single square image, clean centered logo, no surrounding mockup, no multiple options.
+```
+
+## 选定稿生成提示词
+
+```text
+Use case: logo-brand
+Asset type: final polished EvoCraft app/sub-app icon, refined from the visible scan-notebook v2 reference.
+Primary request: Refine the visible logo without changing its core concept. Keep the same identity: a bold blue AI scan/crop frame surrounding an open notebook, teal right page outline, one clean teal check mark, one warm yellow sparkle and one smaller teal sparkle. No wordmark, no readable text, no labels, no watermark.
+Refinement goals: make it feel like the final chosen app icon. Improve proportion, centering, symmetry, spacing, edge crispness, and small-size readability. Reduce visual noise. Make the scan frame corners more evenly balanced and slightly less bulky at the ends. Make the notebook spine and bottom curve cleaner and more iconic. Simplify the left page to abstract non-text strokes and one soft content block. Make the right page and check mark clean, confident, and not crowded. Keep the stars smaller and better integrated so they feel premium, not childish.
+Brand context: EvoCraft is a trustworthy AI learning workspace for Shanghai children and parents. This icon represents capturing a wrong-question photo and turning it into a clean reusable study record. It should feel serious, helpful, and warm.
+Composition: single centered mark on a soft rounded-square app icon canvas. White or very pale cool background. Generous padding. Slight soft depth is acceptable, but keep it vector-friendly and simple.
+Style: polished modern vector logo aesthetics, crisp geometric edges, minimal subtle gradient, app icon ready, high legibility at 16/32/64 px. Use AI trustworthy blue as primary, teal/mint as secondary, tiny warm yellow highlight. Avoid purple, beige, dark slate, brown/orange palettes. Avoid mascots, animals, pencils, graduation caps, camera lenses, complex documents, handwriting, Chinese or English text, AI brain icons, heavy shadows, dense line details, or multiple options.
+Output: one square image, final single logo candidate only.
 ```
