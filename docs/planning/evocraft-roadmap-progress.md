@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-05-18
+最后更新：2026-05-20
 
 ## 路线图
 
@@ -1203,6 +1203,40 @@
 下一步的计划：
 
 - 提交并推送本轮视觉修正；后续发布前继续补 Windows `.ico` 与真实 dock/installer 视觉验收。
+
+### 2026-05-20：上传入口与真实预览修正
+
+本轮任务是什么：
+
+- 解释并修复用户指出的上传页问题：桌面版出现两个上传入口；点击上方上传区后，预览仍像 mock 占位图而不是真实选择的图片。
+
+已完成什么：
+
+- 按 systematic debugging 追到根因：Electron 图片选择接入时新增了独立 `从电脑选择图片` 按钮，但原 Web 上传 label 仍可见；同时 `handleFileSelected()` 仍 dispatch `createOriginalPlaceholderImage()`，没有读取真实文件。
+- 先补 React 红灯测试，锁住浏览器上传必须显示真实 data URL，桌面版 `从电脑选择图片` 必须是主上传区本身，而不是第二个按钮。
+- 上传页改为单一主上传区：桌面环境点击主上传区调用 `window.evocraft.selectImage()`，浏览器环境点击同一位置触发隐藏 file input。
+- 选择图片后，主上传区直接展示真实图片预览；下方只保留文件名和大小/来源信息，避免预览和入口混在一起。
+- 更新 PRD、想法胶囊和项目记忆，明确“平台实现差异不能变成两个并列上传入口”和“上传预览必须是真实选择图片”。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `npm run test:react -- src/app/App.test.tsx`
+- `npm test`
+- `npm run build`
+- `npm run test:electron-config`
+- `npm run desktop:build`
+- `npm run desktop:open`
+- `plutil -p release/mac/EvoCraft.app/Contents/Info.plist | rg "CFBundleIconFile|CFBundleName"`
+- `pgrep -fl "EvoCraft.app|Contents/MacOS/EvoCraft"`
+- `git diff --check`
+
+下一步的计划：
+
+- 提交并推送本轮上传入口和真实预览修正。
 
 ## 下一步
 

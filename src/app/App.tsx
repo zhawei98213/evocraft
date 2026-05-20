@@ -12,7 +12,6 @@ import evocraftLogoUrl from "../assets/evocraft-logo.png";
 import {
   SUBJECTS,
   createManualRegion,
-  createOriginalPlaceholderImage,
   createRecordFromDraft,
   formatTime,
   type RegionCandidate,
@@ -104,19 +103,24 @@ export function App() {
     dispatch({ type: "GO_TO_SCREEN", screen });
   }
 
-  function handleFileSelected(event: ChangeEvent<HTMLInputElement>) {
+  async function handleFileSelected(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
 
     const isImage = file.type.startsWith("image/") || file.name.toLowerCase().endsWith(".heic");
     if (!isImage) return;
 
-    dispatch({
-      type: "IMAGE_SELECTED",
-      imageUri: createOriginalPlaceholderImage(),
-      fileName: file.name,
-      fileMeta: `${Math.max(1, Math.round(file.size / 1024))} KB`,
-    });
+    try {
+      const imageUri = await readFileAsDataUrl(file);
+      dispatch({
+        type: "IMAGE_SELECTED",
+        imageUri,
+        fileName: file.name,
+        fileMeta: `${Math.max(1, Math.round(file.size / 1024))} KB`,
+      });
+    } catch {
+      dispatch({ type: "UPLOAD_FAILED", message: "图片读取失败，请重新选择图片。" });
+    }
   }
 
   async function handleDesktopImageSelected() {
@@ -356,36 +360,44 @@ export function App() {
 
             <div className="upload-layout">
               <div className="upload-card">
-                <label className="upload-dropzone" htmlFor="image-input">
-                  <span className="upload-icon" aria-hidden="true">
-                    +
-                  </span>
-                  <strong>{state.uploadedImageUri ? "图片已准备好" : "将错题照片拖拽到这里"}</strong>
-                  <span>{state.uploadedImageUri ? "可以替换图片或开始整理" : "或点击选择图片"}</span>
-                  <small>支持 JPG / PNG / BMP / HEIC，单张不超过 20MB</small>
-                </label>
-                <input
-                  hidden
-                  id="image-input"
-                  aria-label="选择错题照片"
-                  type="file"
-                  accept="image/png,image/jpeg,image/webp,image/bmp,.heic"
-                  onChange={handleFileSelected}
-                />
-
-                {desktopBridge && (
+                {desktopBridge ? (
                   <button
-                    className="button-secondary full desktop-file-button"
+                    aria-label="从电脑选择图片"
+                    className={`upload-dropzone ${state.uploadedImageUri ? "has-preview" : ""}`}
                     type="button"
                     onClick={handleDesktopImageSelected}
                   >
-                    从电脑选择图片
+                    <UploadDropzoneContent
+                      imageUri={state.uploadedImageUri}
+                      primaryText={state.uploadedImageUri ? "图片已准备好" : "从电脑选择图片"}
+                      secondaryText={state.uploadedImageUri ? "点击可替换图片" : "本地读取，不上传真实照片"}
+                    />
                   </button>
+                ) : (
+                  <>
+                    <label
+                      className={`upload-dropzone ${state.uploadedImageUri ? "has-preview" : ""}`}
+                      htmlFor="image-input"
+                    >
+                      <UploadDropzoneContent
+                        imageUri={state.uploadedImageUri}
+                        primaryText={state.uploadedImageUri ? "图片已准备好" : "将错题照片拖拽到这里"}
+                        secondaryText={state.uploadedImageUri ? "点击可替换图片" : "或点击选择图片"}
+                      />
+                    </label>
+                    <input
+                      hidden
+                      id="image-input"
+                      aria-label="选择错题照片"
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/bmp,.heic"
+                      onChange={handleFileSelected}
+                    />
+                  </>
                 )}
 
                 {state.uploadedImageUri && (
                   <div className="upload-preview">
-                    <img src={state.uploadedImageUri} alt="已上传的错题原图预览" />
                     <div>
                       <strong>{state.uploadedFileName}</strong>
                       <span>{state.uploadedFileMeta}</span>
@@ -745,6 +757,31 @@ export function App() {
   );
 }
 
+function UploadDropzoneContent({
+  imageUri,
+  primaryText,
+  secondaryText,
+}: {
+  imageUri: string;
+  primaryText: string;
+  secondaryText: string;
+}) {
+  return (
+    <>
+      {imageUri ? (
+        <img className="upload-dropzone-preview" src={imageUri} alt="已上传的错题原图预览" />
+      ) : (
+        <span className="upload-icon" aria-hidden="true">
+          +
+        </span>
+      )}
+      <strong>{primaryText}</strong>
+      <span>{secondaryText}</span>
+      <small>支持 JPG / PNG / BMP / HEIC，单张不超过 20MB</small>
+    </>
+  );
+}
+
 function RailButton({
   active = false,
   children,
@@ -1095,6 +1132,30 @@ function getFileNameFromPath(filePath: string) {
   const fileName = normalizedPath.split("/").filter(Boolean).pop();
 
   return fileName ?? "本地图片";
+}
+
+function readFileAsDataUrl(file: File) {
+  return new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener(
+      "load",
+      () => {
+        if (typeof reader.result === "string") {
+          resolve(reader.result);
+          return;
+        }
+
+        reject(new Error("FileReader did not return a data URL."));
+      },
+      { once: true },
+    );
+    reader.addEventListener(
+      "error",
+      () => reject(reader.error ?? new Error("FileReader failed.")),
+      { once: true },
+    );
+    reader.readAsDataURL(file);
+  });
 }
 
 function getBrowserStorage() {

@@ -36,6 +36,12 @@ describe("App", () => {
 
     const file = new File(["fake-image"], "question.png", { type: "image/png" });
     await user.upload(screen.getByLabelText("选择错题照片"), file);
+    await waitFor(() => {
+      expect(screen.getByAltText("已上传的错题原图预览")).toHaveAttribute(
+        "src",
+        expect.stringMatching(/^data:image\/png;base64,/),
+      );
+    });
     await user.click(screen.getByRole("checkbox", { name: /本地隐私确认/ }));
     await user.click(screen.getByRole("button", { name: "下一步：选择题目区域" }));
 
@@ -63,6 +69,12 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "错题收集" }));
     const file = new File(["fake-image"], "question.png", { type: "image/png" });
     await user.upload(screen.getByLabelText("选择错题照片"), file);
+    await waitFor(() => {
+      expect(screen.getByAltText("已上传的错题原图预览")).toHaveAttribute(
+        "src",
+        expect.stringMatching(/^data:image\/png;base64,/),
+      );
+    });
     await user.click(screen.getByRole("checkbox", { name: /本地隐私确认/ }));
     await user.click(screen.getByRole("button", { name: "下一步：选择题目区域" }));
 
@@ -84,6 +96,24 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "确认此区域并识别" })).toBeEnabled();
   });
 
+  it("previews the real browser-selected image in the upload area", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+    await user.upload(screen.getByLabelText("选择错题照片"), new File(["real-image"], "real.png", {
+      type: "image/png",
+    }));
+
+    await waitFor(() => {
+      expect(screen.getByAltText("已上传的错题原图预览")).toHaveAttribute(
+        "src",
+        "data:image/png;base64,cmVhbC1pbWFnZQ==",
+      );
+    });
+    expect(screen.getByText("real.png")).toBeInTheDocument();
+  });
+
   it("loads an image through the desktop bridge and continues into region selection", async () => {
     const desktopApi = installDesktopBridge({
       selectImage: vi.fn().mockResolvedValue("/Users/zha/Desktop/question.png"),
@@ -93,12 +123,14 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "错题收集" }));
-    await user.click(screen.getByRole("button", { name: "从电脑选择图片" }));
+    const desktopPicker = screen.getByRole("button", { name: "从电脑选择图片" });
+    expect(desktopPicker).toHaveClass("upload-dropzone");
+    await user.click(desktopPicker);
 
     expect(desktopApi.selectImage).toHaveBeenCalledTimes(1);
     expect(desktopApi.readImageAsDataUrl).toHaveBeenCalledWith("/Users/zha/Desktop/question.png");
     expect(screen.getByText("question.png")).toBeInTheDocument();
-    expect(screen.getByAltText("已上传的错题原图预览")).toHaveAttribute(
+    expect(within(desktopPicker).getByAltText("已上传的错题原图预览")).toHaveAttribute(
       "src",
       "data:image/png;base64,desktop-image",
     );

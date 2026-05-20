@@ -581,11 +581,26 @@ body[data-screen="detail"] .ai-review-panel {
   color: var(--charcoal);
   padding: 32px;
   text-align: center;
+  cursor: pointer;
 }
 
 .upload-dropzone.is-dragging {
   border-color: var(--primary);
   background: var(--primary-soft);
+}
+
+.upload-dropzone.has-preview {
+  gap: 12px;
+  padding: 16px;
+  background: #fff;
+}
+
+.upload-dropzone-preview {
+  width: 100%;
+  max-height: 340px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--hairline);
+  object-fit: contain;
 }
 
 .upload-icon {
@@ -626,25 +641,13 @@ body[data-screen="detail"] .ai-review-panel {
 }
 
 .upload-preview {
-  display: grid;
-  grid-template-columns: 96px 1fr auto;
+  display: block;
   align-items: center;
-  gap: 14px;
   margin-top: 14px;
   border: 1px solid var(--hairline);
   border-radius: var(--radius-md);
-  padding: 10px;
-}
-
-.desktop-file-button {
-  margin-top: 12px;
-}
-
-.upload-preview img {
-  width: 96px;
-  height: 64px;
-  border-radius: 6px;
-  object-fit: cover;
+  padding: 14px 16px;
+  min-width: 0;
 }
 
 .upload-preview strong,
@@ -656,6 +659,10 @@ body[data-screen="detail"] .ai-review-panel {
   margin-top: 4px;
   color: var(--steel);
   font-size: 12px;
+}
+
+.upload-preview strong {
+  overflow-wrap: anywhere;
 }
 
 .form-error {
