@@ -1,0 +1,83 @@
+# Real AI Recognition Agent Run Ledger
+
+日期：2026-05-23
+
+状态：`pending`
+
+执行模式：`subagent-driven`，但必须在本 ledger 和 task logs 准备完成后才能派发。
+
+父级 spec：
+
+- `docs/superpowers/specs/2026-05-23-real-ai-recognition-design.md`
+
+父级 implementation plan：
+
+- `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+
+项目设计文档体系：
+
+- `docs/planning/2026-05-23-design-documentation-system.md`
+
+## Execution Gate
+
+进入 subagent-driven 前必须满足：
+
+- 详细设计文档已存在并提交。
+- 实施计划已存在并提交。
+- 本 run ledger 已存在并提交。
+- 每个 agent 的 task log 创建规则已存在。
+- `AGENTS.md` 已写入设计文档先行和 agent 进度记录规则。
+
+## Task Ledger
+
+| Task | Agent Log | Status | Scope | Required Verification | Commit |
+| --- | --- | --- | --- | --- | --- |
+| 0. Preflight And Baseline | 创建执行时记录 | pending | 基线命令，无文件改动 | `npm test`, `npm run test:electron-config`, `npm run build` | 未开始 |
+| 1. Async RecordStore | `agents/task-01-async-record-store.md` | pending | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | 未开始 |
+| 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | pending | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | 未开始 |
+| 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | pending | Electron main/preload IPC, desktop bridge | `npm run test:electron-config` | 未开始 |
+| 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | pending | App store selection and tests | Focused app/storage tests | 未开始 |
+| 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | pending | AI contract, mock adapter, domain tests | Adapter/domain tests | 未开始 |
+| 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | pending | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config` | 未开始 |
+| 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | pending | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter` | 未开始 |
+| 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | pending | Electron AI IPC, desktop AI adapter | Electron config + adapter tests | 未开始 |
+| 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | pending | UI mode, authorization copy, final verification | Full verification suite | 未开始 |
+
+## Global Progress
+
+### 2026-05-23
+
+- Created run ledger before dispatching subagents.
+- Confirmed no implementation agent has started yet.
+- Next step after this documentation commit: invoke `superpowers:subagent-driven-development` and dispatch Task 0/1 according to the parent plan.
+
+## Global Blockers
+
+- 无。
+
+## Review Rules
+
+After each agent completes:
+
+1. Update that task's agent log.
+2. Update the task status in this ledger.
+3. Record commands and verification output.
+4. Review diff against assigned scope.
+5. Commit only the intended task scope.
+6. Move to the next task only after review passes or the blocker is explicitly recorded.
+
+## Final Verification
+
+Final verification is not started. When all tasks complete, run:
+
+```bash
+npm test
+npm run test:electron-config
+npm run test:electron-store
+npm run test:ai-eval-config
+npm run test:qwen-adapter
+npm run build
+npm run desktop:build
+git diff --check
+git status --short --branch
+```

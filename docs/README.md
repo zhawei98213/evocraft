@@ -6,6 +6,7 @@
 
 - [项目记忆](planning/evocraft-project-memory.md)：稳定产品背景、已确认决策、开放问题、记忆更新规则。
 - [路线图与进度](planning/evocraft-roadmap-progress.md)：长期路线、当前阶段、进度记录。
+- [设计文档体系](planning/2026-05-23-design-documentation-system.md)：定义 PRD、详细设计、实施计划、agent run ledger 和验证归档的组织方式与执行 gate。
 - [应用集合架构](planning/evocraft-app-collection-architecture.md)：EvoCraft 作为 AI 学习助手应用集合的顶层结构。
 - [想法胶囊](ideas/2026-05-10-evocraft-seed-capsule.md)：原始想法碎片和产品方向。
 - [PRD 编写规范 v1.1](prd/2026-05-16-prd-writing-standards.md)：后续 PRD 新建、重大更新、需求评审和规范反向提炼的统一标准。
@@ -16,6 +17,7 @@
 - [桌面优先迁移实施计划](superpowers/plans/2026-05-17-desktop-first-migration.md)：把桌面优先技术选型拆成 React/Vite/TypeScript 迁移、AI adapter contract tests 和 Electron shell 的可执行任务。
 - [真实 AI 识别接入设计](superpowers/specs/2026-05-23-real-ai-recognition-design.md)：确认第一版真实 AI 只做识别整理、Electron main 调用 Qwen、本地文件夹 + JSON 索引持久化和评测脚本策略。
 - [真实 AI 识别实施计划](superpowers/plans/2026-05-23-real-ai-recognition.md)：把真实 AI 接入拆成本地文件存储、AI adapter v1、Qwen 评测脚本、Electron main IPC、开发开关和授权提示任务。
+- [真实 AI 识别 Agent Run Ledger](superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md)：记录 subagent-driven 执行中每个 agent 的计划、进度、命令、验证和 review。
 - [React 桌面主干 UI 截图](design/desktop-trunk/README.md)：React/Vite 桌面主干跑通后保存的六屏视觉回归基线。
 - [EvoCraft Logo 方向探索](design/logo/2026-05-18-evocraft-logo-options.md)：第一组应用 logo 视觉方向和当前扫描笔记选定稿，已接入 React 品牌位、favicon 与 Electron macOS app icon。
 - [MVP 收尾加固设计](superpowers/specs/2026-05-16-mvp-hardening-tech-route-design.md)：隐私确认、本地删除、失败恢复和技术路线的实现设计。
@@ -40,3 +42,5 @@
 8. 当决策、文件、功能、风险变化时，更新进度记录。
 9. 进度记录必须包含：本轮任务、已完成、卡点、执行命令、下一步计划。
 10. 原始想法放在 `docs/ideas/`，已经收敛的产品需求放在 `docs/prd/`。
+11. 进入重要实现或 subagent-driven 前，必须先确认详细设计文档、实施计划和 agent run ledger 已入库。
+12. 每个 subagent 的工作计划和进度必须记录在 `docs/superpowers/agent-runs/`。

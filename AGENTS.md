@@ -46,6 +46,49 @@ Required behavior:
 
 技能产物不能只存在于对话、临时目录、浏览器状态、外部工具或本地 scratch 中。凡是会影响后续产品、设计、技术决策、实现、测试、验证或交接的结果，都必须在同一次变更中进入 `/Users/zha/Documents/CodeSpaces/evo-craft`，并随目标提交一起保存。
 
+## Iron Rule: Detailed Design Docs Before Execution / 详细设计文档先行铁律
+
+Before starting any substantial implementation plan, especially any `subagent-driven` execution, the project must have durable detailed design documentation.
+
+在开始任何重要实现计划之前，尤其是使用 `subagent-driven` 执行之前，必须先产出并入库详细设计文档。
+
+Canonical design documentation guide:
+
+- `docs/planning/2026-05-23-design-documentation-system.md`
+
+Required behavior:
+
+- Do not start implementation from chat context alone.
+- For architecture, AI behavior, privacy posture, local data shape, storage, IPC, provider integration, UI workflow, or testing strategy changes, create or confirm a detailed design document before execution.
+- Detailed design docs must cover scope, non-goals, architecture, data flow, contracts/interfaces, storage shape, error handling, privacy/security, test strategy, rollout/migration, decisions, rejected alternatives, and open questions.
+- Link new design docs from `docs/README.md`.
+- Synchronize project memory and roadmap progress when the design changes process, architecture, AI behavior, privacy posture, or implementation order.
+- If the design implies a product decision or durable principle, update the idea capsule in the same change set.
+- Do not run `subagent-driven` implementation until the relevant design docs, implementation plan, and agent run ledger exist in the repository.
+
+详细设计文档不是可选说明，而是后续实现、测试、review 和交接的依据。凡是会影响架构、AI 行为、隐私、本地数据形态、存储、IPC、供应商接入、UI 流程或测试策略的任务，都必须先把设计文档写入项目目录，并同步索引、项目记忆和进度记录。
+
+## Iron Rule: Subagent Work Plan And Progress Logs / 子代理工作计划与进度记录铁律
+
+Every subagent-driven execution must have durable per-agent work plan and progress records.
+
+每次使用 `subagent-driven` 执行时，每一个 agent 的工作计划和进度都必须有项目内持久记录。
+
+Canonical agent run protocol:
+
+- `docs/superpowers/agent-runs/README.md`
+
+Required behavior:
+
+- Before dispatching subagents, create or update a run ledger under `docs/superpowers/agent-runs/<YYYY-MM-DD-feature>/README.md`.
+- Each subagent task must have a durable log under that run directory, normally `agents/task-NN-<slug>.md`.
+- Each task log must record: parent plan, assigned scope, allowed files, forbidden scope, work plan, progress updates, commands run, files changed, verification, blockers, review status, and final handoff.
+- The leader must update the run ledger after each subagent finishes, is blocked, or is sent back for fixes.
+- Do not rely on chat-only subagent status. If a subagent reports useful progress, decisions, commands, failures, or verification, copy the durable summary into the run log before finishing the task.
+- Final task completion must reference the relevant run ledger and per-agent logs.
+
+子代理执行不能只靠对话流记忆。每个 agent 的任务边界、执行计划、过程、命令、变更、验证、阻塞和 review 结论，都必须记录到项目目录中的 run ledger 和 task log。
+
 ## PRD Writing Standards / PRD 编写规范
 
 All future PRDs, materially updated PRDs, and PRD changes caused by product-gap feedback must follow:

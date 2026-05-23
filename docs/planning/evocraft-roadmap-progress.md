@@ -1313,9 +1313,41 @@
 
 - 根据用户选择进入执行：推荐 subagent-driven，每个任务一个独立执行单元并在任务间 review。
 
+### 2026-05-23：设计文档体系与 Agent 进度记录协议
+
+本轮任务是什么：
+
+- 在执行真实 AI 识别实施计划前，先把详细设计文档体系、subagent-driven 前置 gate、每个 agent 的工作计划和进度记录要求写入仓库规则和项目文档。
+
+已完成什么：
+
+- 更新 `AGENTS.md`，新增“详细设计文档先行铁律”和“子代理工作计划与进度记录铁律”。
+- 新增 `docs/planning/2026-05-23-design-documentation-system.md`，定义产品意图层、详细设计层、实施计划层、Agent 执行层和验证归档层。
+- 新增 `docs/superpowers/agent-runs/README.md`，定义 subagent-driven run ledger 和 per-agent task log 协议。
+- 新增 `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`，为真实 AI 识别接入准备 run ledger。
+- 新增 `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agent-log-template.md` 和 `agents/.gitkeep`，为后续每个 agent 的工作计划与进度记录预留结构。
+- 同步更新文档索引、项目记忆、想法胶囊和路线图进度。
+
+卡在哪里：
+
+- 无。下一步可以在这些文档提交后再进入 `superpowers:subagent-driven-development`。
+
+执行的是什么命令：
+
+- `sed -n '1,260p' /Users/zha/.codex/superpowers/skills/brainstorming/SKILL.md`
+- `sed -n '1,260p' AGENTS.md`
+- `sed -n '1,220p' docs/README.md`
+- `sed -n '1,240p' docs/planning/evocraft-project-memory.md`
+- `tail -n 220 docs/planning/evocraft-roadmap-progress.md`
+- `find docs -maxdepth 3 -type f | sort`
+
+下一步的计划：
+
+- 提交并推送本轮文档体系更新；随后按新协议启动 subagent-driven，并为每个 agent 创建/更新对应 task log。
+
 ## 下一步
 
-1. 执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`：本地文件存储、AI adapter schema、评测脚本、Qwen adapter、Electron main IPC、开发开关和授权提示。
+1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。
 2. 真实 AI 接入前先建立桌面本地数据目录和文件夹 + JSON 索引，避免真实图片和模型日志继续依赖 `localStorage`。
 3. 使用 10-15 张三科混合脱敏样本跑 Qwen 小样本评测，确认 schema、prompt、失败边界、成本和编造答案风险。
 4. 生产签名、公证、自动更新和安装包发布流程另开任务。
