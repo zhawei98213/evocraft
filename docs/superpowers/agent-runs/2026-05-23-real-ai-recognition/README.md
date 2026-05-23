@@ -2,7 +2,7 @@
 
 日期：2026-05-23
 
-状态：`pending`
+状态：`in_progress`
 
 执行模式：`subagent-driven`，但必须在本 ledger 和 task logs 准备完成后才能派发。
 
@@ -32,7 +32,7 @@
 
 | Task | Agent Log | Status | Scope | Required Verification | Commit |
 | --- | --- | --- | --- | --- | --- |
-| 0. Preflight And Baseline | 创建执行时记录 | pending | 基线命令，无文件改动 | `npm test`, `npm run test:electron-config`, `npm run build` | 未开始 |
+| 0. Preflight And Baseline | `agents/task-00-preflight.md` | assigned | 基线命令，无文件改动 | `npm test`, `npm run test:electron-config`, `npm run build` | 派发中 |
 | 1. Async RecordStore | `agents/task-01-async-record-store.md` | pending | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | 未开始 |
 | 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | pending | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | 未开始 |
 | 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | pending | Electron main/preload IPC, desktop bridge | `npm run test:electron-config` | 未开始 |
@@ -50,6 +50,11 @@
 - Created run ledger before dispatching subagents.
 - Confirmed no implementation agent has started yet.
 - Next step after this documentation commit: invoke `superpowers:subagent-driven-development` and dispatch Task 0/1 according to the parent plan.
+
+### 2026-05-23 Task 0 Dispatch
+
+- Created `agents/task-00-preflight.md`.
+- Task 0 is ready for implementer dispatch.
 
 ## Global Blockers
 
