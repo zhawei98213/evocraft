@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-05-20
+最后更新：2026-05-23
 
 ## 路线图
 
@@ -1238,11 +1238,46 @@
 
 - 提交并推送本轮上传入口和真实预览修正。
 
+### 2026-05-23：真实 AI 识别接入设计收敛
+
+本轮任务是什么：
+
+- 在进入真实 AI/OCR 接入前，先明确技术路线、产品边界、模型选型、评测策略、本地持久化和后续阶段切分。
+
+已完成什么：
+
+- 按 Superpowers brainstorming 流程收敛方案，并写入 `docs/superpowers/specs/2026-05-23-real-ai-recognition-design.md`。
+- 确认第一版真实 AI 只做识别整理：候选题目区域、OCR、科目判断、结构化错题草稿、视觉片段、需复核项和模型调用记录。
+- 确认解题、讲解、错因、知识点和相似题进入后续 Phase 2 错题理解，不混入第一版识别接入。
+- 确认干净题面第一版采用结构化重排，由应用渲染；图像去痕、重绘和 inpainting 后置专项评测。
+- 确认桌面版本地优先：真实 AI 调用放在 Electron main process，renderer 不接触 API key；当前阶段不引入 SaaS backend。
+- 确认本地持久化采用文件夹 + JSON 索引，每条错题独立目录保存 `record.json`、原图、区域图、渲染数据和模型调用日志，后续保留迁 SQLite 或 SaaS 的路径。
+- 确认本机评测脚本调用云端模型，不做模型训练或本地模型部署；先跑 10-15 张三科混合脱敏样本，再扩到 50 张。
+- 更新 MVP PRD 到 v1.6，并同步想法胶囊、项目记忆和文档索引。
+
+卡在哪里：
+
+- 无。仍需后续实现计划拆分，并在真实接入前最终确认外部 AI 授权文案、API key 本机配置方式和 Qwen 小样本评测素材。
+
+执行的是什么命令：
+
+- `sed -n '1,260p' docs/prd/2026-05-16-prd-writing-standards.md`
+- `sed -n '80,150p' docs/superpowers/specs/2026-05-13-question-region-domestic-model-design.md`
+- `sed -n '430,575p' docs/prd/2026-05-10-wrong-question-capture-mvp-prd.md`
+- `sed -n '1,220p' docs/planning/evocraft-project-memory.md`
+- `sed -n '1,120p' docs/ideas/2026-05-10-evocraft-seed-capsule.md`
+- `sed -n '1,220p' docs/README.md`
+- `rg -n "localStorage|GPT-5.5|解题|相似题|去痕|SQLite|文件夹|JSON|backend|后端" docs/prd/2026-05-10-wrong-question-capture-mvp-prd.md docs/superpowers/specs/2026-05-23-real-ai-recognition-design.md docs/planning/evocraft-project-memory.md`
+
+下一步的计划：
+
+- 进入实现计划拆分：本地文件存储 port、图片资产管理、AiAdapter v1 schema/contract tests、本机评测脚本、Qwen adapter spike、Electron main IPC、开发开关和授权提示。
+
 ## 下一步
 
-1. 进入真实 AI/OCR provider 评估前，先补 AI adapter provider PRD，明确供应商数据边界、授权文案、模型分层、失败降级和隐私授权文案。
-2. Electron 下一轮优先补应用数据目录、窗口状态和本地持久化方案，再决定本地持久化使用 JSON store、SQLite 还是文件夹索引。
-3. 后续再接阿里云百炼 Qwen 体系作为第一条国内 AI/OCR 链路。
+1. 将真实 AI 识别接入设计拆成实现计划：本地文件存储、AI adapter schema、评测脚本、Qwen adapter、Electron main IPC、开发开关和授权提示。
+2. 真实 AI 接入前先建立桌面本地数据目录和文件夹 + JSON 索引，避免真实图片和模型日志继续依赖 `localStorage`。
+3. 使用 10-15 张三科混合脱敏样本跑 Qwen 小样本评测，确认 schema、prompt、失败边界、成本和编造答案风险。
 4. 生产签名、公证、自动更新和安装包发布流程另开任务。
 5. 平板和手机版本先补独立场景/信息架构 PRD，再决定 PWA、原生、React Native 或其他路线。
 
@@ -1250,7 +1285,7 @@
 
 - OCR 对手写中文、数学公式、英文、图形题的稳定性可能差异很大。
 - 多题照片的候选框可能漏检或误框，必须保留手动画框兜底和整张原图溯源。
-- 书写痕迹去除可能误删题干、图形或公式，需要保留原图并提供复核机制。
+- 图像去痕可能误删题干、图形或公式，第一版先采用结构化重排和视觉片段渲染，不把去痕放进主链路。
 - 国内模型价格、模型名和能力会持续变化，真实接入前必须复核官方文档和当期价格。
 - 顶层应用集合架构不能过度工程化；第一版只保留清晰入口和扩展方向，不实现复杂插件系统。
 - 面向孩子的产品需要认真设计隐私、授权、照片存储、删除机制。

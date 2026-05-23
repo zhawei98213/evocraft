@@ -14,6 +14,7 @@
 - [MVP 技术路线决策](planning/2026-05-16-mvp-technical-route-decision.md)：基于 PRD v1.5、已实现 UI 基线和桌面优先方向确认 React/Vite/TypeScript、AI adapter、Electron 桌面壳和后端的推进顺序。
 - [桌面优先技术选型设计](superpowers/specs/2026-05-16-desktop-first-technical-selection-design.md)：确认下一阶段采用 React/Vite/TypeScript 工程主干、provider-agnostic AI adapter 和 Electron 桌面壳。
 - [桌面优先迁移实施计划](superpowers/plans/2026-05-17-desktop-first-migration.md)：把桌面优先技术选型拆成 React/Vite/TypeScript 迁移、AI adapter contract tests 和 Electron shell 的可执行任务。
+- [真实 AI 识别接入设计](superpowers/specs/2026-05-23-real-ai-recognition-design.md)：确认第一版真实 AI 只做识别整理、Electron main 调用 Qwen、本地文件夹 + JSON 索引持久化和评测脚本策略。
 - [React 桌面主干 UI 截图](design/desktop-trunk/README.md)：React/Vite 桌面主干跑通后保存的六屏视觉回归基线。
 - [EvoCraft Logo 方向探索](design/logo/2026-05-18-evocraft-logo-options.md)：第一组应用 logo 视觉方向和当前扫描笔记选定稿，已接入 React 品牌位、favicon 与 Electron macOS app icon。
 - [MVP 收尾加固设计](superpowers/specs/2026-05-16-mvp-hardening-tech-route-design.md)：隐私确认、本地删除、失败恢复和技术路线的实现设计。
