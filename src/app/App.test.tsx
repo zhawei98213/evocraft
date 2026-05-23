@@ -2,9 +2,15 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { STORAGE_KEY, createMockRecognition, createRecordFromDraft } from "../domain/wrongQuestion";
+import {
+  STORAGE_KEY,
+  createMockRecognition,
+  createRecordFromDraft,
+  type WrongQuestionRecord,
+} from "../domain/wrongQuestion";
 import { App } from "./App";
 import type { EvoCraftDesktopApi } from "../services/desktopBridge";
+import type { RecordStore } from "../services/storage";
 
 afterEach(() => {
   Reflect.deleteProperty(window, "evocraft");
@@ -57,6 +63,9 @@ describe("App", () => {
 
     await user.clear(screen.getByLabelText("标题"));
     await user.type(screen.getByLabelText("标题"), "一次函数图像与坐标综合题");
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "保存到错题本" })).toBeEnabled();
+    });
     await user.click(screen.getByRole("button", { name: "保存到错题本" }));
 
     await waitFor(() => {
@@ -82,6 +91,71 @@ describe("App", () => {
       expect(screen.getByText("共 1 条")).toBeInTheDocument();
     });
     expect(screen.getByRole("button", { name: /预加载错题.*打开/ })).toBeInTheDocument();
+  });
+
+  it("blocks early save until delayed hydration finishes so preexisting records survive", async () => {
+    const existingRecord = createRecordFromDraft(createMockRecognition(), {
+      id: "wq-existing",
+      now: "2026-05-17T08:00:00.000Z",
+      title: "已存在错题",
+    });
+    const loadDeferred = createDeferred<WrongQuestionRecord[]>();
+    const recordStore = createDeferredRecordStore(loadDeferred.promise);
+    const user = userEvent.setup();
+
+    render(<App recordStore={recordStore} />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+
+    const file = new File(["fake-image"], "question.png", { type: "image/png" });
+    await user.upload(screen.getByLabelText("选择错题照片"), file);
+    await waitFor(() => {
+      expect(screen.getByAltText("已上传的错题原图预览")).toHaveAttribute(
+        "src",
+        expect.stringMatching(/^data:image\/png;base64,/),
+      );
+    });
+    await user.click(screen.getByRole("checkbox", { name: /本地隐私确认/ }));
+    await user.click(screen.getByRole("button", { name: "下一步：选择题目区域" }));
+    await user.click(screen.getByRole("button", { name: "确认此区域并识别" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "识别复核" })).toBeInTheDocument();
+    });
+
+    const saveButton = screen.getByRole("button", { name: "保存到错题本" });
+    expect(saveButton).toBeDisabled();
+    await user.click(saveButton);
+    expect(recordStore.save).not.toHaveBeenCalled();
+
+    loadDeferred.resolve([existingRecord]);
+
+    await waitFor(() => {
+      expect(screen.getByRole("button", { name: "保存到错题本" })).toBeEnabled();
+    });
+
+    await user.click(screen.getByRole("button", { name: "保存到错题本" }));
+
+    await waitFor(() => {
+      expect(recordStore.save).toHaveBeenCalledTimes(1);
+    });
+
+    const [savedRecords] = recordStore.save.mock.calls[0] ?? [];
+    expect(savedRecords.map((record) => record.id)).toEqual([
+      savedRecords[0]?.id,
+      "wq-existing",
+    ]);
+    expect(savedRecords[0]?.title).toBe("一次函数图像与坐标综合题");
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "一次函数图像与坐标综合题" })).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("button", { name: "错题本" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("共 2 条")).toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: /已存在错题.*打开/ })).toBeInTheDocument();
   });
 
   it("lets users delete region candidates and recover with a manual region", async () => {
@@ -209,4 +283,25 @@ function installDesktopBridge(overrides: Partial<EvoCraftDesktopApi>) {
   });
 
   return desktopApi;
+}
+
+function createDeferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+
+  return { promise, resolve, reject };
+}
+
+function createDeferredRecordStore(loadPromise: Promise<WrongQuestionRecord[]>): RecordStore & {
+  save: ReturnType<typeof vi.fn<(records: WrongQuestionRecord[]) => Promise<{ ok: true }>>>;
+} {
+  return {
+    load: vi.fn().mockImplementation(() => loadPromise),
+    save: vi.fn().mockResolvedValue({ ok: true }),
+    clear: vi.fn().mockResolvedValue({ ok: true }),
+  };
 }

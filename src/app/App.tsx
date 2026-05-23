@@ -25,7 +25,7 @@ import {
 } from "../features/wrongQuestion/wrongQuestionReducer";
 import { getDesktopBridge } from "../services/desktopBridge";
 import { mockAiAdapter } from "../services/mockAiAdapter";
-import { createLocalStorageRecordStore } from "../services/storage";
+import { createLocalStorageRecordStore, type RecordStore } from "../services/storage";
 
 interface ReviewForm {
   subject: Subject;
@@ -55,10 +55,14 @@ const emptyReviewForm: ReviewForm = {
   notes: "",
 };
 
-export function App() {
+interface AppProps {
+  recordStore?: RecordStore;
+}
+
+export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
   const recordStore = useMemo(
-    () => createLocalStorageRecordStore(getBrowserStorage()),
-    [],
+    () => injectedRecordStore ?? createLocalStorageRecordStore(getBrowserStorage()),
+    [injectedRecordStore],
   );
   const [state, dispatch] = useReducer(
     wrongQuestionReducer,
@@ -66,6 +70,7 @@ export function App() {
     () => createInitialWrongQuestionState([]),
   );
   const desktopBridge = getDesktopBridge();
+  const [isRecordStoreHydrated, setIsRecordStoreHydrated] = useState(false);
   const [reviewForm, setReviewForm] = useState<ReviewForm>(emptyReviewForm);
   const [regionDrag, setRegionDrag] = useState<RegionDragState | null>(null);
 
@@ -75,11 +80,19 @@ export function App() {
 
   useEffect(() => {
     let active = true;
+    setIsRecordStoreHydrated(false);
 
-    recordStore.load().then((records) => {
-      if (!active) return;
-      dispatch({ type: "RECORDS_LOADED", records });
-    });
+    recordStore
+      .load()
+      .then((records) => {
+        if (!active) return;
+        dispatch({ type: "RECORDS_LOADED", records });
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!active) return;
+        setIsRecordStoreHydrated(true);
+      });
 
     return () => {
       active = false;
@@ -253,7 +266,7 @@ export function App() {
   }
 
   async function saveRecord() {
-    if (!state.draft) return;
+    if (!state.draft || !isRecordStoreHydrated) return;
 
     const record = createRecordFromDraft(state.draft, reviewForm);
     const nextRecords = [record, ...state.records.filter((item) => item.id !== record.id)];
@@ -661,6 +674,7 @@ export function App() {
             onBack={() => goToScreen("upload")}
             onFormChange={setReviewForm}
             onSave={saveRecord}
+            saveDisabled={!isRecordStoreHydrated}
             saveError={state.saveError}
           />
         )}
@@ -827,6 +841,7 @@ function ReviewScreen({
   onBack,
   onFormChange,
   onSave,
+  saveDisabled = false,
   saveError,
 }: {
   draft: WrongQuestionDraft;
@@ -834,6 +849,7 @@ function ReviewScreen({
   onBack: () => void;
   onFormChange: (form: ReviewForm) => void;
   onSave: () => void;
+  saveDisabled?: boolean;
   saveError: string;
 }) {
   function updateForm<K extends keyof ReviewForm>(key: K, value: ReviewForm[K]) {
@@ -851,7 +867,7 @@ function ReviewScreen({
           <button className="button-secondary" type="button" onClick={onBack}>
             重新上传
           </button>
-          <button className="button-primary" type="button" onClick={onSave}>
+          <button className="button-primary" disabled={saveDisabled} type="button" onClick={onSave}>
             保存到错题本
           </button>
         </div>

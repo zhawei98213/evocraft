@@ -9,7 +9,7 @@
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-23
 - Completed at: 2026-05-23
-- Status: `done`
+- Status: `changes_requested_fixed`
 
 ## Scope
 
@@ -60,6 +60,14 @@ Forbidden scope:
 - Updated `App.tsx` to initialize from an empty record list, load records in a guarded `useEffect`, and await `recordStore.save(...)` before dispatching `RECORD_SAVED`.
 - Extended tests with async-load coverage for preexisting localStorage records and adjusted the save flow assertion to wait for the async save path.
 
+### 2026-05-23 Code Quality Follow-Up
+
+- Reviewed the Task 1 code-quality blocker on top of review commit `0e5afad`, which identified a hydration/save race in `src/app/App.tsx`.
+- Added a delayed-load regression in `src/app/App.test.tsx` using an injected deferred `recordStore` so the review path exercises real async latency rather than synchronous `localStorage`.
+- Fixed `App.tsx` by tracking hydration completion, exposing `recordStore` injection for tests, and disabling `保存到错题本` until the initial record-store load settles.
+- Kept the existing browser UX intact in the normal path: localStorage hydration still auto-loads records, and save remains async but now waits for hydration before it can be triggered.
+- Re-ran the focused React/Vitest suite, build, and diff hygiene after the follow-up fix.
+
 ## Commands Run
 
 ```bash
@@ -81,6 +89,11 @@ sed -n '1,320p' src/app/App.test.tsx
 rg -n "STORAGE_KEY|createInitialWrongQuestionState\\(|recordStore\\.load\\(|localStorage" src/domain src/app src/services src/features
 rg -n "RECORDS_LOADED|recordStore\\.save\\(|recordStore\\.load\\(|recordStore\\.clear\\(|createLocalStorageRecordStore\\(" src
 npm run test:react -- src/services/storage.test.ts
+npm run test:react -- src/services/storage.test.ts src/features/wrongQuestion/wrongQuestionReducer.test.ts src/app/App.test.tsx
+npm run build
+git diff --check
+git status --short
+npm run test:react -- src/app/App.test.tsx
 npm run test:react -- src/services/storage.test.ts src/features/wrongQuestion/wrongQuestionReducer.test.ts src/app/App.test.tsx
 npm run build
 git diff --check
@@ -108,6 +121,14 @@ git status --short
   - Passed: `tsc -b && vite build` exited `0`.
 - `git diff --check`
   - Passed: no whitespace or merge-marker issues.
+- `npm run test:react -- src/app/App.test.tsx`
+  - Passed: `1` file, `10` tests, including the delayed-load early-save regression.
+- `npm run test:react -- src/services/storage.test.ts src/features/wrongQuestion/wrongQuestionReducer.test.ts src/app/App.test.tsx`
+  - Passed after the follow-up fix: `3` files, `20` tests.
+- `npm run build`
+  - Passed after the follow-up fix: `tsc -b && vite build` exited `0`.
+- `git diff --check`
+  - Passed after the follow-up fix: no whitespace or merge-marker issues.
 
 ## Blockers
 
@@ -117,12 +138,13 @@ git status --short
 
 - Keep this task as a behavior-preserving async boundary change. Later tasks can now plug Electron IPC and local folder storage behind the same Promise-based `RecordStore` boundary without changing the current browser UX.
 - `RECORDS_LOADED` now owns post-mount notebook hydration, so later desktop store wiring should dispatch through the existing async load path instead of reintroducing synchronous reducer initialization.
+- The follow-up fix resolves the current race by making notebook save unavailable until hydration completes. Task 2 should not remove that guarantee unless it replaces it with an equally safe merge/order strategy for real IPC latency.
 
 ## Leader Review
 
 - Review status: pending
-- Review notes:
-- Required follow-up:
+- Review notes: code-quality review requested a lifecycle-safe async hydration/save order after commit `55b4fba`.
+- Required follow-up: re-run Task 1 code-quality review against the hydration-guard fix and delayed-load regression.
 
 ## Commit
 
