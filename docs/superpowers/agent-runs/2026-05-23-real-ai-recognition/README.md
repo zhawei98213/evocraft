@@ -33,7 +33,7 @@
 | Task | Agent Log | Status | Scope | Required Verification | Commit |
 | --- | --- | --- | --- | --- | --- |
 | 0. Preflight And Baseline | `agents/task-00-preflight.md` | completed | 基线命令，允许 docs-only task log / ledger 更新 | `npm test`, `npm run test:electron-config`, `npm run build` | `02c1c03` |
-| 1. Async RecordStore | `agents/task-01-async-record-store.md` | pending | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | 未开始 |
+| 1. Async RecordStore | `agents/task-01-async-record-store.md` | assigned | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | 未开始 |
 | 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | pending | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | 未开始 |
 | 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | pending | Electron main/preload IPC, desktop bridge | `npm run test:electron-config` | 未开始 |
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | pending | App store selection and tests | Focused app/storage tests | 未开始 |
@@ -50,6 +50,9 @@
 | `agents/task-00-preflight.md` | implementer | Task 0 | done | 已运行基线命令并记录结果，未改应用代码。 |
 | `agents/task-00-spec-review.md` | spec-reviewer | Task 0 | passed | 已核对 Task 0 是否符合实施计划、命令要求和 docs-only 范围，未发现问题。 |
 | `agents/task-00-code-quality-review.md` | code-quality-reviewer | Task 0 | passed | 已确认 Task 0 日志、命令证据和提交卫生满足 docs-only gate，未发现会阻止 Task 1 的质量问题。 |
+| `agents/task-01-async-record-store.md` | implementer | Task 1 | assigned | 将把浏览器 RecordStore 改为 Promise 契约，并保持当前上传/保存体验不变。 |
+| `agents/task-01-spec-review.md` | spec-reviewer | Task 1 | pending | Task 1 implementer 完成后核对是否严格符合 async storage 计划。 |
+| `agents/task-01-code-quality-review.md` | code-quality-reviewer | Task 1 | pending | Task 1 spec review 通过后检查 async 生命周期、测试充分性和提交卫生。 |
 
 ## Global Progress
 
@@ -85,6 +88,11 @@
 - Confirmed commits `02c1c03`, `3308852`, and `3fcee64` stayed docs-only and used acceptable Lore commit hygiene.
 - Confirmed ignored local outputs such as `dist/`, `release/`, `.omx/`, and build caches are not tracked or staged for Task 0.
 - Task 0 fully passed both reviews and is complete; the process can move to Task 1.
+
+### 2026-05-23 Task 1 Logs Prepared
+
+- Created independent Task 1 implementer, spec-review, and code-quality-review logs before dispatch.
+- Task 1 is assigned to the implementer and must stay within the async RecordStore boundary.
 
 ## Global Blockers
 
