@@ -32,7 +32,7 @@
 
 | Task | Agent Log | Status | Scope | Required Verification | Commit |
 | --- | --- | --- | --- | --- | --- |
-| 0. Preflight And Baseline | `agents/task-00-preflight.md` | review | 基线命令，允许 docs-only task log / ledger 更新 | `npm test`, `npm run test:electron-config`, `npm run build` | `02c1c03` |
+| 0. Preflight And Baseline | `agents/task-00-preflight.md` | completed | 基线命令，允许 docs-only task log / ledger 更新 | `npm test`, `npm run test:electron-config`, `npm run build` | `02c1c03` |
 | 1. Async RecordStore | `agents/task-01-async-record-store.md` | pending | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | 未开始 |
 | 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | pending | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | 未开始 |
 | 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | pending | Electron main/preload IPC, desktop bridge | `npm run test:electron-config` | 未开始 |
@@ -49,7 +49,7 @@
 | --- | --- | --- | --- | --- |
 | `agents/task-00-preflight.md` | implementer | Task 0 | done | 已运行基线命令并记录结果，未改应用代码。 |
 | `agents/task-00-spec-review.md` | spec-reviewer | Task 0 | passed | 已核对 Task 0 是否符合实施计划、命令要求和 docs-only 范围，未发现问题。 |
-| `agents/task-00-code-quality-review.md` | code-quality-reviewer | Task 0 | pending | spec review 通过后再检查日志质量、提交卫生和未提交产物风险。 |
+| `agents/task-00-code-quality-review.md` | code-quality-reviewer | Task 0 | passed | 已确认 Task 0 日志、命令证据和提交卫生满足 docs-only gate，未发现会阻止 Task 1 的质量问题。 |
 
 ## Global Progress
 
@@ -79,6 +79,12 @@
 
 - Confirmed Task 0 baseline evidence and docs-only scope with no spec gaps.
 - Task 0 overall remains in `review` until the code-quality review completes.
+
+### 2026-05-23 Task 0 Quality Review Passed
+
+- Confirmed commits `02c1c03`, `3308852`, and `3fcee64` stayed docs-only and used acceptable Lore commit hygiene.
+- Confirmed ignored local outputs such as `dist/`, `release/`, `.omx/`, and build caches are not tracked or staged for Task 0.
+- Task 0 fully passed both reviews and is complete; the process can move to Task 1.
 
 ## Global Blockers
 
