@@ -1273,9 +1273,49 @@
 
 - 进入实现计划拆分：本地文件存储 port、图片资产管理、AiAdapter v1 schema/contract tests、本机评测脚本、Qwen adapter spike、Electron main IPC、开发开关和授权提示。
 
+### 2026-05-23：真实 AI 识别实施计划
+
+本轮任务是什么：
+
+- 用户确认 `docs/superpowers/specs/2026-05-23-real-ai-recognition-design.md` 后，按 Superpowers writing-plans 流程把真实 AI 识别接入拆成可执行任务。
+
+已完成什么：
+
+- 创建 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。
+- 将实施拆成 9 个任务：基线检查、异步 RecordStore、Electron 本地文件存储、记录 IPC、React 使用桌面存储、AI adapter v1、AI 评测脚本、Qwen adapter spike、真实 AI IPC 与应用内开发开关。
+- 明确每个任务的修改文件、测试命令、预期结果和 Lore commit 信息。
+- 更新文档索引，挂载新的真实 AI 识别实施计划。
+
+卡在哪里：
+
+- 无。下一步需要选择执行方式：subagent-driven 或 inline execution。
+
+执行的是什么命令：
+
+- `sed -n '1,260p' /Users/zha/.codex/superpowers/skills/writing-plans/SKILL.md`
+- `sed -n '1,260p' docs/superpowers/specs/2026-05-23-real-ai-recognition-design.md`
+- `sed -n '1,220p' docs/planning/evocraft-project-memory.md`
+- `tail -n 170 docs/planning/evocraft-roadmap-progress.md`
+- `ls docs/superpowers/plans`
+- `sed -n '1,220p' docs/superpowers/plans/2026-05-17-desktop-first-migration.md`
+- `cat package.json`
+- `find electron src tests -maxdepth 3 -type f | sort`
+- `sed -n '1,260p' electron/main.cjs`
+- `sed -n '1,220p' electron/preload.cjs`
+- `sed -n '1,220p' src/services/storage.ts`
+- `sed -n '1,260p' src/app/App.tsx`
+- `sed -n '1,220p' src/services/aiAdapter.ts`
+- `sed -n '1,220p' tests/electron-config.test.mjs`
+- `rg` 占位词和计划自检扫描命令，范围为真实 AI 识别实施计划、进度文件和文档索引。
+- `git diff --check`
+
+下一步的计划：
+
+- 根据用户选择进入执行：推荐 subagent-driven，每个任务一个独立执行单元并在任务间 review。
+
 ## 下一步
 
-1. 将真实 AI 识别接入设计拆成实现计划：本地文件存储、AI adapter schema、评测脚本、Qwen adapter、Electron main IPC、开发开关和授权提示。
+1. 执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`：本地文件存储、AI adapter schema、评测脚本、Qwen adapter、Electron main IPC、开发开关和授权提示。
 2. 真实 AI 接入前先建立桌面本地数据目录和文件夹 + JSON 索引，避免真实图片和模型日志继续依赖 `localStorage`。
 3. 使用 10-15 张三科混合脱敏样本跑 Qwen 小样本评测，确认 schema、prompt、失败边界、成本和编造答案风险。
 4. 生产签名、公证、自动更新和安装包发布流程另开任务。
