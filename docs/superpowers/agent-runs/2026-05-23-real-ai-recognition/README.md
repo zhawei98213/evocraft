@@ -33,7 +33,7 @@
 | Task | Agent Log | Status | Scope | Required Verification | Commit |
 | --- | --- | --- | --- | --- | --- |
 | 0. Preflight And Baseline | `agents/task-00-preflight.md` | completed | 基线命令，允许 docs-only task log / ledger 更新 | `npm test`, `npm run test:electron-config`, `npm run build` | `02c1c03` |
-| 1. Async RecordStore | `agents/task-01-async-record-store.md` | changes_requested_fixed | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | `55b4fba` + follow-up pending |
+| 1. Async RecordStore | `agents/task-01-async-record-store.md` | completed | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | `55b4fba`, `2e29c9d` |
 | 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | pending | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | 未开始 |
 | 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | pending | Electron main/preload IPC, desktop bridge | `npm run test:electron-config` | 未开始 |
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | pending | App store selection and tests | Focused app/storage tests | 未开始 |
@@ -52,7 +52,7 @@
 | `agents/task-00-code-quality-review.md` | code-quality-reviewer | Task 0 | passed | 已确认 Task 0 日志、命令证据和提交卫生满足 docs-only gate，未发现会阻止 Task 1 的质量问题。 |
 | `agents/task-01-async-record-store.md` | implementer | Task 1 | changes_requested_fixed | 已补上 hydration guard 和 delayed-load 回归测试，等待 code-quality 复审。 |
 | `agents/task-01-spec-review.md` | spec-reviewer | Task 1 | passed | Task 1 async RecordStore implementation matches the planned async load/save slice. |
-| `agents/task-01-code-quality-review.md` | code-quality-reviewer | Task 1 | failed | 已确认测试与构建通过，但发现 async hydration/save race：真实异步存储下可能覆盖新状态或丢失预存记录，Task 2 暂停。 |
+| `agents/task-01-code-quality-review.md` | code-quality-reviewer | Task 1 | passed | 已确认 follow-up fix 关闭 pre-hydration save race，并用 delayed-load 回归测试覆盖真实异步时序。 |
 
 ## Global Progress
 
@@ -119,9 +119,17 @@
 - Focused verification passed again: `npm run test:react -- src/services/storage.test.ts src/features/wrongQuestion/wrongQuestionReducer.test.ts src/app/App.test.tsx`, `npm run build`, and `git diff --check`.
 - Task 1 is ready for code-quality re-review; Task 2 remains blocked until that review passes.
 
+### 2026-05-23 Task 1 Code Quality Re-review Passed
+
+- Re-reviewed Task 1 at commit `2e29c9d` and confirmed the follow-up fix stays within the original async RecordStore scope.
+- Confirmed `App.tsx` now blocks notebook save until hydration settles, which closes the earlier pre-hydration overwrite path.
+- Confirmed `App.test.tsx` now includes a deferred-load regression that proves preexisting notebook records survive delayed hydration before the first save.
+- Re-ran `git diff --check`, `npm run test:react -- src/app/App.test.tsx`, `npm run test:react -- src/services/storage.test.ts src/features/wrongQuestion/wrongQuestionReducer.test.ts src/app/App.test.tsx`, and `npm run build`; all passed.
+- Task 1 fully passed both reviews and is complete. Task 2 may proceed when assigned.
+
 ## Global Blockers
 
-- Task 1 quality gate failed: async hydration/save ordering in `src/app/App.tsx` is not safe for a truly asynchronous store and can cause notebook data loss. Task 2 is blocked until this is fixed and re-reviewed.
+- 无。
 
 ## Review Rules
 

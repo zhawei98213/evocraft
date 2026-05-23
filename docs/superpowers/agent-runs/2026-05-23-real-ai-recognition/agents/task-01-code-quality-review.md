@@ -9,7 +9,7 @@
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-23
 - Completed at: 2026-05-23
-- Status: `failed`
+- Status: `passed`
 
 ## Scope
 
@@ -54,16 +54,18 @@ Forbidden scope:
 - Verified the focused React/Vitest suite, `git diff --check`, `npm run build`, and per-file `lsp_diagnostics` all pass.
 - Found one blocking async lifecycle issue in `App.tsx`: the initial `recordStore.load()` result can overwrite newer in-memory notebook state, and saves issued before hydration completes can drop preexisting records when the store becomes truly asynchronous.
 
+### 2026-05-23 Re-review
+
+- Re-ran the Task 1 quality review at head `2e29c9d` after the follow-up fix that was scoped to `src/app/App.tsx` and `src/app/App.test.tsx`.
+- Confirmed Stage 1 still passes: the fix stays inside Task 1, adds no Electron persistence, IPC, dependency, reducer, or Task 2 store-selection work, and directly addresses the previously requested hydration ordering guarantee.
+- Confirmed the previous blocker is resolved: `saveRecord()` now exits until hydration has settled, and the review screen save button is disabled until that state is true.
+- Confirmed regression coverage now exercises real async latency with a deferred `recordStore.load()` promise and proves preexisting records survive delayed hydration before the first save.
+
 ## Findings
 
-- [HIGH] `src/app/App.tsx:76-82`, `src/app/App.tsx:255-267`, `src/features/wrongQuestion/wrongQuestionReducer.ts:82-87`
-  - Issue: `recordStore.load()` always dispatches `RECORDS_LOADED` once it resolves, and `saveRecord()` builds `nextRecords` from the current `state.records`. Because the app now initializes with `[]`, any real async store latency creates a race: a user can save before hydration completes, which writes only the new record and drops preexisting records; after that, a late `RECORDS_LOADED` can still replace newer in-memory state. The `active` flag only prevents post-unmount dispatches, not stale hydration after local mutations.
-  - Why it matters: Task 1 is explicitly preparing for async desktop persistence. With Electron IPC or filesystem-backed load latency, this becomes a real data-loss path and blocks Task 2.
-  - Fix: Track hydration status or request versioning, prevent save from running against the empty pre-hydration state, and ignore stale load results after local record mutations. A safe approach is to gate notebook writes until the first load settles or to merge loaded records against locally-created records instead of blindly replacing them.
-- [MEDIUM] `src/app/App.test.tsx:69-84`
-  - Issue: The added tests prove immediate localStorage hydration and awaited save completion, but they do not simulate a delayed `RecordStore.load()` or a save that happens before hydration settles.
-  - Why it matters: The blocking race above is currently unprotected by regression coverage, so later desktop-store work can reintroduce or preserve the bug unnoticed.
-  - Fix: Add a focused regression test with a deferred `load()` promise and assert that preexisting records survive a save triggered before hydration resolves, and that stale load results do not overwrite newer state.
+- No remaining blocking findings in the reviewed Task 1 scope.
+- Resolved previous `HIGH`: [src/app/App.tsx](/Users/zha/Documents/CodeSpaces/evo-craft/src/app/App.tsx:81) now gates hydration completion explicitly and [src/app/App.tsx](/Users/zha/Documents/CodeSpaces/evo-craft/src/app/App.tsx:268) prevents pre-hydration saves from writing the empty notebook state.
+- Resolved previous `MEDIUM`: [src/app/App.test.tsx](/Users/zha/Documents/CodeSpaces/evo-craft/src/app/App.test.tsx:96) now covers delayed load plus early save ordering with an injected deferred `RecordStore`.
 
 ## Commands Run
 
@@ -94,13 +96,27 @@ rg -n "console\.log|apiKey\s*=\s*\"|catch \{\s*\}" src/services/storage.ts src/s
 git diff --check
 npm run test:react -- src/services/storage.test.ts src/features/wrongQuestion/wrongQuestionReducer.test.ts src/app/App.test.tsx
 npm run build
+ast_grep_search console.log / empty catch / hardcoded apiKey patterns (tool unavailable in this environment; fallback `rg` scan used)
+git show --stat --summary --format=medium 2e29c9d
+git show --format=medium --unified=120 2e29c9d -- src/services/storage.ts src/services/storage.test.ts src/app/App.tsx src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.ts src/features/wrongQuestion/wrongQuestionReducer.test.ts docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-01-async-record-store.md docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md
+sed -n '1,260p' src/app/App.tsx
+sed -n '260,420p' src/app/App.tsx
+sed -n '1,260p' src/app/App.test.tsx
+sed -n '260,420p' src/app/App.test.tsx
+nl -ba src/app/App.tsx | sed -n '1,340p'
+nl -ba src/app/App.test.tsx | sed -n '1,260p'
+git diff --check
+npm run test:react -- src/app/App.test.tsx
+npm run test:react -- src/services/storage.test.ts src/features/wrongQuestion/wrongQuestionReducer.test.ts src/app/App.test.tsx
+npm run build
 lsp_diagnostics src/services/storage.ts
 lsp_diagnostics src/services/storage.test.ts
 lsp_diagnostics src/app/App.tsx
 lsp_diagnostics src/app/App.test.tsx
 lsp_diagnostics src/features/wrongQuestion/wrongQuestionReducer.ts
 lsp_diagnostics src/features/wrongQuestion/wrongQuestionReducer.test.ts
-ast_grep_search console.log / empty catch / hardcoded apiKey patterns (tool unavailable in this environment; fallback `rg` scan used)
+npx tsc --noEmit --pretty false --project tsconfig.json
+rg -n "console\.log|apiKey\s*=\s*\"|catch \{\s*\}" src/services/storage.ts src/services/storage.test.ts src/app/App.tsx src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.ts src/features/wrongQuestion/wrongQuestionReducer.test.ts
 ```
 
 ## Files Changed
@@ -116,35 +132,37 @@ ast_grep_search console.log / empty catch / hardcoded apiKey patterns (tool unav
   - Passed: `3` files, `19` tests.
 - `npm run build`
   - Passed: `tsc -b && vite build` exited `0`.
+- `git diff --check`
+  - Passed again at re-review head `2e29c9d`.
+- `npm run test:react -- src/app/App.test.tsx`
+  - Passed: `1` file, `10` tests, including the deferred-load early-save regression.
+- `npm run test:react -- src/services/storage.test.ts src/features/wrongQuestion/wrongQuestionReducer.test.ts src/app/App.test.tsx`
+  - Passed: `3` files, `20` tests.
+- `npm run build`
+  - Passed: `tsc -b && vite build` exited `0`.
 - `lsp_diagnostics`
-  - Passed with `0` diagnostics for all modified source files:
-    - `src/services/storage.ts`
-    - `src/services/storage.test.ts`
-    - `src/app/App.tsx`
-    - `src/app/App.test.tsx`
-    - `src/features/wrongQuestion/wrongQuestionReducer.ts`
-    - `src/features/wrongQuestion/wrongQuestionReducer.test.ts`
+  - Attempted on all six modified Task 1 source files, but the `omx_code_intel` transport crashed with `Transport closed` on each call during this re-review.
+- `npx tsc --noEmit --pretty false --project tsconfig.json`
+  - Passed as a fallback project-wide typecheck after the diagnostics transport failure.
 - Pattern scan
-  - `ast_grep_search` was unavailable because `ast-grep` is not installed in this environment.
+  - `ast_grep_search` remained unavailable because `ast-grep` is not installed in this environment.
   - Fallback `rg` scan found no `console.log`, no hardcoded `apiKey = "..."`, and no empty `catch {}` blocks in the modified source files.
 
 ## Blockers
 
-- `Task 1 cannot clear the quality gate.` The current async hydration/save flow is not safe once storage latency becomes real, so Task 2 should not start until the load/save race is fixed and covered by regression tests.
+- 无。
 
 ## Handoff Notes
 
-- Do not start Task 2 yet.
-- Fix the async hydration race in `App.tsx` before wiring Electron local persistence:
-  - avoid saving from the empty pre-hydration record set;
-  - prevent stale `RECORDS_LOADED` results from replacing newer notebook state;
-  - add a regression test that exercises delayed load plus early save ordering.
+- Task 1 code quality re-review passed.
+- Task 2 can proceed from the current async `RecordStore` boundary.
+- If later desktop latency changes this flow again, preserve the guarantee that notebook save cannot run from the empty pre-hydration state unless it is replaced with an equally safe ordering or merge strategy.
 
 ## Leader Review
 
-- Review status: failed
-- Review notes: Task 1 meets the basic async-contract shape and passes tests/build, but it does not provide lifecycle-safe async hydration. The implementation can drop preexisting records or overwrite newer state once the store has real latency, so the review gate must stay closed.
-- Required follow-up: fix the hydration/save race and add delayed-load regression coverage before re-running Task 1 quality review.
+- Review status: passed
+- Review notes: The follow-up fix stays within Task 1 scope, closes the pre-hydration save race, and adds the missing delayed-load regression. No new quality blockers were found in the reviewed scope.
+- Required follow-up: Task 2 may start when assigned.
 
 ## Commit
 
