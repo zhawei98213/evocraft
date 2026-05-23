@@ -1345,6 +1345,38 @@
 
 - 提交并推送本轮文档体系更新；随后按新协议启动 subagent-driven，并为每个 agent 创建/更新对应 task log。
 
+### 2026-05-23：真实 AI 识别 Task 0 基线与 Reviewer 日志补齐
+
+本轮任务是什么：
+
+- 按 subagent-driven 规则启动真实 AI 识别实施分支，并完成 Task 0 基线验证；同时把 reviewer agent 的独立日志补齐，满足“每一个 agent 的工作计划和进度都要记录”的要求。
+
+已完成什么：
+
+- 创建实现分支 `codex/real-ai-recognition-implementation`。
+- Task 0 implementer 已完成基线验证并提交 `02c1c03`。
+- `npm test`、`npm run test:electron-config`、`npm run build` 均已通过。
+- 补充 Task 0 spec reviewer 和 code quality reviewer 的独立 task log，并在 run ledger 增加 Agent Ledger。
+- 明确后续每个实现任务都要保留 implementer、spec reviewer、code quality reviewer 三类独立 agent log。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `sed -n '1,220p' /Users/zha/.codex/superpowers/skills/subagent-driven-development/SKILL.md`
+- `git status --short --branch`
+- `git log --oneline --decorate -5`
+- `sed -n '1,260p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
+- `sed -n '1,260p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-00-preflight.md`
+- `sed -n '1,240p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agent-log-template.md`
+- `rg --files docs/superpowers/agent-runs`
+
+下一步的计划：
+
+- 派发 Task 0 spec reviewer；通过后再派发 Task 0 code quality reviewer，然后进入 Task 1 异步 RecordStore 改造。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。

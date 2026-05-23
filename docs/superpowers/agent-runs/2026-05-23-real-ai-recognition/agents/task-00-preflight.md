@@ -3,6 +3,7 @@
 ## Metadata
 
 - Agent ID: Executor
+- Agent role: `implementer`
 - Task ID: 0
 - Task title: Preflight And Baseline
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`

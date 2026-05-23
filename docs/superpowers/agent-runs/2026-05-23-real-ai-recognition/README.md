@@ -32,7 +32,7 @@
 
 | Task | Agent Log | Status | Scope | Required Verification | Commit |
 | --- | --- | --- | --- | --- | --- |
-| 0. Preflight And Baseline | `agents/task-00-preflight.md` | done | 基线命令，允许 docs-only task log / ledger 更新 | `npm test`, `npm run test:electron-config`, `npm run build` | 本次 Task 0 docs-only Lore commit |
+| 0. Preflight And Baseline | `agents/task-00-preflight.md` | review | 基线命令，允许 docs-only task log / ledger 更新 | `npm test`, `npm run test:electron-config`, `npm run build` | `02c1c03` |
 | 1. Async RecordStore | `agents/task-01-async-record-store.md` | pending | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | 未开始 |
 | 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | pending | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | 未开始 |
 | 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | pending | Electron main/preload IPC, desktop bridge | `npm run test:electron-config` | 未开始 |
@@ -42,6 +42,14 @@
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | pending | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter` | 未开始 |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | pending | Electron AI IPC, desktop AI adapter | Electron config + adapter tests | 未开始 |
 | 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | pending | UI mode, authorization copy, final verification | Full verification suite | 未开始 |
+
+## Agent Ledger
+
+| Agent Log | Role | Task | Status | Work Plan / Progress |
+| --- | --- | --- | --- | --- |
+| `agents/task-00-preflight.md` | implementer | Task 0 | done | 已运行基线命令并记录结果，未改应用代码。 |
+| `agents/task-00-spec-review.md` | spec-reviewer | Task 0 | assigned | 将核对 Task 0 是否符合实施计划、命令要求和 docs-only 范围。 |
+| `agents/task-00-code-quality-review.md` | code-quality-reviewer | Task 0 | pending | spec review 通过后再检查日志质量、提交卫生和未提交产物风险。 |
 
 ## Global Progress
 
@@ -62,6 +70,11 @@
 - `npm test`, `npm run test:electron-config`, and `npm run build` all exited `0`.
 - Task 0 closed with docs-only logging updates and no application-code changes.
 
+### 2026-05-23 Task 0 Review Logs Prepared
+
+- Created independent Task 0 spec review and code quality review logs so every subagent has a recorded work plan and progress trail.
+- Task 0 remains in `review` until both reviewer agents pass.
+
 ## Global Blockers
 
 - 无。
@@ -76,6 +89,13 @@ After each agent completes:
 4. Review diff against assigned scope.
 5. Commit only the intended task scope.
 6. Move to the next task only after review passes or the blocker is explicitly recorded.
+
+For each implementation task:
+
+1. Run the implementation agent.
+2. Run the spec reviewer after implementation completes.
+3. Run the code quality reviewer only after spec review passes.
+4. Keep all three agent logs independent, even when a reviewer produces docs-only changes.
 
 ## Final Verification
 
