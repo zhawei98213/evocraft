@@ -16,9 +16,9 @@ export interface StorageFailure {
 }
 
 export interface RecordStore {
-  load(): WrongQuestionRecord[];
-  save(records: WrongQuestionRecord[]): StorageResult | StorageFailure;
-  clear(): StorageResult | StorageFailure;
+  load(): Promise<WrongQuestionRecord[]>;
+  save(records: WrongQuestionRecord[]): Promise<StorageResult | StorageFailure>;
+  clear(): Promise<StorageResult | StorageFailure>;
 }
 
 export interface StorageLike {
@@ -29,7 +29,7 @@ export interface StorageLike {
 
 export function createLocalStorageRecordStore(storage: StorageLike | undefined): RecordStore {
   return {
-    load() {
+    async load() {
       if (!storage) return [];
 
       try {
@@ -40,7 +40,7 @@ export function createLocalStorageRecordStore(storage: StorageLike | undefined):
       }
     },
 
-    save(records) {
+    async save(records) {
       if (!storage) return { ok: false, reason: "storage_unavailable" };
 
       try {
@@ -51,7 +51,7 @@ export function createLocalStorageRecordStore(storage: StorageLike | undefined):
       }
     },
 
-    clear() {
+    async clear() {
       if (!storage) return { ok: false, reason: "storage_unavailable" };
 
       try {

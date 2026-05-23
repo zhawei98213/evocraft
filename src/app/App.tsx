@@ -63,7 +63,7 @@ export function App() {
   const [state, dispatch] = useReducer(
     wrongQuestionReducer,
     undefined,
-    () => createInitialWrongQuestionState(recordStore.load()),
+    () => createInitialWrongQuestionState([]),
   );
   const desktopBridge = getDesktopBridge();
   const [reviewForm, setReviewForm] = useState<ReviewForm>(emptyReviewForm);
@@ -72,6 +72,19 @@ export function App() {
   useEffect(() => {
     document.body.dataset.screen = state.screen;
   }, [state.screen]);
+
+  useEffect(() => {
+    let active = true;
+
+    recordStore.load().then((records) => {
+      if (!active) return;
+      dispatch({ type: "RECORDS_LOADED", records });
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [recordStore]);
 
   useEffect(() => {
     if (!regionDrag) return undefined;
@@ -239,12 +252,12 @@ export function App() {
     dispatch({ type: "DRAFT_READY", draft: result.draft });
   }
 
-  function saveRecord() {
+  async function saveRecord() {
     if (!state.draft) return;
 
     const record = createRecordFromDraft(state.draft, reviewForm);
     const nextRecords = [record, ...state.records.filter((item) => item.id !== record.id)];
-    const saveResult = recordStore.save(nextRecords);
+    const saveResult = await recordStore.save(nextRecords);
 
     if (!saveResult.ok) {
       dispatch({ type: "SAVE_FAILED", message: getStorageErrorMessage(saveResult.reason) });

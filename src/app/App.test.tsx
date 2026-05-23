@@ -2,11 +2,13 @@ import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { STORAGE_KEY, createMockRecognition, createRecordFromDraft } from "../domain/wrongQuestion";
 import { App } from "./App";
 import type { EvoCraftDesktopApi } from "../services/desktopBridge";
 
 afterEach(() => {
   Reflect.deleteProperty(window, "evocraft");
+  window.localStorage.clear();
 });
 
 describe("App", () => {
@@ -57,9 +59,29 @@ describe("App", () => {
     await user.type(screen.getByLabelText("标题"), "一次函数图像与坐标综合题");
     await user.click(screen.getByRole("button", { name: "保存到错题本" }));
 
-    expect(screen.getByRole("heading", { name: "一次函数图像与坐标综合题" })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "一次函数图像与坐标综合题" })).toBeInTheDocument();
+    });
     await user.click(screen.getByRole("button", { name: "错题本" }));
     expect(screen.getByText("共 1 条")).toBeInTheDocument();
+  });
+
+  it("loads preexisting records from localStorage after startup", async () => {
+    const record = createRecordFromDraft(createMockRecognition(), {
+      id: "wq-preloaded",
+      now: "2026-05-17T08:00:00.000Z",
+      title: "预加载错题",
+    });
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([record]));
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题本" }));
+
+    await waitFor(() => {
+      expect(screen.getByText("共 1 条")).toBeInTheDocument();
+    });
+    expect(screen.getByRole("button", { name: /预加载错题.*打开/ })).toBeInTheDocument();
   });
 
   it("lets users delete region candidates and recover with a manual region", async () => {

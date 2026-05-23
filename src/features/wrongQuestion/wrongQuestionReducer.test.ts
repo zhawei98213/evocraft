@@ -129,4 +129,24 @@ describe("wrongQuestionReducer", () => {
     expect(saved.selectedRecordId).toBe("wq-new");
     expect(saved.screen).toBe("detail");
   });
+
+  it("loads records and selects the first loaded record", () => {
+    const firstRecord = createRecordFromDraft(createMockRecognition(), {
+      id: "wq-loaded-1",
+      now: "2026-05-17T08:00:00.000Z",
+    });
+    const secondRecord = createRecordFromDraft(createMockRecognition(), {
+      id: "wq-loaded-2",
+      now: "2026-05-17T09:00:00.000Z",
+    });
+    const state = createInitialWrongQuestionState([]);
+
+    const loaded = wrongQuestionReducer(state, {
+      type: "RECORDS_LOADED",
+      records: [firstRecord, secondRecord],
+    });
+
+    expect(loaded.records.map((record) => record.id)).toEqual(["wq-loaded-1", "wq-loaded-2"]);
+    expect(loaded.selectedRecordId).toBe("wq-loaded-1");
+  });
 });

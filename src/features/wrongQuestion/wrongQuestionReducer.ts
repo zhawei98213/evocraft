@@ -30,6 +30,7 @@ export interface WrongQuestionState {
 
 export type WrongQuestionAction =
   | { type: "GO_TO_SCREEN"; screen: Screen }
+  | { type: "RECORDS_LOADED"; records: WrongQuestionRecord[] }
   | { type: "IMAGE_SELECTED"; imageUri: string; fileName: string; fileMeta: string }
   | { type: "UPLOAD_FAILED"; message: string }
   | { type: "PRIVACY_ACKNOWLEDGED"; acknowledged: boolean }
@@ -76,6 +77,13 @@ export function wrongQuestionReducer(
       return {
         ...state,
         screen: action.screen,
+      };
+
+    case "RECORDS_LOADED":
+      return {
+        ...state,
+        records: action.records,
+        selectedRecordId: action.records[0]?.id ?? null,
       };
 
     case "IMAGE_SELECTED":
