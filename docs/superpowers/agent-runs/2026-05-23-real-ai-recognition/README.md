@@ -32,7 +32,7 @@
 
 | Task | Agent Log | Status | Scope | Required Verification | Commit |
 | --- | --- | --- | --- | --- | --- |
-| 0. Preflight And Baseline | `agents/task-00-preflight.md` | assigned | 基线命令，无文件改动 | `npm test`, `npm run test:electron-config`, `npm run build` | 派发中 |
+| 0. Preflight And Baseline | `agents/task-00-preflight.md` | done | 基线命令，允许 docs-only task log / ledger 更新 | `npm test`, `npm run test:electron-config`, `npm run build` | 本次 Task 0 docs-only Lore commit |
 | 1. Async RecordStore | `agents/task-01-async-record-store.md` | pending | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | 未开始 |
 | 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | pending | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | 未开始 |
 | 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | pending | Electron main/preload IPC, desktop bridge | `npm run test:electron-config` | 未开始 |
@@ -55,6 +55,12 @@
 
 - Created `agents/task-00-preflight.md`.
 - Task 0 is ready for implementer dispatch.
+
+### 2026-05-23 Task 0 Complete
+
+- Baseline branch check passed on `codex/real-ai-recognition-implementation`.
+- `npm test`, `npm run test:electron-config`, and `npm run build` all exited `0`.
+- Task 0 closed with docs-only logging updates and no application-code changes.
 
 ## Global Blockers
 
