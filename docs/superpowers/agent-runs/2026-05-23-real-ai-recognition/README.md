@@ -33,7 +33,7 @@
 | Task | Agent Log | Status | Scope | Required Verification | Commit |
 | --- | --- | --- | --- | --- | --- |
 | 0. Preflight And Baseline | `agents/task-00-preflight.md` | completed | 基线命令，允许 docs-only task log / ledger 更新 | `npm test`, `npm run test:electron-config`, `npm run build` | `02c1c03` |
-| 1. Async RecordStore | `agents/task-01-async-record-store.md` | done | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | 待本任务提交 |
+| 1. Async RecordStore | `agents/task-01-async-record-store.md` | review | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | `55b4fba` |
 | 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | pending | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | 未开始 |
 | 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | pending | Electron main/preload IPC, desktop bridge | `npm run test:electron-config` | 未开始 |
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | pending | App store selection and tests | Focused app/storage tests | 未开始 |
@@ -51,7 +51,7 @@
 | `agents/task-00-spec-review.md` | spec-reviewer | Task 0 | passed | 已核对 Task 0 是否符合实施计划、命令要求和 docs-only 范围，未发现问题。 |
 | `agents/task-00-code-quality-review.md` | code-quality-reviewer | Task 0 | passed | 已确认 Task 0 日志、命令证据和提交卫生满足 docs-only gate，未发现会阻止 Task 1 的质量问题。 |
 | `agents/task-01-async-record-store.md` | implementer | Task 1 | done | 已完成 Promise 化 RecordStore、async app hydration/save 和 focused verification。 |
-| `agents/task-01-spec-review.md` | spec-reviewer | Task 1 | pending | Task 1 implementer 完成后核对是否严格符合 async storage 计划。 |
+| `agents/task-01-spec-review.md` | spec-reviewer | Task 1 | passed | Task 1 async RecordStore implementation matches the planned async load/save slice. |
 | `agents/task-01-code-quality-review.md` | code-quality-reviewer | Task 1 | pending | Task 1 spec review 通过后检查 async 生命周期、测试充分性和提交卫生。 |
 
 ## Global Progress
@@ -99,6 +99,12 @@
 - Browser `RecordStore` is now Promise-based while preserving the current localStorage fallback behavior and failure reasons.
 - `App.tsx` now boots with an empty notebook state, hydrates records through `RECORDS_LOADED`, and awaits async saves before dispatching `RECORD_SAVED`.
 - Focused verification passed: `npm run test:react -- src/services/storage.test.ts src/features/wrongQuestion/wrongQuestionReducer.test.ts src/app/App.test.tsx` and `npm run build`.
+
+### 2026-05-23 Task 1 Spec Review Passed
+
+- Confirmed the Task 1 implementation matches the async `RecordStore` plan and the explicit acceptance requirements.
+- Confirmed `git diff --check`, the focused React/Vitest suite, and `npm run build` all passed in the reviewed branch.
+- Task 1 overall remains in `review` until the code-quality review completes.
 
 ## Global Blockers
 
