@@ -48,7 +48,7 @@
 | Agent Log | Role | Task | Status | Work Plan / Progress |
 | --- | --- | --- | --- | --- |
 | `agents/task-00-preflight.md` | implementer | Task 0 | done | 已运行基线命令并记录结果，未改应用代码。 |
-| `agents/task-00-spec-review.md` | spec-reviewer | Task 0 | assigned | 将核对 Task 0 是否符合实施计划、命令要求和 docs-only 范围。 |
+| `agents/task-00-spec-review.md` | spec-reviewer | Task 0 | passed | 已核对 Task 0 是否符合实施计划、命令要求和 docs-only 范围，未发现问题。 |
 | `agents/task-00-code-quality-review.md` | code-quality-reviewer | Task 0 | pending | spec review 通过后再检查日志质量、提交卫生和未提交产物风险。 |
 
 ## Global Progress
@@ -74,6 +74,11 @@
 
 - Created independent Task 0 spec review and code quality review logs so every subagent has a recorded work plan and progress trail.
 - Task 0 remains in `review` until both reviewer agents pass.
+
+### 2026-05-23 Task 0 Spec Review Passed
+
+- Confirmed Task 0 baseline evidence and docs-only scope with no spec gaps.
+- Task 0 overall remains in `review` until the code-quality review completes.
 
 ## Global Blockers
 
