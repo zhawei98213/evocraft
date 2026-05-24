@@ -35,7 +35,7 @@
 | 0. Preflight And Baseline | `agents/task-00-preflight.md` | completed | 基线命令，允许 docs-only task log / ledger 更新 | `npm test`, `npm run test:electron-config`, `npm run build` | `02c1c03` |
 | 1. Async RecordStore | `agents/task-01-async-record-store.md` | completed | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | `55b4fba`, `2e29c9d` |
 | 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | completed | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | `ed78c4f`, `09ec94c` |
-| 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | pending review | Electron main/preload IPC, desktop bridge | `npm run test:electron-config` | 待提交 |
+| 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | pending review | Electron main/preload IPC, desktop bridge | `npm run test:electron-config` | `9a78dbb` |
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | pending | App store selection and tests | Focused app/storage tests | 未开始 |
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | pending | AI contract, mock adapter, domain tests | Adapter/domain tests | 未开始 |
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | pending | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config` | 未开始 |
@@ -57,7 +57,7 @@
 | `agents/task-02-spec-review.md` | spec-reviewer | Task 2 | passed | 已核对 temp-root 文件存储、CommonJS 导出、原子写入、图片资产重建和范围边界，未发现阻塞问题。 |
 | `agents/task-02-code-quality-review.md` | code-quality-reviewer | Task 2 | passed | 已确认 follow-up fix 关闭路径逃逸与外部 `file://` 资产透传问题，并补齐 traversal、external file、prune、broken record、updatedAt 排序回归覆盖。 |
 | `agents/task-03-record-store-ipc.md` | implementer | Task 3 | done | 已按 TDD 先扩展 Electron config test 并记录 RED，再完成白名单 record-store IPC、preload invoke-only API、typed desktop bridge 与 renderer-side adapter；另对 `src/app/App.test.tsx` 做了仅限类型兼容的 helper 补齐。 |
-| `agents/task-03-spec-review.md` | spec-reviewer | Task 3 | pending | Task 3 implementer 完成后核对 IPC channel、preload API 和 typed bridge 是否符合计划。 |
+| `agents/task-03-spec-review.md` | spec-reviewer | Task 3 | passed | 已核对 Task 3 IPC channel、preload API、typed bridge 和 type-only helper 兼容修复，未发现 spec 问题。 |
 | `agents/task-03-code-quality-review.md` | code-quality-reviewer | Task 3 | pending | Task 3 spec review 通过后检查 IPC 安全、payload 校验、preload allowlist 和测试充分性。 |
 
 ## Global Progress
@@ -189,6 +189,22 @@
 - `npm run build` exposed one necessary type-only follow-up in `src/app/App.test.tsx`; the desktop bridge test helper now includes no-op record-store methods so the stricter interface compiles, with no Task 4 behavior change.
 - Verification passed: `npm run test:electron-config`, `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx`, `npm run build`, and `git diff --check`.
 - Task 3 implementer scope is complete and ready for spec review. Overall Task 3 remains pending review.
+
+### 2026-05-24 Task 3 Spec Review Passed
+
+- Confirmed the Task 3 code path stays limited to IPC registration, preload invocation, typed bridge APIs, and a renderer-side adapter.
+- Confirmed `electron/main.cjs` registers `records:load`, `records:save`, and `records:clear` after `app.whenReady()` and before `createWindow()`, with `assertAllowedSender(event)` on every handler and array validation on `records:save`.
+- Confirmed `electron/preload.cjs` stays invoke-only and does not expose `ipcRenderer.send` or `DASHSCOPE_API_KEY`.
+- Confirmed `src/services/desktopBridge.ts` and `src/services/desktopRecordStore.ts` type and delegate the async record-store boundary correctly.
+- Confirmed the `src/app/App.test.tsx` helper update is type-only compatibility work and does not switch the app to the desktop store or add Task 4 behavior.
+- Re-ran `git diff --check`, `npm run test:electron-config`, `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx`, and `npm run build`; all passed on the current HEAD.
+- Task 3 remains in review until code-quality review passes.
+
+### 2026-05-24 Task 3 Review Status Updated
+
+- Recorded the Task 3 spec-review result as `passed` in the agent ledger.
+- Set the Task 3 commit anchor to `9a78dbb` for downstream reviewers.
+- Task 3 overall remains in review pending code-quality review.
 
 ## Global Blockers
 
