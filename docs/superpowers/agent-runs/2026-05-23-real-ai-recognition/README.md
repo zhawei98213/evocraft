@@ -37,7 +37,7 @@
 | 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | completed | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | `ed78c4f`, `09ec94c` |
 | 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | completed | Electron main/preload IPC, desktop bridge | `npm run test:electron-config`, `npm run test:electron-store` | `9a78dbb`, `61441ba`, `a2fa40c` |
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | completed | App store selection and tests | `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts`, `npm run build`, `git diff --check` | `32b8fe7` |
-| 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | completed | AI contract, mock adapter, domain tests | `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, `npm run build`, `git diff --check` | 待本任务提交 |
+| 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | completed | AI contract, mock adapter, domain tests | `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, `npm run build`, `git diff --check` | `ea08fc4` |
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | pending | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config` | 未开始 |
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | pending | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter` | 未开始 |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | pending | Electron AI IPC, desktop AI adapter | Electron config + adapter tests | 未开始 |
@@ -64,7 +64,7 @@
 | `agents/task-04-code-quality-review.md` | code-quality-reviewer | Task 4 | passed | 已确认 store 选择顺序、hydration guard、browser fallback、desktop upload bridge 覆盖和范围边界均满足要求。 |
 | `agents/task-05-ai-adapter-contract.md` | implementer | Task 5 | done | 已按 TDD 扩展 AI adapter failure contract，mock adapter 现对缺失题目区域截图返回可恢复错误，adapter/domain 验证与 build 均通过。 |
 | `agents/task-05-spec-review.md` | spec-reviewer | Task 5 | passed | 已确认 Task 5 AI adapter contract 扩展符合计划，且 focused verification 通过。 |
-| `agents/task-05-code-quality-review.md` | code-quality-reviewer | Task 5 | pending | 已创建日志，等待 Task 5 spec review 通过后复审。 |
+| `agents/task-05-code-quality-review.md` | code-quality-reviewer | Task 5 | passed | 已确认共享失败契约、mock 缺失截图失败路径、测试覆盖和范围边界均满足要求，Task 5 质量 review 通过。 |
 
 ## Global Progress
 
@@ -316,6 +316,16 @@
 - Confirmed the review stayed within scope: no real AI/Qwen provider calls, no Electron main/preload changes, no local storage format changes, no React runtime switch/UI behavior changes, no dependencies, and no generated outputs.
 - Required verification passed: `git status --short --branch`, `git diff --check`, `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, and `npm run build`.
 - Task 5 spec review is passed; Task 5 overall remains pending code-quality review.
+
+### 2026-05-24 Task 5 Code Quality Review Passed
+
+- Re-reviewed Task 5 at implementation commit `ea08fc4` after spec review commit `5bffcf4` and confirmed the change stays scoped to the provider-agnostic AI adapter contract, mock behavior, and focused tests.
+- Confirmed `src/services/aiAdapter.ts` adds shared real-provider failure reasons plus optional `retryable` metadata without forcing downstream callers to change immediately.
+- Confirmed `src/services/mockAiAdapter.ts` now returns the exact user-readable `region_image_missing` failure before draft creation when the selected region screenshot is missing.
+- Confirmed `src/services/aiAdapter.test.ts` locks the reviewed draft invariants and the exact recoverable missing-region-image failure result, while the broader suite still passes.
+- Re-ran `git status --short --branch`, `git diff --check`, `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, `npm run build`, and `npm test`; all passed.
+- Confirmed `lsp_diagnostics` reported zero findings for all modified Task 5 source files, and the fallback `rg` hygiene scan found no `console.log`, empty `catch`, or hardcoded `apiKey` patterns.
+- Task 5 fully passed both reviews and is complete. Task 6 may proceed when assigned.
 
 ## Global Blockers
 
