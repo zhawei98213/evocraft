@@ -86,6 +86,14 @@ Forbidden scope:
 - Updated `qwenAdapter.cjs` so auto mode requires a valid provider subject instead of silently writing `"math"`, and review-item status values are whitelisted to `可信` or `需复核`.
 - Re-ran focused and broader verification to GREEN.
 
+### 2026-05-24 Prompt Follow-Up
+
+- Code-quality re-review returned `FAIL` because `buildRecognitionPrompt({ subject: "chinese" })` still included the auto-subject return instruction.
+- Added prompt regression coverage so explicit-subject prompts reject the auto-subject instruction while auto prompts require it.
+- Verified `npm run test:qwen-adapter` failed before the prompt fix.
+- Updated `recognitionPrompt.cjs` so the auto-subject instruction is added only when `subject === "auto"`.
+- Re-ran focused and broader verification to GREEN.
+
 ## Commands Run
 
 ```bash
@@ -140,6 +148,8 @@ npm run build
 - GREEN follow-up: `npm run test:ai-eval-config`, `npm run test:qwen-adapter`, `git diff --check`, and `npm test` passed after removing stale comments and updating the config test to the Task 7 adapter contract.
 - RED quality follow-up: `npm run test:qwen-adapter` failed on invalid review-item status before the normalization fix.
 - GREEN quality follow-up: `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build`, `node scripts/evaluate-ai-samples.mjs`, and `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs` passed.
+- RED prompt follow-up: `npm run test:qwen-adapter` failed while explicit-subject prompts still included the auto-subject instruction.
+- GREEN prompt follow-up: `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build`, `node scripts/evaluate-ai-samples.mjs`, and `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs` passed.
 
 ## Blockers
 
@@ -154,7 +164,7 @@ npm run build
 ## Leader Review
 
 - Review status: code-quality concerns fixed, pending re-review.
-- Review notes: leader follow-up commit `309f8aa` aligned `tests/ai-eval-config.test.mjs` with the Task 7 runner contract. The current follow-up fixes auto-subject corruption, review-item status normalization, and the missing HTTP non-ok / invalid-status coverage noted by code-quality review.
+- Review notes: leader follow-up commit `309f8aa` aligned `tests/ai-eval-config.test.mjs` with the Task 7 runner contract. The current follow-ups fix auto-subject corruption, review-item status normalization, missing HTTP non-ok / invalid-status coverage, and prompt containment for explicit-subject requests.
 - Required follow-up: run Task 7 code-quality re-review before Task 8.
 
 ## Commit

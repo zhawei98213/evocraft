@@ -71,6 +71,19 @@ Forbidden scope:
 - Updated `qwenAdapter.cjs` so explicit user-selected subjects are preserved, auto mode requires a valid provider subject, missing/invalid auto-subject responses return `provider_response_invalid`, and invalid review-item statuses downgrade to `需复核`.
 - Focused and broader verification passed after the fix.
 
+### 2026-05-24 Re-review Failed
+
+- Code-quality re-review confirmed the previous auto-subject and review-status concerns were fixed, but returned `FAIL` on prompt containment.
+- Issue: `buildRecognitionPrompt({ subject: "chinese" })` still included the auto-subject return instruction, so explicit-subject requests were unnecessarily asking the provider to classify the subject again.
+- Required fix: include the `subject` return instruction only for `subject === "auto"`.
+
+### 2026-05-24 Prompt Follow-Up Fixed
+
+- Added prompt contract assertions to `tests/qwen-adapter-contract.test.mjs`.
+- Verified the new assertion failed while explicit-subject prompts still included the auto-subject instruction.
+- Updated `recognitionPrompt.cjs` so the auto-subject instruction is appended only for auto mode.
+- Focused and broader verification passed after the fix.
+
 ## Commands Run
 
 ```bash
@@ -91,6 +104,8 @@ npm run test:qwen-adapter
 npm run test:ai-eval-config
 npm test
 npm run build
+node scripts/evaluate-ai-samples.mjs
+EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs
 ```
 
 ## Files Changed
@@ -117,6 +132,9 @@ npm run build
   - `node -e ... bad reviewItems status ...` printed `[{"label":"答案","status":"模型长篇解释而不是状态"}]`.
 - Follow-up RED: `npm run test:qwen-adapter` failed before the status-normalization fix.
 - Follow-up GREEN: `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build`, `node scripts/evaluate-ai-samples.mjs`, and `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs` passed after the fix.
+- Re-review result: `FAIL` because explicit-subject prompts still included the auto-subject instruction.
+- Prompt follow-up RED: `npm run test:qwen-adapter` failed before the prompt containment fix.
+- Prompt follow-up GREEN: `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build`, `node scripts/evaluate-ai-samples.mjs`, and `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs` passed after the fix.
 
 ## Blockers
 
@@ -130,7 +148,7 @@ npm run build
 ## Leader Review
 
 - Review status: concerns fixed, pending re-review.
-- Review notes: first quality review found auto-subject corruption and unchecked `reviewItems[*].status`. The follow-up adds subject validation, status normalization, and the missing contract coverage.
+- Review notes: first quality review found auto-subject corruption and unchecked `reviewItems[*].status`; the first follow-up fixed those. Re-review then found prompt containment still too broad for explicit subjects; the prompt follow-up now adds a regression and limits the auto-subject instruction to auto mode.
 - Required follow-up: run code-quality re-review before Task 8.
 
 ## Commit

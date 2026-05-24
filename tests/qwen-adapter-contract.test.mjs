@@ -1,6 +1,15 @@
 import assert from "node:assert/strict";
 
+import { buildRecognitionPrompt } from "../electron/ai/recognitionPrompt.cjs";
 import { createQwenAdapter, parseQwenJsonContent } from "../electron/ai/qwenAdapter.cjs";
+
+const explicitSubjectPrompt = buildRecognitionPrompt({ subject: "chinese" });
+assert.match(explicitSubjectPrompt, /用户选择的科目是 chinese/);
+assert.doesNotMatch(explicitSubjectPrompt, /自动判断，必须返回 subject/);
+
+const autoSubjectPrompt = buildRecognitionPrompt({ subject: "auto" });
+assert.match(autoSubjectPrompt, /用户选择的科目是 自动判断/);
+assert.match(autoSubjectPrompt, /自动判断，必须返回 subject/);
 
 const rawParsed = parseQwenJsonContent('{"title":"一元一次方程","questionText":"2x=4"}');
 assert.equal(rawParsed.title, "一元一次方程");

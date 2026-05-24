@@ -439,6 +439,20 @@
 - Re-ran `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build`, and both eval-runner gate probes; all passed.
 - Task 7 is ready for code-quality re-review. Task 8 remains blocked until that re-review passes.
 
+### 2026-05-24 Task 7 Code Quality Re-Review Failed
+
+- Code-quality re-review confirmed the previous auto-subject and review-status concerns were fixed, but returned `FAIL` on prompt containment.
+- The prompt was asking for provider subject classification even when the user had already selected an explicit subject because the auto-subject instruction was always included in `buildRecognitionPrompt(...)`.
+- Required fix: include the `subject` return instruction only when `subject === "auto"`.
+
+### 2026-05-24 Task 7 Prompt Follow-Up Prepared
+
+- Added prompt regression coverage to `tests/qwen-adapter-contract.test.mjs`: explicit subject prompts must not include the auto-subject return instruction, while auto prompts must include it.
+- Verified `npm run test:qwen-adapter` failed before the prompt fix because `buildRecognitionPrompt({ subject: "chinese" })` still included the auto instruction.
+- Updated `recognitionPrompt.cjs` so the auto-subject instruction is appended only for `subject === "auto"`.
+- Re-ran `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build`, and both eval-runner gate probes; all passed.
+- Task 7 is ready for another code-quality re-review. Task 8 remains blocked until that re-review passes.
+
 ## Global Blockers
 
 - 无。

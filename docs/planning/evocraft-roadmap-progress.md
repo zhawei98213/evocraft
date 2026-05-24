@@ -1843,6 +1843,39 @@
 - 提交并推送 Task 7 quality follow-up。
 - 派发 Task 7 code-quality re-review；通过后再创建并派发 Task 8 Real AI IPC。
 
+### 2026-05-24：真实 AI 识别 Task 7 prompt 复审返工
+
+本轮任务是什么：
+
+- 根据 Task 7 code-quality re-review 的失败结论，修复 explicit subject prompt 仍包含 auto-subject 指令的问题。
+
+已完成什么：
+
+- 复审确认前一轮 auto subject 和 review status 修复有效，但 prompt containment 仍有一个问题：显式选择 `chinese/math/english` 时，prompt 仍要求 provider 返回 `subject`。
+- 在 `tests/qwen-adapter-contract.test.mjs` 添加 prompt 回归：显式科目 prompt 不应包含 auto-subject 指令，auto prompt 必须包含。
+- 验证新增测试先失败，失败证据显示 `buildRecognitionPrompt({ subject: "chinese" })` 仍包含自动判断指令。
+- 修改 `recognitionPrompt.cjs`，只有 `subject === "auto"` 时才加入“必须返回 subject”的指令。
+- 重新跑 focused、默认套件、build 和 eval runner gate probes，全部通过。
+
+卡在哪里：
+
+- 无实现卡点；Task 7 仍需 code-quality re-review 通过后才能进入 Task 8。
+
+执行的是什么命令：
+
+- `npm run test:qwen-adapter`（修复前按预期失败，修复后通过）
+- `npm run test:ai-eval-config`
+- `git diff --check`
+- `npm test`
+- `npm run build`
+- `node scripts/evaluate-ai-samples.mjs`
+- `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs`
+
+下一步的计划：
+
+- 提交并推送 Task 7 prompt follow-up。
+- 再次派发 Task 7 code-quality re-review；通过后再创建并派发 Task 8 Real AI IPC。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。
