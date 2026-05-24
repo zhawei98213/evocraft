@@ -2,7 +2,7 @@ const { app, BrowserWindow, dialog, ipcMain, session } = require("electron");
 const { readFile } = require("node:fs/promises");
 const { extname, join } = require("node:path");
 const { isTrustedRendererUrl } = require("./security/rendererTrust.cjs");
-const { createLocalRecordStore, isValidWrongQuestionRecord } = require("./storage/localRecordStore.cjs");
+const { createLocalRecordStore, isValidWrongQuestionRecordArray } = require("./storage/localRecordStore.cjs");
 
 const isDev = Boolean(process.env.ELECTRON_RENDERER_URL);
 const devRendererUrl = process.env.ELECTRON_RENDERER_URL ?? "http://127.0.0.1:5173";
@@ -110,7 +110,7 @@ function registerRecordIpc(recordStore) {
   ipcMain.handle("records:save", async (event, records) => {
     assertAllowedSender(event);
 
-    if (!Array.isArray(records) || !records.every(isValidWrongQuestionRecord)) {
+    if (!isValidWrongQuestionRecordArray(records)) {
       throw new Error("Invalid records payload");
     }
 

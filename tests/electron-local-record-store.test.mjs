@@ -114,6 +114,19 @@ await runTest("rejects malformed records without writing them", async (userDataD
   assert.deepEqual(await store.load(), []);
 });
 
+await runTest("rejects sparse record arrays before writing any records", async (userDataDir) => {
+  const store = createLocalRecordStore(userDataDir);
+  const sparseRecords = [createRecord({ id: "valid-before-hole" })];
+  sparseRecords.length = 2;
+
+  assert.equal(1 in sparseRecords, false);
+  assert.deepEqual(await store.save(sparseRecords), {
+    ok: false,
+    reason: "storage_write_failed",
+  });
+  assert.deepEqual(await store.load(), []);
+});
+
 await runTest("skips broken record json and sorts by descending updatedAt", async (userDataDir) => {
   const recordsDir = join(userDataDir, "wrong-question", "records");
   const validOlderDir = join(recordsDir, "valid-older");

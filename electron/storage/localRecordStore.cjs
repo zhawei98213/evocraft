@@ -42,7 +42,7 @@ function createLocalRecordStore(userDataDir) {
 
     async save(records) {
       try {
-        if (!Array.isArray(records) || !records.every(isValidWrongQuestionRecord)) {
+        if (!isValidWrongQuestionRecordArray(records)) {
           return { ok: false, reason: "storage_write_failed" };
         }
 
@@ -251,6 +251,17 @@ function isValidWrongQuestionRecord(record) {
   );
 }
 
+function isValidWrongQuestionRecordArray(records) {
+  if (!Array.isArray(records)) return false;
+
+  for (let index = 0; index < records.length; index += 1) {
+    if (!Object.prototype.hasOwnProperty.call(records, index)) return false;
+    if (!isValidWrongQuestionRecord(records[index])) return false;
+  }
+
+  return true;
+}
+
 function isValidRegionCandidate(candidate) {
   return (
     isPlainObject(candidate) &&
@@ -319,4 +330,4 @@ function isContainedPath(rootDir, targetPath) {
   return relativePath.length > 0 && !relativePath.startsWith("..") && !relativePath.startsWith("/");
 }
 
-module.exports = { createLocalRecordStore, isValidWrongQuestionRecord };
+module.exports = { createLocalRecordStore, isValidWrongQuestionRecord, isValidWrongQuestionRecordArray };

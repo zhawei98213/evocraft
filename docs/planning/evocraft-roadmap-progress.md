@@ -1505,6 +1505,39 @@
 - 提交并推送 Task 3 follow-up fix。
 - 派出 Task 3 code-quality re-review agent；通过后再创建并派发 Task 4 React Desktop Store。
 
+### 2026-05-24：真实 AI 识别 Task 3 sparse-array 返工
+
+本轮任务是什么：
+
+- 根据 Task 3 code-quality re-review 结果，修复 malformed record payload 中 sparse array 会绕过 `every(...)` 校验并导致部分写入的问题。
+
+已完成什么：
+
+- 复审确认 `rendererTrust` 和 dense malformed-array 修复有效，但 sparse arrays 仍会让 `records.every(isValidWrongQuestionRecord)` 跳过空洞。
+- 先在 `tests/electron-local-record-store.test.mjs` 添加 sparse-array 回归测试，并确认 `npm run test:electron-store` 在修复前失败，失败证据显示 `valid-before-hole` 已被部分写入。
+- 在 `electron/storage/localRecordStore.cjs` 新增 `isValidWrongQuestionRecordArray(...)`，使用 index + `hasOwnProperty` 逐项检查，任何空洞或非法记录都会在写入前整体拒绝。
+- 更新 `electron/main.cjs` 和 local store direct save boundary，共用 sparse-safe validation helper。
+- 验证通过：`npm run test:electron-store`、`npm run test:electron-config`、`npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx`、`npm run build`、`npm test`、`git diff --check`。
+
+卡在哪里：
+
+- 无实现卡点；Task 3 仍需 code-quality re-review 通过后才能启动 Task 4。
+
+执行的是什么命令：
+
+- `npm run test:electron-store`（修复前失败，修复后通过）
+- `npm run test:electron-config`
+- `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx`
+- `npm run build`
+- `npm test`
+- `git diff --check`
+- `git status --short --branch`
+
+下一步的计划：
+
+- 提交并推送 sparse-array follow-up fix。
+- 再次派出 Task 3 code-quality re-review；通过后进入 Task 4 React Desktop Store。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。

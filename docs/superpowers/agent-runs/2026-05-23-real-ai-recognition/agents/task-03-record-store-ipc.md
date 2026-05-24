@@ -10,6 +10,7 @@
 - Assigned at: 2026-05-24
 - Completed at: 2026-05-24 10:08:44 CST
 - Follow-up completed at: 2026-05-24 10:38 CST
+- Sparse-array follow-up completed at: 2026-05-24 10:48 CST
 - Status: `changes_requested_fixed`
 
 ## Scope
@@ -70,6 +71,14 @@ Forbidden scope:
 - Added runtime regression tests for near-match dev origins, arbitrary `file://` production pages, and malformed record arrays.
 - Re-ran the focused verification suite; all commands passed.
 
+### 2026-05-24 Sparse-Array Follow-Up
+
+- Code-quality re-review confirmed renderer trust and dense malformed-array fixes, but found that `Array.prototype.every(...)` skips sparse array holes.
+- Added a sparse-array regression test first and confirmed the RED state: `npm run test:electron-store` failed because a valid record was partially written before the sparse payload returned failure.
+- Replaced `records.every(...)` with `isValidWrongQuestionRecordArray(...)`, an index-based validation helper that rejects missing array entries before any write occurs.
+- Updated `electron/main.cjs` and `electron/storage/localRecordStore.cjs` to share the sparse-safe helper.
+- Re-ran focused and full verification; all commands passed.
+
 ## Commands Run
 
 ```bash
@@ -116,6 +125,13 @@ npm test
 - FOLLOW-UP GREEN: `npm run build` passed.
 - FOLLOW-UP GREEN: `npm test` passed with `5` files and `28` tests passing.
 - FOLLOW-UP GREEN: `git diff --check` passed.
+- SPARSE RED: `npm run test:electron-store` failed before the sparse-safe validation fix because `store.load()` returned the already-written `valid-before-hole` record.
+- SPARSE GREEN: `npm run test:electron-store` passed after the index-based validation helper.
+- SPARSE GREEN: `npm run test:electron-config` passed.
+- SPARSE GREEN: `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx` passed with `2` files and `13` tests passing.
+- SPARSE GREEN: `npm run build` passed.
+- SPARSE GREEN: `npm test` passed with `5` files and `28` tests passing.
+- SPARSE GREEN: `git diff --check` passed.
 
 ## Blockers
 
@@ -125,6 +141,7 @@ npm test
 
 - This task only exposes the local store through safe IPC and renderer-side service types. React app selection of the desktop store starts in Task 4.
 - Code-quality follow-up fixed the IPC trust-boundary blockers without adding Task 4 behavior.
+- Sparse-array follow-up fixed the remaining partial-write validation blocker without changing renderer behavior.
 
 ## Leader Review
 
