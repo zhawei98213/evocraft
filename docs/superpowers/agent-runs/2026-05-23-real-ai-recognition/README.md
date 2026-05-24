@@ -39,7 +39,7 @@
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | completed | App store selection and tests | `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts`, `npm run build`, `git diff --check` | `32b8fe7` |
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | completed | AI contract, mock adapter, domain tests | `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, `npm run build`, `git diff --check` | `ea08fc4` |
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | completed | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config`, runner gate checks, `npm test`, `git diff --check` | `58c827a`, `85028ee` |
-| 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | in_review | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check` | 待补 |
+| 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | in_review | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check` | `5f9ba4f` |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | pending | Electron AI IPC, desktop AI adapter | Electron config + adapter tests | 未开始 |
 | 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | pending | UI mode, authorization copy, final verification | Full verification suite | 未开始 |
 
@@ -389,6 +389,15 @@
 - Created independent Task 7 implementer, spec-review, and code-quality-review logs before implementation.
 - Task 7 is assigned to the implementer and must stay inside Electron/Node Qwen adapter spike, fake-fetch contract tests, local evaluation runner connection, and `package.json` script updates.
 - Task 7 must not modify Electron main/preload IPC, renderer runtime behavior, storage format, dependencies, private samples/results, API keys, or `.env` files.
+
+### 2026-05-24 Task 7 Implementer Complete
+
+- Implementer followed TDD and recorded the expected RED failure: `node tests/qwen-adapter-contract.test.mjs` failed with `ERR_MODULE_NOT_FOUND` before `electron/ai/qwenAdapter.cjs` existed.
+- Added `electron/ai/recognitionPrompt.cjs`, `electron/ai/qwenAdapter.cjs`, `tests/qwen-adapter-contract.test.mjs`, the `test:qwen-adapter` package script, and the Qwen-backed local eval-runner wiring in `scripts/evaluate-ai-samples.mjs`.
+- The contract test now covers fenced/raw JSON parsing, selected-region-only provider requests, required provider/fetch failure reasons, success draft mapping, empty `correctAnswer`, and Qwen trace / `providerMeta` mapping.
+- Focused verification passed: `node tests/qwen-adapter-contract.test.mjs`, `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, and `git diff --check`.
+- Runner safety probes passed without a real key: default run exits `2` with the disabled message, and enabled-without-key exits `2` with the `DASHSCOPE_API_KEY` required message.
+- Implementation commit recorded at `5f9ba4f`. Task 7 now awaits spec review and code-quality review; Task 8 has not started.
 - Task 8 remains responsible for real AI IPC and renderer adapter wiring.
 
 ## Global Blockers

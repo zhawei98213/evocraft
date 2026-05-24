@@ -129,4 +129,4 @@ EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs
 
 ## Commit
 
-- Commit hash:
+- Commit hash: `5f9ba4f`
