@@ -35,7 +35,7 @@
 | 0. Preflight And Baseline | `agents/task-00-preflight.md` | completed | 基线命令，允许 docs-only task log / ledger 更新 | `npm test`, `npm run test:electron-config`, `npm run build` | `02c1c03` |
 | 1. Async RecordStore | `agents/task-01-async-record-store.md` | completed | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | `55b4fba`, `2e29c9d` |
 | 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | completed | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | `ed78c4f`, `09ec94c` |
-| 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | pending re-review | Electron main/preload IPC, desktop bridge | `npm run test:electron-config`, `npm run test:electron-store` | `9a78dbb`, follow-up pending |
+| 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | blocked | Electron main/preload IPC, desktop bridge | `npm run test:electron-config`, `npm run test:electron-store` | `9a78dbb`, `61441ba` |
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | pending | App store selection and tests | Focused app/storage tests | 未开始 |
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | pending | AI contract, mock adapter, domain tests | Adapter/domain tests | 未开始 |
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | pending | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config` | 未开始 |
@@ -58,7 +58,7 @@
 | `agents/task-02-code-quality-review.md` | code-quality-reviewer | Task 2 | passed | 已确认 follow-up fix 关闭路径逃逸与外部 `file://` 资产透传问题，并补齐 traversal、external file、prune、broken record、updatedAt 排序回归覆盖。 |
 | `agents/task-03-record-store-ipc.md` | implementer | Task 3 | changes_requested_fixed | 已补上 renderer URL 精确匹配、record payload 运行时校验、恶意近似 URL 与 malformed save 回归测试，等待 code-quality re-review。 |
 | `agents/task-03-spec-review.md` | spec-reviewer | Task 3 | passed | 已核对 Task 3 IPC channel、preload API、typed bridge 和 type-only helper 兼容修复，未发现 spec 问题。 |
-| `agents/task-03-code-quality-review.md` | code-quality-reviewer | Task 3 | failed | 已确认 preload/typed bridge 范围正确，但 sender allowlist 过宽、`records:save` 只做 `Array.isArray` 校验且静态测试无法覆盖这些边界，Task 3 需返工后复审。 |
+| `agents/task-03-code-quality-review.md` | code-quality-reviewer | Task 3 | failed | Re-review 确认 renderer trust helper 和 dense malformed-array 修复已生效，但 sparse array 仍会绕过 `every(...)` 校验并在失败前部分写入记录，Task 3 继续 blocked。 |
 
 ## Global Progress
 
@@ -222,9 +222,18 @@
 - Verification passed: `npm run test:electron-config`, `npm run test:electron-store`, `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx`, `npm run build`, `npm test`, and `git diff --check`.
 - Task 3 is ready for code-quality re-review. Task 4 remains pending until that re-review passes.
 
+### 2026-05-24 Task 3 Code Quality Re-review Failed
+
+- Re-ran `git status --short --branch`, `git diff --check`, `npm run test:electron-config`, `npm run test:electron-store`, `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx`, `npm run build`, and `npm test`; all passed.
+- Confirmed the original sender-allowlist flaw is fixed: runtime probes now reject the prior near-match dev URL and arbitrary production `file://` page, and `tests/electron-config.test.mjs` exercises those cases at runtime.
+- Confirmed dense malformed arrays now fail cleanly for both IPC-path validation and direct store callers.
+- Found one remaining malformed-array integrity bug: sparse arrays still bypass `records.every(isValidWrongQuestionRecord)` in both `electron/main.cjs` and `electron/storage/localRecordStore.cjs`.
+- Direct probe evidence: a sparse array with keys `[0, 2]` returned `every === true`, then `store.save(...) => { ok: false, reason: "storage_write_failed" }`, but `store.load()` still returned the already-written `"valid"` record.
+- `tests/electron-local-record-store.test.mjs` does not yet cover the sparse-array case, so Task 3 stays blocked until validation becomes sparse-safe and the regression is added.
+
 ## Global Blockers
 
-- Task 3 follow-up fix is ready for code-quality re-review; Task 4 must remain pending until that re-review passes.
+- Task 3 remains blocked because sparse malformed arrays still bypass `every(...)` validation and can partially write notebook state before failure; Task 4 must remain pending until that edge case is fixed and re-reviewed.
 
 ## Review Rules
 

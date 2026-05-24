@@ -8,7 +8,7 @@
 - Task title: Record Store IPC Code Quality Review
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-24
-- Completed at: 2026-05-24 10:27:59 CST
+- Completed at: 2026-05-24 10:41:30 CST
 - Status: `failed`
 
 ## Scope
@@ -63,15 +63,26 @@ Forbidden scope:
 - Confirmed the malformed-save gap with a direct Node probe: `createLocalRecordStore(...).save([{ id: "broken-only-id" }, "bad-record"])` returned `{ ok: true }` and reloaded malformed notebook entries.
 - `tests/electron-config.test.mjs` remains static regex coverage, so it would not catch either the sender-allowlist bug or malformed `records:save` acceptance.
 
+### 2026-05-24 Re-review Complete
+
+- Reviewed the follow-up fix at `61441ba` and current HEAD, then re-ran the full required suite: `git status --short --branch`, `git diff --check`, `npm run test:electron-config`, `npm run test:electron-store`, `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx`, `npm run build`, and `npm test`; all passed.
+- Confirmed the original sender-allowlist blocker is closed: `electron/security/rendererTrust.cjs` now requires exact dev origin/path/search matching and exact packaged `dist/index.html` file URL matching in production, and direct probes returned `false` for the previous near-match dev URL and arbitrary production `file://` URL.
+- Confirmed the preload surface remains invoke-only and still does not expose raw `ipcRenderer`, `ipcRenderer.send`, env vars, or `DASHSCOPE_API_KEY`.
+- Confirmed `electron/main.cjs` still calls `assertAllowedSender(event)` before every `records:*` handler and now checks `isValidWrongQuestionRecord` before `recordStore.save(records)`.
+- Confirmed `electron/storage/localRecordStore.cjs` now rejects the previously reported dense malformed array input and `tests/electron-local-record-store.test.mjs` covers that case.
+- Found one remaining integrity bug: both `electron/main.cjs` and `electron/storage/localRecordStore.cjs` rely on `records.every(isValidWrongQuestionRecord)`, which skips sparse array holes. A sparse payload therefore bypasses the intended “validate every entry before writing” guard.
+- Confirmed the sparse-array bug with a direct probe: a payload whose keys were `[0, 2]` produced `every === true`, `store.save(...) => { ok: false, reason: "storage_write_failed" }`, and `store.load()` still returned the already-written `"valid"` record. That means malformed input can still partially mutate notebook state before the save fails.
+- Confirmed the new regression coverage does not exercise sparse arrays, so this remaining malformed-array case is still untested.
+
 ## Code Review Summary
 
 **Files Reviewed:** 8
-**Total Issues:** 3
+**Total Issues:** 2
 
 ### By Severity
 
 - HIGH: 1
-- MEDIUM: 2
+- MEDIUM: 1
 - LOW: 0
 
 ### Strengths
@@ -79,42 +90,38 @@ Forbidden scope:
 - `electron/preload.cjs` keeps the record-store bridge invoke-only and does not widen renderer access with raw `ipcRenderer` or secret exposure.
 - `src/services/desktopBridge.ts` and `src/services/desktopRecordStore.ts` preserve the async `RecordStore` contract cleanly, so Task 4 can switch store implementations without changing the storage API shape.
 - The Task 3 diff stays scoped: no React store selection, no storage-format churn, no dependency additions, and no generated output committed.
+- `electron/security/rendererTrust.cjs` closes the original allowlist flaw with exact dev origin/path/search matching and exact packaged production renderer URL matching.
+- The dense malformed-array path reported in the first review is now blocked at both the IPC boundary and direct store boundary, with matching runtime regression coverage.
 
 ### Issues
 
 #### HIGH
 
-1. **Overbroad sender allowlist can authorize untrusted pages to use the new record-store IPC surface**
-   - File: `electron/main.cjs:25-28`, `electron/main.cjs:125-133`
-   - Issue: `isAllowedRendererUrl()` uses `url.startsWith(devRendererUrl)` in dev and `url.startsWith("file://")` in production. That accepts URLs such as `http://127.0.0.1:5173.evil.test/pwn` and arbitrary local HTML files like `file:///tmp/evil.html`.
-   - Why it matters: the same weak check guards both navigation and `assertAllowedSender(event)`. After Task 3, an untrusted page that passes this check can call `records:load`, `records:save`, and `records:clear`, which exposes or destroys the user's local notebook data.
-   - Fix: parse the URL and compare exact trusted origins/paths instead of raw prefixes. In dev, compare `new URL(url).origin` against the configured dev origin and restrict the pathname to the expected app root. In production, compare against the exact packaged renderer file URL(s), not generic `file://`.
+1. **Sparse arrays still bypass the “validate every save entry” guard and can partially write notebook state**
+   - File: `electron/main.cjs:113-117`, `electron/storage/localRecordStore.cjs:45-63`
+   - Issue: both layers use `records.every(isValidWrongQuestionRecord)`. JavaScript `every(...)` skips sparse array holes, so payloads like `[validRecord, <hole>, validRecord]` pass the validation gate even though not every entry was checked.
+   - Why it matters: the store writes sequentially. A sparse payload can write one or more earlier valid records, then hit the hole, throw, and return `{ ok: false }` after the notebook has already been mutated. That violates the intended boundary and leaves persistence behavior non-atomic for malformed input.
+   - Fix: reject sparse arrays explicitly before writing, for example by requiring `records.length === Object.keys(records).length` plus shape validation, or by iterating with an index-based loop that fails on missing entries before any write occurs. Add a regression test that proves sparse arrays are rejected with zero writes.
 
 #### MEDIUM
 
-1. **`records:save` accepts malformed arrays and persists invalid notebook entries**
-   - File: `electron/main.cjs:109-116`, `electron/storage/localRecordStore.cjs:43-59`, `electron/storage/localRecordStore.cjs:78-96`
-   - Issue: the IPC layer validates only `Array.isArray(records)`. The main-process store then serializes each element as if it were a `WrongQuestionRecord`, so malformed objects or primitives can be written successfully.
-   - Why it matters: this is the write boundary for on-disk notebook state. A renderer bug, malicious renderer, or future API misuse can corrupt persisted records while still returning `{ ok: true }`.
-   - Fix: validate each entry before writing, ideally with a narrow runtime schema for `WrongQuestionRecord` at the IPC boundary or immediately inside `createLocalRecordStore.save()`. Reject the whole request on invalid shape and add regression coverage for malformed payloads.
-
-2. **Security-sensitive coverage is too static to trust this IPC boundary**
-   - File: `tests/electron-config.test.mjs:18-42`
-   - Issue: the test only regex-matches source text. It does not execute `assertAllowedSender()`, prove the allowlist rejects near-match origins, or verify malformed `records:save` payloads fail at runtime.
-   - Why it matters: Task 3 adds a sensitive persistence bridge. The current test can stay green while the effective runtime trust boundary is broken, which is exactly what happened with the allowlist issue above.
-   - Fix: add runtime-focused tests for the allowlist and payload guard. The simplest path is to extract the URL check into a small helper with direct unit tests, then add a main-process test that exercises the `records:*` handlers with trusted and untrusted sender URLs plus malformed save payloads.
+1. **Regression coverage still misses the sparse-array malformed payload that bypasses validation**
+   - File: `tests/electron-local-record-store.test.mjs:107-115`
+   - Issue: the new malformed-record test covers only a dense invalid array (`[{ id: "broken-only-id" }, "bad-record"]`). It does not cover sparse arrays, which are the remaining bypass for the current validation approach.
+   - Why it matters: the current suite will stay green while malformed sparse payloads continue to mutate persisted data before failing.
+   - Fix: add a regression test using a sparse array such as `[validRecord, <hole>, validRecord]` and assert that save fails without writing any record directory or index entry.
 
 ### Recommendations
 
-- Tighten the sender allowlist first; Task 3 should not expose persistent notebook read/write IPC behind prefix-based or generic `file://` trust decisions.
-- Add runtime payload validation for `WrongQuestionRecord[]` before the store writes to disk.
-- Upgrade Task 3 coverage from regex-only static checks to at least one runtime test for sender gating and one for malformed `records:save` rejection.
+- Keep the new renderer trust helper and runtime coverage; those parts are now sound.
+- Replace `every(...)`-based validation with a sparse-safe validation path before any write occurs in either `electron/main.cjs` or `createLocalRecordStore.save(...)`.
+- Extend the malformed-payload regression coverage to prove sparse arrays are rejected with zero writes.
 
 ### Assessment
 
 **Ready to merge?** No
 
-**Reasoning:** The bridge typing and preload surface are clean, but the current sender allowlist is not strong enough for the expanded record-store IPC surface, and the write boundary will persist malformed arrays as successful saves. Task 3 needs changes before Task 4 can safely build on it.
+**Reasoning:** The sender-allowlist issue and the original dense malformed-array bug are fixed, but the follow-up still leaves one malformed-array bypass that can partially write notebook state. Task 3 still needs one more narrow fix before Task 4 can safely build on it.
 
 ## Commands Run
 
@@ -125,8 +132,10 @@ git diff bd9ddcf..9a78dbb -- electron/main.cjs electron/preload.cjs src/services
 git diff --check bd9ddcf..9a78dbb
 git diff --check
 npm run test:electron-config
+npm run test:electron-store
 npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx
 npm run build
+npm test
 node -e 'const devRendererUrl="http://127.0.0.1:5173"; console.log("devPrefixBypass", "http://127.0.0.1:5173.evil.test/pwn".startsWith(devRendererUrl)); console.log("prodFileOverbroad", "file:///tmp/evil.html".startsWith("file://"));'
 node <<'NODE'
 const { mkdtempSync } = require('node:fs');
@@ -139,6 +148,67 @@ const { createLocalRecordStore } = require('./electron/storage/localRecordStore.
   const result = await store.save([{ id: 'broken-only-id' }, 'bad-record']);
   const loaded = await store.load();
   console.log(JSON.stringify({ result, loaded }, null, 2));
+})();
+NODE
+git show --stat --oneline --no-patch 61441ba
+git diff --stat de4ef44..61441ba
+git diff de4ef44..61441ba -- electron/main.cjs electron/security/rendererTrust.cjs electron/storage/localRecordStore.cjs tests/electron-config.test.mjs tests/electron-local-record-store.test.mjs src/services/desktopBridge.ts src/services/desktopRecordStore.ts src/app/App.test.tsx docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-03-record-store-ipc.md docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md
+npx tsc --noEmit --pretty false --project tsconfig.json
+node <<'NODE'
+const { join } = require('node:path');
+const { pathToFileURL } = require('node:url');
+const { isTrustedRendererUrl } = require('./electron/security/rendererTrust.cjs');
+const appDirname = join(process.cwd(), 'electron');
+const prod = pathToFileURL(join(process.cwd(), 'dist/index.html')).toString();
+console.log(JSON.stringify({
+  dev_root: isTrustedRendererUrl('http://127.0.0.1:5173/', { devRendererUrl: 'http://127.0.0.1:5173', isDev: true }),
+  dev_prefix_bypass: isTrustedRendererUrl('http://127.0.0.1:5173.evil.test/pwn', { devRendererUrl: 'http://127.0.0.1:5173', isDev: true }),
+  dev_path_mismatch: isTrustedRendererUrl('http://127.0.0.1:5173/other', { devRendererUrl: 'http://127.0.0.1:5173', isDev: true }),
+  prod_exact: isTrustedRendererUrl(prod, { appDirname, isDev: false }),
+  prod_file_bypass: isTrustedRendererUrl('file:///tmp/evil.html', { appDirname, isDev: false })
+}, null, 2));
+NODE
+node <<'NODE'
+const { mkdtempSync } = require('node:fs');
+const { tmpdir } = require('node:os');
+const { join } = require('node:path');
+const { createLocalRecordStore, isValidWrongQuestionRecord } = require('./electron/storage/localRecordStore.cjs');
+const sparse = [{
+  id: 'valid',
+  appId: 'wrong_question_capture',
+  title: 'x',
+  subject: 'math',
+  createdAt: '2026-05-24T09:00:00.000Z',
+  updatedAt: '2026-05-24T09:00:00.000Z',
+  questionText: 'q',
+  originalImageUri: 'data:image/png;base64,aa==',
+  selectedRegion: { id: 'c1', label: 'L', x: 0, y: 0, width: 1, height: 1, unit: 'ratio', source: 'manual', confidence: 1 },
+  selectedRegionImageUri: 'data:image/png;base64,aa==',
+  cleanedQuestionImageUri: 'data:image/png;base64,aa==',
+  visualSnippetUri: 'data:image/png;base64,aa==',
+  studentAnswer: '',
+  correctAnswer: '',
+  notes: '',
+  recognitionStatus: 'reviewed',
+  recognitionConfidence: 1,
+  cleanupStatus: 'reviewed',
+  cleanupConfidence: 1,
+  modelTraces: [{ provider: 'mock', modelId: 'm', task: 'ocr' }],
+  reviewItems: [{ label: 'l', status: 'reviewed' }],
+}];
+sparse[2] = sparse[0];
+(async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'evocraft-sparse2-'));
+  const store = createLocalRecordStore(dir);
+  const result = await store.save(sparse);
+  const loaded = await store.load();
+  console.log(JSON.stringify({
+    every: sparse.every(isValidWrongQuestionRecord),
+    length: sparse.length,
+    keys: Object.keys(sparse),
+    result,
+    loadedIds: loaded.map((record) => record.id),
+  }, null, 2));
 })();
 NODE
 ```
@@ -154,29 +224,33 @@ NODE
 - `git diff --check bd9ddcf..9a78dbb` passed.
 - `git diff --check` passed.
 - `npm run test:electron-config` passed.
+- `npm run test:electron-store` passed.
 - `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx` passed with 2 files and 13 tests.
 - `npm run build` passed.
-- `lsp_diagnostics` reported zero diagnostics for `electron/main.cjs`, `electron/preload.cjs`, `src/services/desktopBridge.ts`, `src/services/desktopRecordStore.ts`, `tests/electron-config.test.mjs`, and `src/app/App.test.tsx`.
+- `npm test` passed with 5 files and 28 tests.
+- `npx tsc --noEmit --pretty false --project tsconfig.json` passed.
+- Attempted `lsp_diagnostics` / `lsp_servers` on the modified follow-up files, but the `omx_code_intel` transport was closed in this session. Fallback type diagnostics via `tsc --noEmit` were clean.
 - `ast_grep_search` was unavailable in this environment (`ast-grep not installed`), so pattern checks fell back to direct source inspection and `rg`.
-- Manual probe confirmed the URL allowlist is overbroad in both dev and production matching.
-- Manual Node probe confirmed malformed `records:save` payloads are currently persisted as successful writes.
+- Runtime probe confirmed the tightened renderer trust helper accepts only the exact trusted dev and production URLs and rejects the prior bypass URLs.
+- Dense malformed-array probe now fails cleanly with no writes.
+- Sparse-array probe still bypasses `every(...)` validation and leaves a partially written record on disk before failure.
 
 ## Blockers
 
-- `electron/main.cjs` sender allowlist is too weak for the new `records:*` IPC surface.
-- `records:save` lacks runtime record-shape validation and can persist malformed arrays.
-- `tests/electron-config.test.mjs` does not yet provide runtime regression coverage for those boundaries.
+- Sparse arrays still bypass the `isValidWrongQuestionRecord` guard in `electron/main.cjs` and `electron/storage/localRecordStore.cjs`, so malformed input can partially mutate notebook state before save returns failure.
+- `tests/electron-local-record-store.test.mjs` does not yet cover that sparse-array malformed payload.
 
 ## Handoff Notes
 
 - Do not start Task 4 until Task 3 is reworked and re-reviewed.
-- Fix order should be: tighten `isAllowedRendererUrl()` / `assertAllowedSender()`, add per-record payload validation, then add runtime regression tests that prove both protections hold.
+- Keep the new renderer trust helper and dense malformed-array guard as-is.
+- Next fix should make malformed-array validation sparse-safe before any write occurs, then add a sparse-array regression test that proves zero writes on failure.
 
 ## Leader Review
 
 - Review status: failed
-- Review notes: Request changes. The main-process bridge stays scoped and type-safe, but the sender allowlist and payload-validation gaps are blocking for a persistence IPC surface.
-- Required follow-up: Return Task 3 to the implementer for sender-allowlist hardening, runtime payload validation, and stronger regression coverage.
+- Review notes: Request changes. The original blockers are largely resolved, but the persistence guard still misses sparse arrays and can partially write notebook state before failure.
+- Required follow-up: Return Task 3 to the implementer for sparse-safe payload validation and matching regression coverage.
 
 ## Commit
 
