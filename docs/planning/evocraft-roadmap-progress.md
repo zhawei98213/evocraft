@@ -1808,6 +1808,41 @@
 - 提交并推送 Task 7 spec-review docs。
 - 派发 Task 7 code-quality reviewer；通过后再创建并派发 Task 8 Real AI IPC。
 
+### 2026-05-24：真实 AI 识别 Task 7 质量复审返工
+
+本轮任务是什么：
+
+- 根据 Task 7 code-quality review 的 concerns，修复 Qwen adapter 在 auto 科目归类和 `reviewItems.status` 归一化上的数据质量风险。
+
+已完成什么：
+
+- 复核 reviewer 反馈：Task 7 总体可作为 spike 通过，但 `subject: "auto"` 会静默写成 `math`，且 malformed provider response 可以把任意 `reviewItems[*].status` 写进草稿。
+- 先扩展 `tests/qwen-adapter-contract.test.mjs`，覆盖 `response.ok === false`、非法 review status、auto mode 缺少 provider subject、auto mode 返回合法 provider subject 四个场景。
+- 验证新增测试先在非法 review status 场景失败，证明漏洞可复现。
+- 更新 `recognitionPrompt.cjs`，要求自动判断科目时返回 `subject`，取值只能是 `chinese`、`math` 或 `english`。
+- 更新 `qwenAdapter.cjs`，显式科目保持用户选择，auto mode 必须拿到合法 provider subject，否则返回 `provider_response_invalid`；`reviewItems.status` 限定到 `可信/需复核`，非法值降级为 `需复核`。
+- 重新跑 focused、默认套件、build 和 eval runner gate probes，全部通过。
+
+卡在哪里：
+
+- 无实现卡点；Task 7 需要 code-quality re-review 通过后才能进入 Task 8。
+
+执行的是什么命令：
+
+- `npm run test:qwen-adapter`（修复前按预期失败，修复后通过）
+- `npm run test:ai-eval-config`
+- `git diff --check`
+- `npm test`
+- `npm run build`
+- `node scripts/evaluate-ai-samples.mjs`
+- `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs`
+- `git status --short --branch`
+
+下一步的计划：
+
+- 提交并推送 Task 7 quality follow-up。
+- 派发 Task 7 code-quality re-review；通过后再创建并派发 Task 8 Real AI IPC。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。

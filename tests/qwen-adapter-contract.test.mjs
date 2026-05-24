@@ -165,6 +165,24 @@ const requestFailureResult = await createQwenAdapter({
 assert.equal(requestFailureResult.ok, false);
 assert.equal(requestFailureResult.reason, "provider_request_failed");
 
+const nonOkResponseResult = await createQwenAdapter({
+  apiKey: "test-key",
+  fetchImpl: async () => ({
+    ok: false,
+    status: 429,
+    async json() {
+      return { error: "rate limited" };
+    },
+  }),
+}).recognizeQuestion({
+  subject: "chinese",
+  imageUri: "data:image/png;base64,b3JpZ2luYWw=",
+  selectedRegion: placeholderRegion,
+  selectedRegionImageUri: "data:image/png;base64,cmVnaW9u",
+});
+assert.equal(nonOkResponseResult.ok, false);
+assert.equal(nonOkResponseResult.reason, "provider_request_failed");
+
 const invalidResponseResult = await createQwenAdapter({
   apiKey: "test-key",
   fetchImpl: async () => ({
@@ -183,3 +201,91 @@ const invalidResponseResult = await createQwenAdapter({
 });
 assert.equal(invalidResponseResult.ok, false);
 assert.equal(invalidResponseResult.reason, "provider_response_invalid");
+
+const badReviewStatusResult = await createQwenAdapter({
+  apiKey: "test-key",
+  fetchImpl: async () => ({
+    ok: true,
+    async json() {
+      return {
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                title: "阅读理解",
+                questionText: "请概括文章主要内容。",
+                reviewItems: [{ label: "答案", status: "模型长篇解释而不是状态" }],
+              }),
+            },
+          },
+        ],
+      };
+    },
+  }),
+}).recognizeQuestion({
+  subject: "chinese",
+  imageUri: "data:image/png;base64,b3JpZ2luYWw=",
+  selectedRegion: placeholderRegion,
+  selectedRegionImageUri: "data:image/png;base64,cmVnaW9u",
+});
+assert.equal(badReviewStatusResult.ok, true);
+assert.deepEqual(badReviewStatusResult.draft.reviewItems, [{ label: "答案", status: "需复核" }]);
+
+const autoSubjectWithoutProviderSubjectResult = await createQwenAdapter({
+  apiKey: "test-key",
+  fetchImpl: async () => ({
+    ok: true,
+    async json() {
+      return {
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                title: "阅读理解",
+                questionText: "请概括文章主要内容。",
+                reviewItems: [{ label: "科目", status: "需复核" }],
+              }),
+            },
+          },
+        ],
+      };
+    },
+  }),
+}).recognizeQuestion({
+  subject: "auto",
+  imageUri: "data:image/png;base64,b3JpZ2luYWw=",
+  selectedRegion: placeholderRegion,
+  selectedRegionImageUri: "data:image/png;base64,cmVnaW9u",
+});
+assert.equal(autoSubjectWithoutProviderSubjectResult.ok, false);
+assert.equal(autoSubjectWithoutProviderSubjectResult.reason, "provider_response_invalid");
+
+const autoSubjectResult = await createQwenAdapter({
+  apiKey: "test-key",
+  fetchImpl: async () => ({
+    ok: true,
+    async json() {
+      return {
+        choices: [
+          {
+            message: {
+              content: JSON.stringify({
+                subject: "english",
+                title: "Reading",
+                questionText: "Choose the best answer.",
+                reviewItems: [{ label: "科目", status: "可信" }],
+              }),
+            },
+          },
+        ],
+      };
+    },
+  }),
+}).recognizeQuestion({
+  subject: "auto",
+  imageUri: "data:image/png;base64,b3JpZ2luYWw=",
+  selectedRegion: placeholderRegion,
+  selectedRegionImageUri: "data:image/png;base64,cmVnaW9u",
+});
+assert.equal(autoSubjectResult.ok, true);
+assert.equal(autoSubjectResult.draft.subject, "english");

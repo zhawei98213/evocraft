@@ -2,6 +2,8 @@ const { buildRecognitionPrompt } = require("./recognitionPrompt.cjs");
 
 const defaultEndpoint = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
 const defaultModel = "qwen-vl-ocr-latest";
+const validSubjects = new Set(["chinese", "math", "english"]);
+const validReviewStatuses = new Set(["可信", "需复核"]);
 
 function createQwenAdapter({
   apiKey,
@@ -160,7 +162,15 @@ function createQwenAdapter({
       }
 
       const now = new Date().toISOString();
-      const subject = input.subject === "auto" ? "math" : input.subject;
+      const subject = resolveDraftSubject(input.subject, parsed.subject);
+      if (!subject) {
+        return {
+          ok: false,
+          reason: "provider_response_invalid",
+          message: "真实 AI 未返回有效科目，请手动选择科目后重试。",
+          retryable: true,
+        };
+      }
 
       return {
         ok: true,
@@ -231,15 +241,30 @@ function normalizeReviewItems(reviewItems) {
 
       const label = asString(item.label, "").trim();
       const status = asString(item.status, "").trim();
-      if (!label || !status) {
+      if (!label) {
         return null;
       }
 
-      return { label, status };
+      return {
+        label,
+        status: validReviewStatuses.has(status) ? status : "需复核",
+      };
     })
     .filter(Boolean);
 
   return normalized.length > 0 ? normalized : [{ label: "识别结果", status: "需复核" }];
+}
+
+function resolveDraftSubject(inputSubject, parsedSubject) {
+  if (validSubjects.has(inputSubject)) {
+    return inputSubject;
+  }
+
+  if (inputSubject === "auto" && validSubjects.has(parsedSubject)) {
+    return parsedSubject;
+  }
+
+  return null;
 }
 
 function asString(value, fallback) {

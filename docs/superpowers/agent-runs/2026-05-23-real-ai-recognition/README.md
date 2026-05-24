@@ -39,7 +39,7 @@
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | completed | App store selection and tests | `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts`, `npm run build`, `git diff --check` | `32b8fe7` |
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | completed | AI contract, mock adapter, domain tests | `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, `npm run build`, `git diff --check` | `ea08fc4` |
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | completed | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config`, runner gate checks, `npm test`, `git diff --check` | `58c827a`, `85028ee` |
-| 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | passed_with_concerns | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check` | `5f9ba4f`, `0c8e488`, `309f8aa`, `a5c4c83` |
+| 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | pending code-quality re-review | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build` | `5f9ba4f`, `0c8e488`, `309f8aa`, follow-up 待提交 |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | pending | Electron AI IPC, desktop AI adapter | Electron config + adapter tests | 未开始 |
 | 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | pending | UI mode, authorization copy, final verification | Full verification suite | 未开始 |
 
@@ -68,9 +68,9 @@
 | `agents/task-06-ai-eval-harness.md` | implementer | Task 6 | done | 已补上 `.env*` ignore、`git check-ignore` 隐私回归测试，并把 `test:ai-eval-config` 纳入默认 `npm test`，复审通过。 |
 | `agents/task-06-spec-review.md` | spec-reviewer | Task 6 | passed | 已确认 Task 6 本机 AI 评测脚手架符合计划，且 focused verification 通过。 |
 | `agents/task-06-code-quality-review.md` | code-quality-reviewer | Task 6 | passed | 复审确认 `.env*` ignore、`git check-ignore` 隐私回归、默认 `npm test` 覆盖和 runner gate 均通过。 |
-| `agents/task-07-qwen-adapter-spike.md` | implementer | Task 7 | done | 已按 TDD 完成 Qwen adapter spike，并通过 leader follow-up 将 ai-eval config test 对齐到 Task 7 runner contract。 |
+| `agents/task-07-qwen-adapter-spike.md` | implementer | Task 7 | changes_requested_fixed | 已修复 code-quality concerns：`auto` 科目不再静默落成数学，`reviewItems.status` 归一到 `可信/需复核`，并补齐 HTTP non-ok/非法 status/auto subject 合约测试。 |
 | `agents/task-07-spec-review.md` | spec-reviewer | Task 7 | passed_with_concerns | Spec review 确认核心 Task 7 范围通过；关注点是 leader follow-up 涉及测试/进度文档，已在本次 docs sync 中补齐 reviewed range。 |
-| `agents/task-07-code-quality-review.md` | code-quality-reviewer | Task 7 | passed_with_concerns | 已完成命令验证、类型诊断和直接探针；非阻塞关注点是 auto 科目默认写成 `math`，以及 `reviewItems.status` 尚未限制到 `可信/需复核`。 |
+| `agents/task-07-code-quality-review.md` | code-quality-reviewer | Task 7 | concerns_fixed_pending_re-review | 首轮质量 review 为 `PASS_WITH_CONCERNS`；leader 已修复 auto subject、review item status 和缺失测试覆盖，等待复审。 |
 
 ## Global Progress
 
@@ -429,6 +429,15 @@
 - Non-blocking concern `[MEDIUM]`: `electron/ai/qwenAdapter.cjs` accepts arbitrary non-empty `reviewItems[*].status` text, even though the prompt contract restricts status to `可信` or `需复核`. A direct review probe printed `[{"label":"答案","status":"模型长篇解释而不是状态"}]`, so malformed provider responses can persist unchecked status strings.
 - Test-gap note `[LOW]`: `tests/qwen-adapter-contract.test.mjs` covers thrown-request and malformed-content failures, but not the `response.ok === false` branch or invalid-review-status normalization.
 - Task 7 is acceptable to close as a spike with concerns recorded. Do not start Task 8 from this review; close the two adapter-normalization issues in a follow-up before real IPC wiring depends on them.
+
+### 2026-05-24 Task 7 Code Quality Follow-Up Prepared
+
+- Leader accepted the two medium quality concerns as worth fixing before Task 8 rather than carrying them into real IPC wiring.
+- Added failing contract coverage first for `response.ok === false`, invalid `reviewItems[*].status`, `subject: "auto"` without provider subject, and `subject: "auto"` with a valid provider subject.
+- Updated `recognitionPrompt.cjs` so auto-subject mode asks the provider to return `subject` with one of `chinese`, `math`, or `english`.
+- Updated `qwenAdapter.cjs` so explicit subjects are preserved, auto mode requires a valid provider subject, missing/invalid auto subject returns `provider_response_invalid`, and invalid review-item status values downgrade to `需复核`.
+- Re-ran `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build`, and both eval-runner gate probes; all passed.
+- Task 7 is ready for code-quality re-review. Task 8 remains blocked until that re-review passes.
 
 ## Global Blockers
 

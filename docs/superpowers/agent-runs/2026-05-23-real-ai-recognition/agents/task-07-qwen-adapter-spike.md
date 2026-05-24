@@ -73,6 +73,19 @@ Forbidden scope:
 - Updated `tests/ai-eval-config.test.mjs` to assert the Task 7 runner uses `createQwenAdapter`, calls `adapter.recognizeQuestion`, does not keep placeholder `not-run` rows, and does not bypass the shared adapter with direct `fetch`.
 - Re-ran focused verification and default regression checks to GREEN.
 
+### 2026-05-24 Code Quality Follow-Up
+
+- Code-quality review returned `PASS_WITH_CONCERNS` with two medium adapter-normalization concerns and one low test-gap note.
+- Added contract coverage first for:
+  - `response.ok === false` mapping to `provider_request_failed`,
+  - malformed `reviewItems[*].status` downgrading to `需复核`,
+  - `subject: "auto"` without provider subject returning `provider_response_invalid`,
+  - `subject: "auto"` with valid provider subject mapping to the returned subject.
+- Verified `npm run test:qwen-adapter` failed before the review-status normalization fix.
+- Updated `recognitionPrompt.cjs` to require `subject` when the user selected auto mode.
+- Updated `qwenAdapter.cjs` so auto mode requires a valid provider subject instead of silently writing `"math"`, and review-item status values are whitelisted to `可信` or `需复核`.
+- Re-ran focused and broader verification to GREEN.
+
 ## Commands Run
 
 ```bash
@@ -100,6 +113,7 @@ EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs
 npm run test:ai-eval-config
 npm run test:qwen-adapter
 npm test
+npm run build
 ```
 
 ## Files Changed
@@ -124,6 +138,8 @@ npm test
 - GREEN safety probe: `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs` -> exit `2`, `DASHSCOPE_API_KEY is required for Qwen evaluation.`
 - RED follow-up: `npm run test:ai-eval-config` failed while the Task 7 runner still carried Task 6 placeholder comments.
 - GREEN follow-up: `npm run test:ai-eval-config`, `npm run test:qwen-adapter`, `git diff --check`, and `npm test` passed after removing stale comments and updating the config test to the Task 7 adapter contract.
+- RED quality follow-up: `npm run test:qwen-adapter` failed on invalid review-item status before the normalization fix.
+- GREEN quality follow-up: `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build`, `node scripts/evaluate-ai-samples.mjs`, and `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs` passed.
 
 ## Blockers
 
@@ -137,10 +153,10 @@ npm test
 
 ## Leader Review
 
-- Review status: spec review passed with concerns; code-quality review pending.
-- Review notes: leader follow-up commit `309f8aa` aligned `tests/ai-eval-config.test.mjs` with the Task 7 runner contract and removed stale Task 6 placeholder comments from `scripts/evaluate-ai-samples.mjs`.
-- Required follow-up: run Task 7 code-quality review before Task 8.
+- Review status: code-quality concerns fixed, pending re-review.
+- Review notes: leader follow-up commit `309f8aa` aligned `tests/ai-eval-config.test.mjs` with the Task 7 runner contract. The current follow-up fixes auto-subject corruption, review-item status normalization, and the missing HTTP non-ok / invalid-status coverage noted by code-quality review.
+- Required follow-up: run Task 7 code-quality re-review before Task 8.
 
 ## Commit
 
-- Commit hash: `5f9ba4f`, evidence/docs `0c8e488`, leader follow-up `309f8aa`
+- Commit hash: `5f9ba4f`, evidence/docs `0c8e488`, leader follow-up `309f8aa`, quality follow-up pending

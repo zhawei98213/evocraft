@@ -9,7 +9,7 @@
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-24
 - Completed at: 2026-05-24
-- Status: `passed_with_concerns`
+- Status: `concerns_fixed_pending_re-review`
 
 ## Scope
 
@@ -63,6 +63,14 @@ Forbidden scope:
 - Non-blocking concern `[MEDIUM]` `electron/ai/qwenAdapter.cjs:232-239`: `normalizeReviewItems()` accepts any non-empty `status` string, despite the prompt contract restricting status to `可信` or `需复核`. A direct review probe returned `[{"label":"答案","status":"模型长篇解释而不是状态"}]`, so malformed provider responses can persist arbitrary status text. Fix: normalize unknown statuses to `需复核` or drop invalid items and fall back to the default review item, then add a contract test for that case.
 - Test-gap note `[LOW]` `tests/qwen-adapter-contract.test.mjs:154-185`: the contract test covers thrown-request and malformed-content failures but does not yet assert the non-`ok` HTTP branch or the invalid-review-status normalization path. Fix: add fake-fetch cases for `response.ok === false` and for a bad `reviewItems[*].status` value.
 
+### 2026-05-24 Follow-Up Fixed
+
+- Leader accepted both medium concerns and fixed them before Task 8.
+- Added contract tests for the HTTP non-`ok` branch, invalid review-item status normalization, missing provider subject in auto mode, and valid provider subject mapping in auto mode.
+- Updated `recognitionPrompt.cjs` to require `subject` when the user selects auto mode, constrained to `chinese`, `math`, or `english`.
+- Updated `qwenAdapter.cjs` so explicit user-selected subjects are preserved, auto mode requires a valid provider subject, missing/invalid auto-subject responses return `provider_response_invalid`, and invalid review-item statuses downgrade to `需复核`.
+- Focused and broader verification passed after the fix.
+
 ## Commands Run
 
 ```bash
@@ -79,6 +87,10 @@ git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eva
 npx tsc --noEmit --pretty false --project tsconfig.json
 node -e 'const {createQwenAdapter}=require("./electron/ai/qwenAdapter.cjs"); (async()=>{const r=await createQwenAdapter({apiKey:"test-key",fetchImpl:async()=>({ok:true,json:async()=>({choices:[{message:{content:JSON.stringify({title:"t",questionText:"q",reviewItems:[]})}}]})})}).recognizeQuestion({subject:"auto",imageUri:"data:image/png;base64,b3JpZw==",selectedRegion:{id:"r",label:"R",x:0,y:0,width:1,height:1,unit:"ratio",source:"manual",confidence:1},selectedRegionImageUri:"data:image/png;base64,cmVnaW9u"}); console.log(r.ok, r.draft.subject);})()'
 node -e 'const {createQwenAdapter}=require("./electron/ai/qwenAdapter.cjs"); (async()=>{const r=await createQwenAdapter({apiKey:"test-key",fetchImpl:async()=>({ok:true,json:async()=>({choices:[{message:{content:JSON.stringify({title:"t",questionText:"q",reviewItems:[{label:"答案",status:"模型长篇解释而不是状态"}]})}}]})})}).recognizeQuestion({subject:"chinese",imageUri:"data:image/png;base64,b3JpZw==",selectedRegion:{id:"r",label:"R",x:0,y:0,width:1,height:1,unit:"ratio",source:"manual",confidence:1},selectedRegionImageUri:"data:image/png;base64,cmVnaW9u"}); console.log(JSON.stringify(r.draft.reviewItems));})()'
+npm run test:qwen-adapter
+npm run test:ai-eval-config
+npm test
+npm run build
 ```
 
 ## Files Changed
@@ -103,20 +115,23 @@ node -e 'const {createQwenAdapter}=require("./electron/ai/qwenAdapter.cjs"); (as
 - Direct probe evidence:
   - `node -e ... subject:"auto" ...` printed `true math`.
   - `node -e ... bad reviewItems status ...` printed `[{"label":"答案","status":"模型长篇解释而不是状态"}]`.
+- Follow-up RED: `npm run test:qwen-adapter` failed before the status-normalization fix.
+- Follow-up GREEN: `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build`, `node scripts/evaluate-ai-samples.mjs`, and `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs` passed after the fix.
 
 ## Blockers
 
-- 无。
+- 无实现卡点；Task 7 must pass code-quality re-review before Task 8 starts.
 
 ## Handoff Notes
 
-- Task 7 is passable for the current spike, but Task 8 or a Task 7 follow-up should close the two adapter-normalization issues before real IPC wiring relies on auto-subject output or review-item status values.
+- The adapter-normalization concerns have been fixed locally and require code-quality re-review.
+- Task 8 remains blocked until that re-review passes.
 
 ## Leader Review
 
-- Review status: passed with concerns.
-- Review notes: quality/safety verification passed and scope stayed contained, but the adapter still silently hardcodes `subject: "math"` for auto-subject calls and accepts arbitrary `reviewItems[*].status` text from malformed provider responses.
-- Required follow-up: add subject validation/normalization in `qwenAdapter.cjs` and extend the contract test to cover `response.ok === false` plus invalid review-item status handling before Task 8 depends on those fields.
+- Review status: concerns fixed, pending re-review.
+- Review notes: first quality review found auto-subject corruption and unchecked `reviewItems[*].status`. The follow-up adds subject validation, status normalization, and the missing contract coverage.
+- Required follow-up: run code-quality re-review before Task 8.
 
 ## Commit
 
