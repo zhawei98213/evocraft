@@ -66,7 +66,7 @@
 | `agents/task-05-spec-review.md` | spec-reviewer | Task 5 | passed | 已确认 Task 5 AI adapter contract 扩展符合计划，且 focused verification 通过。 |
 | `agents/task-05-code-quality-review.md` | code-quality-reviewer | Task 5 | passed | 已确认共享失败契约、mock 缺失截图失败路径、测试覆盖和范围边界均满足要求，Task 5 质量 review 通过。 |
 | `agents/task-06-ai-eval-harness.md` | implementer | Task 6 | done | 已按 TDD 添加默认禁用的本机 AI 评测脚手架、隐私 ignore 规则、manifest example、README、结果目录 ignore 和静态测试，并完成 gate 验证与回归测试。 |
-| `agents/task-06-spec-review.md` | spec-reviewer | Task 6 | pending | 已创建日志，等待 Task 6 implementer 完成后复审。 |
+| `agents/task-06-spec-review.md` | spec-reviewer | Task 6 | passed | 已确认 Task 6 本机 AI 评测脚手架符合计划，且 focused verification 通过。 |
 | `agents/task-06-code-quality-review.md` | code-quality-reviewer | Task 6 | pending | 已创建日志，等待 Task 6 spec review 通过后复审。 |
 
 ## Global Progress
@@ -344,6 +344,14 @@
 - Verified the runner exits early when disabled, requires `DASHSCOPE_API_KEY` only after `EVOCRAFT_AI_EVAL_ENABLED=1`, and writes placeholder `not-run` rows with the example manifest when explicitly enabled for local evaluation smoke-checking.
 - Ran `npm test` and confirmed the broader suite still passed.
 - Task 6 implementer scope is complete and ready for review. Task 7 remains blocked on its own assignment, not on missing Task 6 scaffolding.
+
+### 2026-05-24 Task 6 Spec Review Passed
+
+- Confirmed the Task 6 implementation matches the planned local AI evaluation harness slice and stays within the allowed docs, script, ignore, and static test scope.
+- Confirmed the runner is disabled by default, mentions `EVOCRAFT_AI_EVAL_ENABLED`, `DASHSCOPE_API_KEY`, and `manifestPath`, and only emits placeholder `not-run` rows for now.
+- Confirmed no real provider adapter, `fetch` provider call, dependency addition, Electron/React/storage runtime change, private sample file, generated result file, API key file, or `.env` file was introduced.
+- Required verification passed: `git status --short --branch`, `git diff --check`, `npm run test:ai-eval-config`, and `npm test`.
+- Task 6 spec review is passed; Task 6 overall remains pending code-quality review.
 
 ## Global Blockers
 
