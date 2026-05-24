@@ -13,9 +13,15 @@ assert.match(script, /EVOCRAFT_AI_EVAL_ENABLED/, "runner should require an expli
 assert.match(script, /DASHSCOPE_API_KEY/, "runner should mention the DashScope API key");
 assert.match(script, /manifestPath/, "runner should read a manifest path");
 assert.match(script, /outputPath/, "runner should support a result output path");
-assert.match(script, /status:\s*"not-run"/, "runner should only emit placeholder not-run rows for now");
-assert.match(script, /Provider adapter is connected in the next task\./, "runner should document the Task 7 handoff");
-assert.doesNotMatch(script, /fetch\(.*DASHSCOPE_API_KEY/s, "runner must not call a provider directly in Task 6");
+assert.match(script, /createQwenAdapter/, "runner should use the shared Qwen adapter after Task 7");
+assert.match(script, /adapter\.recognizeQuestion/, "runner should evaluate samples through recognizeQuestion");
+assert.doesNotMatch(script, /status:\s*"not-run"/, "Task 7 runner should not keep Task 6 placeholder rows");
+assert.doesNotMatch(
+  script,
+  /Provider adapter is connected in the next task\./,
+  "Task 7 runner should not keep the old handoff comment",
+);
+assert.doesNotMatch(script, /fetch\(.*DASHSCOPE_API_KEY/s, "runner must not bypass the shared adapter");
 
 const readme = readFileSync("ai-eval/README.md", "utf8");
 assert.match(readme, /Real child photos are not committed\./);

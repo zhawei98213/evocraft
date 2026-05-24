@@ -65,6 +65,14 @@ Forbidden scope:
 - Added `test:qwen-adapter` to `package.json`.
 - Re-ran the Node contract test and focused verification to GREEN without using a real API key.
 
+### 2026-05-24 Leader Follow-Up
+
+- Leader review found `tests/ai-eval-config.test.mjs` still asserted the old Task 6 placeholder handoff by matching `status: "not-run"` and `Provider adapter is connected in the next task.`.
+- Added a regression first so `npm run test:ai-eval-config` failed while `scripts/evaluate-ai-samples.mjs` still contained the stale Task 6 compatibility comments.
+- Removed the stale comments from `scripts/evaluate-ai-samples.mjs`.
+- Updated `tests/ai-eval-config.test.mjs` to assert the Task 7 runner uses `createQwenAdapter`, calls `adapter.recognizeQuestion`, does not keep placeholder `not-run` rows, and does not bypass the shared adapter with direct `fetch`.
+- Re-ran focused verification and default regression checks to GREEN.
+
 ## Commands Run
 
 ```bash
@@ -89,6 +97,9 @@ npm run test:ai-eval-config
 git diff --check
 node scripts/evaluate-ai-samples.mjs
 EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs
+npm run test:ai-eval-config
+npm run test:qwen-adapter
+npm test
 ```
 
 ## Files Changed
@@ -98,6 +109,7 @@ EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs
 - `electron/ai/qwenAdapter.cjs`
 - `scripts/evaluate-ai-samples.mjs`
 - `package.json`
+- `tests/ai-eval-config.test.mjs`
 - `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-07-qwen-adapter-spike.md`
 - `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
 
@@ -110,6 +122,8 @@ EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs
 - GREEN: `git diff --check` -> exit `0`
 - GREEN safety probe: `node scripts/evaluate-ai-samples.mjs` -> exit `2`, `AI evaluation is disabled. Set EVOCRAFT_AI_EVAL_ENABLED=1 to call the provider.`
 - GREEN safety probe: `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs` -> exit `2`, `DASHSCOPE_API_KEY is required for Qwen evaluation.`
+- RED follow-up: `npm run test:ai-eval-config` failed while the Task 7 runner still carried Task 6 placeholder comments.
+- GREEN follow-up: `npm run test:ai-eval-config`, `npm run test:qwen-adapter`, `git diff --check`, and `npm test` passed after removing stale comments and updating the config test to the Task 7 adapter contract.
 
 ## Blockers
 
@@ -129,4 +143,4 @@ EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs
 
 ## Commit
 
-- Commit hash: `5f9ba4f`
+- Commit hash: `5f9ba4f`, follow-up pending

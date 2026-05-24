@@ -21,9 +21,6 @@ if (!process.env.DASHSCOPE_API_KEY) {
 const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
 await mkdir(dirname(outputPath), { recursive: true });
 
-// Task 6 compatibility note:
-// status: "not-run"
-// Provider adapter is connected in the next task.
 const adapter = createQwenAdapter({ apiKey: process.env.DASHSCOPE_API_KEY });
 const rows = [];
 for (const sample of manifest.samples) {

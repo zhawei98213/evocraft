@@ -400,6 +400,15 @@
 - Implementation commit recorded at `5f9ba4f`. Task 7 now awaits spec review and code-quality review; Task 8 has not started.
 - Task 8 remains responsible for real AI IPC and renderer adapter wiring.
 
+### 2026-05-24 Task 7 Leader Follow-Up Prepared
+
+- Leader review found the Task 6 static harness test was still passing by matching stale placeholder comments in the Task 7 eval runner.
+- Updated `tests/ai-eval-config.test.mjs` to require the Task 7 runner to use `createQwenAdapter` and `adapter.recognizeQuestion`, and to reject old `status: "not-run"` placeholder text.
+- Removed the stale Task 6 compatibility comments from `scripts/evaluate-ai-samples.mjs`.
+- Verified the new config assertion failed before the comment removal, then passed after the fix.
+- Re-ran `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `node scripts/evaluate-ai-samples.mjs`, `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs`, and `npm test`; all expected checks passed.
+- Task 7 remains in implementation-complete state and is ready for spec review after the follow-up commit/push.
+
 ## Global Blockers
 
 - 无。
