@@ -37,7 +37,7 @@
 | 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | completed | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | `ed78c4f`, `09ec94c` |
 | 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | completed | Electron main/preload IPC, desktop bridge | `npm run test:electron-config`, `npm run test:electron-store` | `9a78dbb`, `61441ba`, `a2fa40c` |
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | completed | App store selection and tests | `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts`, `npm run build`, `git diff --check` | `32b8fe7` |
-| 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | pending | AI contract, mock adapter, domain tests | Adapter/domain tests | 未开始 |
+| 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | assigned | AI contract, mock adapter, domain tests | Adapter/domain tests | 未开始 |
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | pending | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config` | 未开始 |
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | pending | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter` | 未开始 |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | pending | Electron AI IPC, desktop AI adapter | Electron config + adapter tests | 未开始 |
@@ -62,6 +62,9 @@
 | `agents/task-04-react-desktop-store.md` | implementer | Task 4 | done | 已补上 desktop store 回归测试，`App` 现按 injected store -> desktop bridge -> localStorage 顺序选 store，等待 reviewer 复审。 |
 | `agents/task-04-spec-review.md` | spec-reviewer | Task 4 | passed | 已确认 Task 4 React desktop store 选择逻辑、桌面回归测试和范围边界，等待 code-quality 复审。 |
 | `agents/task-04-code-quality-review.md` | code-quality-reviewer | Task 4 | passed | 已确认 store 选择顺序、hydration guard、browser fallback、desktop upload bridge 覆盖和范围边界均满足要求。 |
+| `agents/task-05-ai-adapter-contract.md` | implementer | Task 5 | pending | 已创建日志，等待扩展 AI adapter 合约和 mock adapter recoverable failure。 |
+| `agents/task-05-spec-review.md` | spec-reviewer | Task 5 | pending | 已创建日志，等待 Task 5 implementer 完成后复审。 |
+| `agents/task-05-code-quality-review.md` | code-quality-reviewer | Task 5 | pending | 已创建日志，等待 Task 5 spec review 通过后复审。 |
 
 ## Global Progress
 
@@ -289,6 +292,12 @@
 - Confirmed `src/app/App.test.tsx` adds a meaningful UI regression proving desktop hydration comes from `window.evocraft.loadRecords()` rather than browser `localStorage`, while existing delayed-hydration and desktop upload bridge tests still pass.
 - Confirmed `lsp_diagnostics` reported zero findings for the modified React files; `ast-grep` was unavailable in this environment, so the required pattern scan fell back to `rg` and found no `console.log`, empty `catch`, or hardcoded `apiKey` patterns.
 - Task 4 fully passed both reviews and is complete. Task 5 may proceed when assigned.
+
+### 2026-05-24 Task 5 Logs Prepared
+
+- Created independent Task 5 implementer, spec-review, and code-quality-review logs before implementation.
+- Task 5 is assigned to the implementer and must stay inside AI adapter contract, mock adapter, and focused domain/adapter tests.
+- Task 5 must not connect real AI or modify Electron IPC/storage/UI runtime behavior.
 
 ## Global Blockers
 

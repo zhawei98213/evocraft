@@ -1568,6 +1568,39 @@
 - 提交并推送 Task 4 派发准备日志。
 - 派出 Task 4 implementer；如果 subagent 受 usage limit 阻塞，则由 leader 按 TDD fallback 实现并记录。
 
+### 2026-05-24：真实 AI 识别 Task 4 关闭与 Task 5 派发准备
+
+本轮任务是什么：
+
+- 完成 Task 4 React desktop store selection 的实现、spec review、code quality review，并为 Task 5 AI Adapter Contract 创建 agent 日志。
+
+已完成什么：
+
+- Task 4 implementer 新增桌面 store 回归测试，先验证 RED：`App` 原先不会调用 `window.evocraft.loadRecords()`。
+- Task 4 实现后，`App` 的记录存储选择顺序变为 injected `recordStore` -> Electron desktop bridge -> browser `localStorage` fallback。
+- Task 4 spec review 通过，确认没有进入 Electron main/preload、disk storage、AI adapter 或依赖变更。
+- Task 4 code-quality review 通过，确认 hydration guard、browser fallback、desktop upload bridge 覆盖仍然成立。
+- 创建 Task 5 implementer、spec reviewer、code quality reviewer 三份独立 task log。
+- 更新 run ledger，将 Task 5 标记为 `assigned`。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `sed -n '820,920p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+- `sed -n '1,220p' src/services/aiAdapter.ts`
+- `sed -n '1,260p' src/services/mockAiAdapter.ts`
+- `sed -n '1,220p' src/services/aiAdapter.test.ts`
+- `sed -n '1,260p' src/domain/wrongQuestion.test.ts`
+
+下一步的计划：
+
+- 提交并推送 Task 5 派发准备日志。
+- 派出 Task 5 implementer，按 TDD 扩展 adapter contract 和 mock recoverable failure，不接真实 AI。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。
