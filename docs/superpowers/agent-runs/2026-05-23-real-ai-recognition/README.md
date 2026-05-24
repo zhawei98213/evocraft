@@ -38,7 +38,7 @@
 | 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | completed | Electron main/preload IPC, desktop bridge | `npm run test:electron-config`, `npm run test:electron-store` | `9a78dbb`, `61441ba`, `a2fa40c` |
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | completed | App store selection and tests | `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts`, `npm run build`, `git diff --check` | `32b8fe7` |
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | completed | AI contract, mock adapter, domain tests | `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, `npm run build`, `git diff --check` | `ea08fc4` |
-| 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | assigned | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config` | 未开始 |
+| 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | completed | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config`, runner gate checks, `npm test`, `git diff --check` | 待提交 |
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | pending | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter` | 未开始 |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | pending | Electron AI IPC, desktop AI adapter | Electron config + adapter tests | 未开始 |
 | 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | pending | UI mode, authorization copy, final verification | Full verification suite | 未开始 |
@@ -65,7 +65,7 @@
 | `agents/task-05-ai-adapter-contract.md` | implementer | Task 5 | done | 已按 TDD 扩展 AI adapter failure contract，mock adapter 现对缺失题目区域截图返回可恢复错误，adapter/domain 验证与 build 均通过。 |
 | `agents/task-05-spec-review.md` | spec-reviewer | Task 5 | passed | 已确认 Task 5 AI adapter contract 扩展符合计划，且 focused verification 通过。 |
 | `agents/task-05-code-quality-review.md` | code-quality-reviewer | Task 5 | passed | 已确认共享失败契约、mock 缺失截图失败路径、测试覆盖和范围边界均满足要求，Task 5 质量 review 通过。 |
-| `agents/task-06-ai-eval-harness.md` | implementer | Task 6 | pending | 已创建日志，等待创建默认禁用的本机 AI 评测脚手架。 |
+| `agents/task-06-ai-eval-harness.md` | implementer | Task 6 | done | 已按 TDD 添加默认禁用的本机 AI 评测脚手架、隐私 ignore 规则、manifest example、README、结果目录 ignore 和静态测试，并完成 gate 验证与回归测试。 |
 | `agents/task-06-spec-review.md` | spec-reviewer | Task 6 | pending | 已创建日志，等待 Task 6 implementer 完成后复审。 |
 | `agents/task-06-code-quality-review.md` | code-quality-reviewer | Task 6 | pending | 已创建日志，等待 Task 6 spec review 通过后复审。 |
 
@@ -335,6 +335,15 @@
 - Created independent Task 6 implementer, spec-review, and code-quality-review logs before implementation.
 - Task 6 is assigned to the implementer and must stay inside the local AI evaluation harness, privacy ignore rules, disabled-by-default runner, package script, and static harness test.
 - Task 6 must not connect Qwen/provider calls or commit private samples, generated results, API keys, or `.env` files.
+
+### 2026-05-24 Task 6 Implementer Complete
+
+- Added `tests/ai-eval-config.test.mjs` first and captured the expected RED failure before any harness files existed.
+- Implemented the Task 6 scope only: root ignore rules, `ai-eval/README.md`, sample keepfile, manifest example, results ignore file, disabled-by-default `scripts/evaluate-ai-samples.mjs`, and the `test:ai-eval-config` package script.
+- Verified `npm run test:ai-eval-config` and `git diff --check` both passed.
+- Verified the runner exits early when disabled, requires `DASHSCOPE_API_KEY` only after `EVOCRAFT_AI_EVAL_ENABLED=1`, and writes placeholder `not-run` rows with the example manifest when explicitly enabled for local evaluation smoke-checking.
+- Ran `npm test` and confirmed the broader suite still passed.
+- Task 6 implementer scope is complete and ready for review. Task 7 remains blocked on its own assignment, not on missing Task 6 scaffolding.
 
 ## Global Blockers
 

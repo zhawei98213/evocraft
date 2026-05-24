@@ -9,3 +9,8 @@ vite.config.d.ts
 vite.config.js
 .DS_Store
 docs/.DS_Store
+ai-eval/samples/*
+!ai-eval/samples/.gitkeep
+!ai-eval/samples/manifest.example.json
+ai-eval/results/*
+!ai-eval/results/.gitignore

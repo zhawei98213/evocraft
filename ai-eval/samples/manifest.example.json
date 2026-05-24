@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "samples": [
+    {
+      "id": "math-geometry-demo",
+      "subject": "math",
+      "imagePath": "samples/private/math-geometry-demo.jpg",
+      "labels": ["geometry", "multi-question-page", "teacher-markup"],
+      "expected": {
+        "targetQuestion": "只评测人工确认区域中的一道题",
+        "mustNotInferAnswer": true,
+        "mustPreserveVisualElements": ["geometry-diagram"]
+      }
+    }
+  ]
+}
