@@ -34,7 +34,7 @@
 | --- | --- | --- | --- | --- | --- |
 | 0. Preflight And Baseline | `agents/task-00-preflight.md` | completed | 基线命令，允许 docs-only task log / ledger 更新 | `npm test`, `npm run test:electron-config`, `npm run build` | `02c1c03` |
 | 1. Async RecordStore | `agents/task-01-async-record-store.md` | completed | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | `55b4fba`, `2e29c9d` |
-| 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | assigned | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | 未开始 |
+| 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | done | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | 待本任务提交 |
 | 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | pending | Electron main/preload IPC, desktop bridge | `npm run test:electron-config` | 未开始 |
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | pending | App store selection and tests | Focused app/storage tests | 未开始 |
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | pending | AI contract, mock adapter, domain tests | Adapter/domain tests | 未开始 |
@@ -53,7 +53,7 @@
 | `agents/task-01-async-record-store.md` | implementer | Task 1 | changes_requested_fixed | 已补上 hydration guard 和 delayed-load 回归测试，等待 code-quality 复审。 |
 | `agents/task-01-spec-review.md` | spec-reviewer | Task 1 | passed | Task 1 async RecordStore implementation matches the planned async load/save slice. |
 | `agents/task-01-code-quality-review.md` | code-quality-reviewer | Task 1 | passed | 已确认 follow-up fix 关闭 pre-hydration save race，并用 delayed-load 回归测试覆盖真实异步时序。 |
-| `agents/task-02-electron-local-record-store.md` | implementer | Task 2 | assigned | 将在 Electron main 侧实现文件夹 + JSON 索引本地记录存储，并添加 Node 测试。 |
+| `agents/task-02-electron-local-record-store.md` | implementer | Task 2 | done | 已按 TDD 完成 Electron main 侧文件夹 + JSON 索引本地记录存储、Node 测试和 package script。 |
 | `agents/task-02-spec-review.md` | spec-reviewer | Task 2 | pending | Task 2 implementer 完成后核对是否严格符合本地文件存储计划。 |
 | `agents/task-02-code-quality-review.md` | code-quality-reviewer | Task 2 | pending | Task 2 spec review 通过后检查文件系统安全、测试充分性和提交卫生。 |
 
@@ -134,6 +134,14 @@
 
 - Created independent Task 2 implementer, spec-review, and code-quality-review logs before dispatch.
 - Task 2 is assigned to the implementer and must stay inside Electron main-process local file storage plus its Node test and package script.
+
+### 2026-05-24 Task 2 Implementer Complete
+
+- Added `tests/electron-local-record-store.test.mjs` first and captured the expected RED failure before the storage module existed.
+- Implemented `electron/storage/localRecordStore.cjs` with per-record directories, local asset persistence, atomic JSON writes, descending `updatedAt` load order, broken-record tolerance, index rebuilds, and clear support.
+- Added `test:electron-store` to `package.json`.
+- Verification passed: `node tests/electron-local-record-store.test.mjs`, `npm run test:electron-store`, `npm run test:electron-config`, and `git diff --check`.
+- Task 2 implementer scope is complete and ready for spec review.
 
 ## Global Blockers
 

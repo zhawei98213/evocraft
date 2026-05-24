@@ -8,8 +8,8 @@
 - Task title: Add Electron Main Local Record Store
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-24
-- Completed at:
-- Status: `assigned`
+- Completed at: 2026-05-24
+- Status: `done`
 
 ## Scope
 
@@ -49,19 +49,47 @@ Forbidden scope:
 - Task 1 is fully reviewed and complete.
 - Implementation has not started yet.
 
+### 2026-05-24 Implementation
+
+- Wrote `tests/electron-local-record-store.test.mjs` first with a temp user-data directory, data URL image fields, index assertions, and clear/load coverage.
+- Verified the required RED failure with `ERR_MODULE_NOT_FOUND` before any store implementation existed.
+- Added `electron/storage/localRecordStore.cjs` as a CommonJS Electron-main local store using only Node built-ins.
+- Implemented per-record directories under `wrong-question/records/<sanitized-id>`, atomic `record.json` and `index.json` writes, `data:image/...` asset persistence, `file://` hydration, descending `updatedAt` sorting, record-directory pruning, and tolerant broken-record skipping during load.
+- Added `test:electron-store` to `package.json` without changing existing scripts.
+- Fixed one first-pass path bug after green attempt so stored asset paths always use the `./assets/...` form expected by hydration.
+
 ## Commands Run
 
 ```bash
-# No commands run yet.
+git branch --show-current
+git rev-parse --short HEAD
+sed -n '1,260p' src/services/storage.ts
+sed -n '1,320p' src/domain/wrongQuestion.ts
+sed -n '1,220p' electron/main.cjs
+sed -n '320,560p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md
+node tests/electron-local-record-store.test.mjs
+node tests/electron-local-record-store.test.mjs
+npm run test:electron-store
+npm run test:electron-config
+git diff --check
+git status --short
 ```
 
 ## Files Changed
 
-- No files changed yet.
+- `electron/storage/localRecordStore.cjs`
+- `tests/electron-local-record-store.test.mjs`
+- `package.json`
+- `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-02-electron-local-record-store.md`
+- `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
 
 ## Verification
 
-- Not run yet.
+- RED: `node tests/electron-local-record-store.test.mjs` failed with `ERR_MODULE_NOT_FOUND` for `electron/storage/localRecordStore.cjs`, confirming test-first execution.
+- GREEN: `node tests/electron-local-record-store.test.mjs` exited `0` after implementation.
+- `npm run test:electron-store` exited `0`.
+- `npm run test:electron-config` exited `0`.
+- `git diff --check` exited `0`.
 
 ## Blockers
 
@@ -69,7 +97,8 @@ Forbidden scope:
 
 ## Handoff Notes
 
-- This task only creates the main-process storage module and its Node test. Renderer IPC wiring starts in Task 3.
+- Task 2 stays strictly inside the Electron main-process storage layer; no IPC handlers or preload APIs were added.
+- Task 3 can now wire this store into `electron/main.cjs` and preload without changing the on-disk format introduced here.
 
 ## Leader Review
 
@@ -79,4 +108,4 @@ Forbidden scope:
 
 ## Commit
 
-- Commit hash:
+- Commit hash: 待本任务提交后回填

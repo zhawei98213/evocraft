@@ -14,6 +14,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "test": "node tests/static-mvp.test.mjs && node tests/logo-assets.test.mjs && vitest run",
     "test:electron-config": "node tests/electron-config.test.mjs",
+    "test:electron-store": "node tests/electron-local-record-store.test.mjs",
     "test:static": "node tests/static-mvp.test.mjs",
     "test:react": "vitest run"
   },
