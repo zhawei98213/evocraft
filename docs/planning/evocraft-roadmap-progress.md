@@ -1705,6 +1705,40 @@
 - 提交并推送 Task 6 review-complete docs。
 - 创建 Task 7 Qwen Adapter Spike 的 implementer、spec reviewer 和 code-quality reviewer 日志，然后按 TDD 开始真实 provider adapter spike。
 
+### 2026-05-24：真实 AI 识别 Task 7 派发准备
+
+本轮任务是什么：
+
+- 在 Task 6 AI evaluation harness 通过质量复审后，为 Task 7 Qwen Adapter Spike 创建 agent 日志和派发边界。
+
+已完成什么：
+
+- 创建 Task 7 implementer、spec reviewer、code-quality reviewer 三份独立 task log。
+- 更新 run ledger，将 Task 7 标记为 `assigned`。
+- 明确 Task 7 只做 Electron/Node 侧 Qwen adapter spike、fake-fetch contract test、local evaluation runner 接入和 `package.json` script。
+- 明确 Task 7 不改 Electron main/preload IPC、renderer runtime、storage format，不引入依赖，不提交 API key、`.env`、private samples 或 generated results。
+- 明确 Task 8 才负责 real AI IPC 和 renderer adapter wiring。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `sed -n '1120,1320p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+- `sed -n '1320,1520p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+- `ls docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents`
+- `find src -maxdepth 3 -type f`
+- `sed -n '1,240p' src/services/aiAdapter.ts`
+- `sed -n '1,220p' src/services/mockAiAdapter.ts`
+- `sed -n '1,260p' src/services/aiAdapter.test.ts`
+
+下一步的计划：
+
+- 提交并推送 Task 7 派发准备日志。
+- 派出 Task 7 implementer，按 TDD 添加 Qwen adapter fake-fetch contract test、recognition prompt、Node adapter、eval runner 接入和 `test:qwen-adapter`。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。
