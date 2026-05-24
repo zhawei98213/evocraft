@@ -8,8 +8,8 @@
 - Task title: AI Adapter Contract Spec Compliance Review
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-24
-- Completed at:
-- Status: `pending`
+- Completed at: 2026-05-24 16:10:00 CST
+- Status: `passed`
 
 ## Scope
 
@@ -51,19 +51,34 @@ Forbidden scope:
 - Leader created this reviewer log before spec-review dispatch.
 - Review is pending until Task 5 implementer completes.
 
+### 2026-05-24 Passed
+
+- Verified `src/services/aiAdapter.ts` expands the shared failure contract with `region_image_missing`, `real_ai_disabled`, `provider_not_configured`, `provider_request_failed`, and `provider_response_invalid` while keeping the existing failure reasons and adding optional `retryable?: boolean`.
+- Verified `src/services/mockAiAdapter.ts` returns the exact recoverable, user-readable `region_image_missing` failure when `selectedRegionImageUri` is empty.
+- Verified `src/services/aiAdapter.test.ts` includes the success assertions for review items, provider/modelId trace metadata, no `模型推理` wording in `correctAnswer`, and the missing region image failure case.
+- Verified the review scope stayed out of real AI/Qwen provider calls, Electron main/preload changes, local storage format changes, React runtime switch/UI behavior changes, dependencies, and generated outputs.
+- Required verification passed: `git status --short --branch`, `git diff --check`, `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, and `npm run build`.
+
 ## Commands Run
 
 ```bash
-# No commands run yet.
+git status --short --branch
+git diff --check
+npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts
+npm run build
 ```
 
 ## Files Changed
 
-- No files changed yet.
+- `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-05-spec-review.md`
+- `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
 
 ## Verification
 
-- Not run yet.
+- `git status --short --branch` -> clean branch state on `codex/real-ai-recognition-implementation`.
+- `git diff --check` -> passed with no whitespace or patch formatting issues.
+- `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts` -> 2 files passed, 9 tests passed.
+- `npm run build` -> passed.
 
 ## Blockers
 
@@ -75,10 +90,10 @@ Forbidden scope:
 
 ## Leader Review
 
-- Review status:
-- Review notes:
-- Required follow-up:
+- Review status: passed
+- Review notes: Task 5 stays within the provider-agnostic AI adapter boundary and mock adapter contract, with no real provider calls or runtime/UI/storage scope creep.
+- Required follow-up: Task 5 overall remains pending code-quality review.
 
 ## Commit
 
-- Commit hash:
+- Commit hash: ea08fc4

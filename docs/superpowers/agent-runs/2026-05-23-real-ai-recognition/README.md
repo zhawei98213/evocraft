@@ -63,7 +63,7 @@
 | `agents/task-04-spec-review.md` | spec-reviewer | Task 4 | passed | 已确认 Task 4 React desktop store 选择逻辑、桌面回归测试和范围边界，等待 code-quality 复审。 |
 | `agents/task-04-code-quality-review.md` | code-quality-reviewer | Task 4 | passed | 已确认 store 选择顺序、hydration guard、browser fallback、desktop upload bridge 覆盖和范围边界均满足要求。 |
 | `agents/task-05-ai-adapter-contract.md` | implementer | Task 5 | done | 已按 TDD 扩展 AI adapter failure contract，mock adapter 现对缺失题目区域截图返回可恢复错误，adapter/domain 验证与 build 均通过。 |
-| `agents/task-05-spec-review.md` | spec-reviewer | Task 5 | pending | 已创建日志，等待 Task 5 implementer 完成后复审。 |
+| `agents/task-05-spec-review.md` | spec-reviewer | Task 5 | passed | 已确认 Task 5 AI adapter contract 扩展符合计划，且 focused verification 通过。 |
 | `agents/task-05-code-quality-review.md` | code-quality-reviewer | Task 5 | pending | 已创建日志，等待 Task 5 spec review 通过后复审。 |
 
 ## Global Progress
@@ -307,6 +307,15 @@
 - Confirmed no domain edits were needed because the existing mock draft already provides `需复核` review items, `provider`/`modelId` trace metadata, and a `correctAnswer` that does not contain `模型推理`.
 - Verification passed: `npm run test:react -- src/services/aiAdapter.test.ts`, `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, `npm run build`, `git diff --check`, and zero `lsp_diagnostics` findings on modified source files.
 - Task 5 implementer scope is complete and ready for review. Task 6 should not start until Task 5 review and scoped commit/push are finished.
+
+### 2026-05-24 Task 5 Spec Review Passed
+
+- Confirmed `src/services/aiAdapter.ts` expands the shared failure contract with `region_image_missing`, `real_ai_disabled`, `provider_not_configured`, `provider_request_failed`, and `provider_response_invalid` while keeping the existing failure reasons and adding optional `retryable?: boolean`.
+- Confirmed `src/services/mockAiAdapter.ts` returns the exact recoverable, user-readable `region_image_missing` failure when `selectedRegionImageUri` is empty.
+- Confirmed `src/services/aiAdapter.test.ts` covers the success assertions for review items, provider/modelId trace metadata, no `模型推理` wording in `correctAnswer`, and the missing region image failure case.
+- Confirmed the review stayed within scope: no real AI/Qwen provider calls, no Electron main/preload changes, no local storage format changes, no React runtime switch/UI behavior changes, no dependencies, and no generated outputs.
+- Required verification passed: `git status --short --branch`, `git diff --check`, `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, and `npm run build`.
+- Task 5 spec review is passed; Task 5 overall remains pending code-quality review.
 
 ## Global Blockers
 
