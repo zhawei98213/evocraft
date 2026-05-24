@@ -10,7 +10,7 @@
 - Assigned at: 2026-05-24
 - Completed at: 2026-05-24
 - Follow-up completed at: 2026-05-24
-- Status: `changes_requested_fixed`
+- Status: `done`
 
 ## Scope
 
@@ -121,7 +121,7 @@ git check-ignore -v .env .env.local .env.production ai-eval/.env ai-eval/.env.lo
 
 ## Blockers
 
-- 无实现卡点；等待 code-quality re-review 通过后关闭 Task 6。
+- 无。
 
 ## Handoff Notes
 
@@ -132,10 +132,10 @@ git check-ignore -v .env .env.local .env.production ai-eval/.env ai-eval/.env.lo
 
 ## Leader Review
 
-- Review status: failed once, follow-up fixed, pending re-review.
-- Review notes: first code-quality review found `.env*` files were not ignored, ignore behavior was not tested through git, and the normal `npm test` suite did not include the ai-eval privacy harness.
-- Required follow-up: run code-quality re-review before Task 7.
+- Review status: passed after follow-up.
+- Review notes: first code-quality review found `.env*` files were not ignored, ignore behavior was not tested through git, and the normal `npm test` suite did not include the ai-eval privacy harness. Follow-up commit `85028ee` closed those gaps and passed re-review.
+- Required follow-up: proceed to Task 7 when assigned.
 
 ## Commit
 
-- Commit hash:
+- Commit hash: `58c827a`, follow-up `85028ee`

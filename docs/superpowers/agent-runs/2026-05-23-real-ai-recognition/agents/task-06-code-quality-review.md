@@ -9,7 +9,7 @@
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-24
 - Completed at: 2026-05-24
-- Status: `failed`
+- Status: `passed`
 
 ## Scope
 
@@ -63,6 +63,16 @@ Forbidden scope:
 - Regression-suite issue: default `npm test` did not include `node tests/ai-eval-config.test.mjs`, so the harness privacy checks could be skipped during normal verification.
 - Reviewer did not modify repository files or commit review docs; the leader recorded this failed review and prepared the follow-up fix in the implementer log.
 
+### 2026-05-24 Re-review Passed
+
+- Harvey re-reviewed follow-up commit `85028ee`.
+- Result: `PASS`.
+- Confirmed `.gitignore` now protects `.env`, `.env.local`, `.env.*`, and nested `ai-eval/.env*` through git basename matching.
+- Confirmed `tests/ai-eval-config.test.mjs` uses `git check-ignore` for real ignore behavior checks and keeps `.gitkeep`, `manifest.example.json`, and `results/.gitignore` trackable.
+- Confirmed `package.json` default `npm test` includes `node tests/ai-eval-config.test.mjs`.
+- Confirmed runner safety still holds: default disabled mode exits before provider access, explicitly enabled mode requires `DASHSCOPE_API_KEY`, and dummy-key example-manifest mode only writes a placeholder `not-run` row.
+- Confirmed no Qwen adapter/provider wiring, dependencies, private samples/results/API keys/`.env` files, or Electron/React/storage runtime changes were introduced.
+
 ## Commands Run
 
 ```bash
@@ -78,22 +88,34 @@ git check-ignore --quiet .env.local
 git check-ignore --quiet .env.production
 git check-ignore --quiet ai-eval/.env
 git check-ignore --quiet ai-eval/.env.local
+git check-ignore -v .env .env.local .env.production ai-eval/.env ai-eval/.env.local ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl
+git diff --name-only 58c827a..85028ee
+git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl
+npx tsc --noEmit --pretty false --project tsconfig.json
 ```
 
 ## Files Changed
 
 - No implementation files changed by the reviewer.
 - This log was updated by the leader because the reviewer returned findings without committing docs.
+- Follow-up implementation commit reviewed: `85028ee`.
 
 ## Verification
 
 - `npm run test:ai-eval-config` and `npm test` passed for the original Task 6 implementation, but the reviewer found privacy coverage was insufficient.
 - Disabled/key-gated/placeholder runner probes behaved as intended.
 - `.env*` git ignore probes failed in the original reviewed implementation, so the review result is failed.
+- Re-review verification passed for follow-up commit `85028ee`.
+- `git check-ignore -v` confirmed ignored paths: `.env`, `.env.local`, `.env.production`, `ai-eval/.env`, `ai-eval/.env.local`, `ai-eval/samples/manifest.local.json`, `ai-eval/samples/private/math.jpg`, and `ai-eval/results/result-123.jsonl`.
+- Safe placeholder files remained trackable: `ai-eval/samples/.gitkeep`, `ai-eval/samples/manifest.example.json`, and `ai-eval/results/.gitignore`.
+- `npm test` passed and visibly included `node tests/ai-eval-config.test.mjs`.
+- Runner smoke probes matched the intended gate behavior and produced a single placeholder JSONL row with `status: "not-run"`.
+- `git ls-files` found no tracked private/env/result files.
+- `npx tsc --noEmit --pretty false --project tsconfig.json` passed as fallback after `lsp_diagnostics` was unavailable to the review lane.
 
 ## Blockers
 
-- Task 6 is blocked from Task 7 until `.env*` ignore coverage is fixed, committed, pushed, and code-quality re-review passes.
+- 无。
 
 ## Handoff Notes
 
@@ -102,13 +124,14 @@ git check-ignore --quiet ai-eval/.env.local
   - Add `git check-ignore` assertions for `.env*`, nested `ai-eval/.env*`, private sample paths, generated result rows, and the allowed keep/example files.
   - Include `node tests/ai-eval-config.test.mjs` in default `npm test`.
   - Re-run the focused harness test, default suite, runner smoke probes, `git diff --check`, and git ignore probes before re-review.
+- Re-review passed. Task 6 is complete and Task 7 may proceed.
 
 ## Leader Review
 
-- Review status: failed.
-- Review notes: harness behavior is acceptable, but secret-file ignore coverage and default regression coverage were insufficient.
-- Required follow-up: fix privacy/test coverage and request code-quality re-review.
+- Review status: passed after follow-up.
+- Review notes: harness behavior remained acceptable; follow-up commit `85028ee` closed secret-file ignore coverage, git ignore regression coverage, and default test-suite coverage.
+- Required follow-up: proceed to Task 7 when assigned.
 
 ## Commit
 
-- Commit hash:
+- Reviewed commit: `85028ee`

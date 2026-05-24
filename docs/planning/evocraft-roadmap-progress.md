@@ -1667,6 +1667,44 @@
 - 提交并推送 Task 6 follow-up fix。
 - 派发 Task 6 code-quality re-review；通过后再创建并派发 Task 7 Qwen Adapter Spike。
 
+### 2026-05-24：真实 AI 识别 Task 6 质量复审通过
+
+本轮任务是什么：
+
+- 记录 Task 6 follow-up fix 的 code-quality re-review 结果，并关闭 AI evaluation harness 阶段。
+
+已完成什么：
+
+- Harvey 对 follow-up commit `85028ee` 返回 `PASS`。
+- 复审确认 `.env*`、nested `ai-eval/.env*`、私有样本、私有 manifest 和 generated results 均被 git ignore 保护。
+- 复审确认 `.gitkeep`、`manifest.example.json`、`results/.gitignore` 仍可追踪。
+- 复审确认 `tests/ai-eval-config.test.mjs` 使用 `git check-ignore` 做真实 ignore 行为回归，并且默认 `npm test` 会运行 ai-eval config test。
+- 复审确认 runner 仍默认禁用，只有显式 `EVOCRAFT_AI_EVAL_ENABLED=1` 后才要求 `DASHSCOPE_API_KEY`，dummy-key smoke 只写 `not-run` placeholder 行，没有真实 provider call。
+- 更新 Task 6 run ledger、implementer log 和 code-quality review log，把 Task 6 标记为完成。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git diff --check`
+- `npm run test:ai-eval-config`
+- `npm test`
+- `git check-ignore -v .env .env.local .env.production ai-eval/.env ai-eval/.env.local ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl`
+- `node scripts/evaluate-ai-samples.mjs`
+- `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs`
+- `EVOCRAFT_AI_EVAL_ENABLED=1 DASHSCOPE_API_KEY=dummy node scripts/evaluate-ai-samples.mjs ai-eval/samples/manifest.example.json /tmp/evocraft-ai-eval-review.jsonl`
+- `git diff --name-only 58c827a..85028ee`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl`
+- `npx tsc --noEmit --pretty false --project tsconfig.json`
+
+下一步的计划：
+
+- 提交并推送 Task 6 review-complete docs。
+- 创建 Task 7 Qwen Adapter Spike 的 implementer、spec reviewer 和 code-quality reviewer 日志，然后按 TDD 开始真实 provider adapter spike。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。

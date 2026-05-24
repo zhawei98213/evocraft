@@ -38,7 +38,7 @@
 | 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | completed | Electron main/preload IPC, desktop bridge | `npm run test:electron-config`, `npm run test:electron-store` | `9a78dbb`, `61441ba`, `a2fa40c` |
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | completed | App store selection and tests | `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts`, `npm run build`, `git diff --check` | `32b8fe7` |
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | completed | AI contract, mock adapter, domain tests | `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, `npm run build`, `git diff --check` | `ea08fc4` |
-| 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | pending re-review | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config`, runner gate checks, `npm test`, `git diff --check` | `58c827a`, follow-up 待提交 |
+| 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | completed | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config`, runner gate checks, `npm test`, `git diff --check` | `58c827a`, `85028ee` |
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | pending | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter` | 未开始 |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | pending | Electron AI IPC, desktop AI adapter | Electron config + adapter tests | 未开始 |
 | 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | pending | UI mode, authorization copy, final verification | Full verification suite | 未开始 |
@@ -65,9 +65,9 @@
 | `agents/task-05-ai-adapter-contract.md` | implementer | Task 5 | done | 已按 TDD 扩展 AI adapter failure contract，mock adapter 现对缺失题目区域截图返回可恢复错误，adapter/domain 验证与 build 均通过。 |
 | `agents/task-05-spec-review.md` | spec-reviewer | Task 5 | passed | 已确认 Task 5 AI adapter contract 扩展符合计划，且 focused verification 通过。 |
 | `agents/task-05-code-quality-review.md` | code-quality-reviewer | Task 5 | passed | 已确认共享失败契约、mock 缺失截图失败路径、测试覆盖和范围边界均满足要求，Task 5 质量 review 通过。 |
-| `agents/task-06-ai-eval-harness.md` | implementer | Task 6 | changes_requested_fixed | 已补上 `.env*` ignore、`git check-ignore` 隐私回归测试，并把 `test:ai-eval-config` 纳入默认 `npm test`，等待 code-quality re-review。 |
+| `agents/task-06-ai-eval-harness.md` | implementer | Task 6 | done | 已补上 `.env*` ignore、`git check-ignore` 隐私回归测试，并把 `test:ai-eval-config` 纳入默认 `npm test`，复审通过。 |
 | `agents/task-06-spec-review.md` | spec-reviewer | Task 6 | passed | 已确认 Task 6 本机 AI 评测脚手架符合计划，且 focused verification 通过。 |
-| `agents/task-06-code-quality-review.md` | code-quality-reviewer | Task 6 | failed | 首轮质量 review 确认 harness 核心正确，但 `.env*` 未被 git ignore、测试未覆盖 ignore 生效、默认 `npm test` 未运行 ai-eval config，需返工复审。 |
+| `agents/task-06-code-quality-review.md` | code-quality-reviewer | Task 6 | passed | 复审确认 `.env*` ignore、`git check-ignore` 隐私回归、默认 `npm test` 覆盖和 runner gate 均通过。 |
 
 ## Global Progress
 
@@ -369,6 +369,17 @@
 - Verified the new test failed before the `.env*` ignore fix, then passed after the fix.
 - Re-ran `npm run test:ai-eval-config`, `git diff --check`, `git check-ignore` probes, `npm test`, and the runner disabled/key-gated/placeholder smoke probes; all passed in the follow-up workspace.
 - Task 6 is ready for code-quality re-review. Task 7 remains blocked until that review passes.
+
+### 2026-05-24 Task 6 Code Quality Re-Review Passed
+
+- Harvey re-reviewed follow-up commit `85028ee` and returned `PASS`.
+- Confirmed `.env`, `.env.local`, `.env.*`, nested `ai-eval/.env*`, private sample paths, local manifest paths, and generated result rows are ignored by git.
+- Confirmed `ai-eval/samples/.gitkeep`, `ai-eval/samples/manifest.example.json`, and `ai-eval/results/.gitignore` remain trackable.
+- Confirmed `tests/ai-eval-config.test.mjs` now uses `git check-ignore` and asserts default `npm test` includes the ai-eval config test.
+- Confirmed `npm test` visibly runs `node tests/ai-eval-config.test.mjs` and passes.
+- Confirmed the runner remains safe: disabled by default, requires `DASHSCOPE_API_KEY` only after explicit enablement, writes a placeholder `not-run` row with the example manifest, and does not call a real provider.
+- Re-review commands included `git status --short --branch`, `git diff --check`, `npm run test:ai-eval-config`, `npm test`, `git check-ignore -v ...`, runner smoke probes, `git diff --name-only 58c827a..85028ee`, `git ls-files` checks for private/env/result paths, and `npx tsc --noEmit --pretty false --project tsconfig.json`.
+- Task 6 fully passed both reviews and is complete. Task 7 may proceed when assigned.
 
 ## Global Blockers
 
