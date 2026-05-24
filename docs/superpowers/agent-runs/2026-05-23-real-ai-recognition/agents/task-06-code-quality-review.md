@@ -8,8 +8,8 @@
 - Task title: AI Evaluation Harness Code Quality Review
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-24
-- Completed at:
-- Status: `pending`
+- Completed at: 2026-05-24
+- Status: `failed`
 
 ## Scope
 
@@ -53,33 +53,61 @@ Forbidden scope:
 - Leader created this reviewer log before quality-review dispatch.
 - Quality review is pending until Task 6 spec review passes.
 
+### 2026-05-24 Review Failed
+
+- Reviewer Harvey (`019e591e-a265-73d2-bafe-97d3247cafa5`) reviewed Task 6 after spec review passed.
+- Result: `FAIL`.
+- Positive finding: the disabled-by-default runner, key gate, placeholder `not-run` output, and no-provider-call scope were sound.
+- Blocking issue: `.gitignore` did not ignore `.env`, `.env.local`, or `.env.*`; reviewer verified those paths were not ignored, which would make local provider credentials easy to stage.
+- Test adequacy issue: `tests/ai-eval-config.test.mjs` checked ignore pattern text but did not prove actual git ignore behavior with `git check-ignore`.
+- Regression-suite issue: default `npm test` did not include `node tests/ai-eval-config.test.mjs`, so the harness privacy checks could be skipped during normal verification.
+- Reviewer did not modify repository files or commit review docs; the leader recorded this failed review and prepared the follow-up fix in the implementer log.
+
 ## Commands Run
 
 ```bash
-# No commands run yet.
+git status --short --branch
+git diff --check
+npm run test:ai-eval-config
+npm test
+node scripts/evaluate-ai-samples.mjs
+EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs
+EVOCRAFT_AI_EVAL_ENABLED=1 DASHSCOPE_API_KEY=dummy node scripts/evaluate-ai-samples.mjs ai-eval/samples/manifest.example.json /tmp/evocraft-ai-eval-test.jsonl
+git check-ignore --quiet .env
+git check-ignore --quiet .env.local
+git check-ignore --quiet .env.production
+git check-ignore --quiet ai-eval/.env
+git check-ignore --quiet ai-eval/.env.local
 ```
 
 ## Files Changed
 
-- No files changed yet.
+- No implementation files changed by the reviewer.
+- This log was updated by the leader because the reviewer returned findings without committing docs.
 
 ## Verification
 
-- Not run yet.
+- `npm run test:ai-eval-config` and `npm test` passed for the original Task 6 implementation, but the reviewer found privacy coverage was insufficient.
+- Disabled/key-gated/placeholder runner probes behaved as intended.
+- `.env*` git ignore probes failed in the original reviewed implementation, so the review result is failed.
 
 ## Blockers
 
-- 无。
+- Task 6 is blocked from Task 7 until `.env*` ignore coverage is fixed, committed, pushed, and code-quality re-review passes.
 
 ## Handoff Notes
 
-- No handoff yet.
+- Follow-up fix requirements:
+  - Add `.env`, `.env.local`, and `.env.*` ignore coverage.
+  - Add `git check-ignore` assertions for `.env*`, nested `ai-eval/.env*`, private sample paths, generated result rows, and the allowed keep/example files.
+  - Include `node tests/ai-eval-config.test.mjs` in default `npm test`.
+  - Re-run the focused harness test, default suite, runner smoke probes, `git diff --check`, and git ignore probes before re-review.
 
 ## Leader Review
 
-- Review status:
-- Review notes:
-- Required follow-up:
+- Review status: failed.
+- Review notes: harness behavior is acceptable, but secret-file ignore coverage and default regression coverage were insufficient.
+- Required follow-up: fix privacy/test coverage and request code-quality re-review.
 
 ## Commit
 

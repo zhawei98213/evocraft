@@ -9,7 +9,8 @@
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-24
 - Completed at: 2026-05-24
-- Status: `done`
+- Follow-up completed at: 2026-05-24
+- Status: `changes_requested_fixed`
 
 ## Scope
 
@@ -68,6 +69,15 @@ Forbidden scope:
 - `EVOCRAFT_AI_EVAL_ENABLED=1 DASHSCOPE_API_KEY=dummy node scripts/evaluate-ai-samples.mjs ai-eval/samples/manifest.example.json /tmp/evocraft-ai-eval-test.jsonl` wrote a single placeholder JSONL row with `status: "not-run"` and no provider call.
 - `npm test` passed to confirm the new harness config did not regress the broader suite.
 
+### 2026-05-24 Code Quality Follow-Up
+
+- Received a failed code-quality review from Harvey (`019e591e-a265-73d2-bafe-97d3247cafa5`).
+- Verified the feedback: `.env`, `.env.local`, `.env.*`, and nested `ai-eval/.env*` files were not protected by git ignore rules, and the harness test did not prove ignore behavior with `git check-ignore`.
+- Added `.env`, `.env.local`, and `.env.*` to root `.gitignore`.
+- Extended `tests/ai-eval-config.test.mjs` with `git check-ignore --quiet` checks for local env files, private sample paths, generated result rows, and the allowed keep/example files.
+- Added an assertion that default `npm test` includes `node tests/ai-eval-config.test.mjs`.
+- Updated `package.json` so `npm test` runs the ai-eval config/privacy test before Vitest.
+
 ## Commands Run
 
 ```bash
@@ -78,6 +88,8 @@ node scripts/evaluate-ai-samples.mjs
 EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs
 EVOCRAFT_AI_EVAL_ENABLED=1 DASHSCOPE_API_KEY=dummy node scripts/evaluate-ai-samples.mjs ai-eval/samples/manifest.example.json /tmp/evocraft-ai-eval-test.jsonl
 npm test
+npm run test:ai-eval-config
+git check-ignore -v .env .env.local .env.production ai-eval/.env ai-eval/.env.local ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl
 ```
 
 ## Files Changed
@@ -92,6 +104,8 @@ npm test
 - `tests/ai-eval-config.test.mjs`
 - `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-06-ai-eval-harness.md`
 - `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
+- `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-06-code-quality-review.md`
+- `docs/planning/evocraft-roadmap-progress.md`
 
 ## Verification
 
@@ -100,22 +114,27 @@ npm test
 - Hygiene: `git diff --check` -> passed.
 - Runner gate: disabled mode and enabled-without-key mode both exited `2` with the expected messages.
 - Broader regression: `npm test` -> 5 files passed, 30 tests passed.
+- RED follow-up: `npm run test:ai-eval-config` failed before the `.env*` ignore fix because `.gitignore` lacked `^\.env$`.
+- GREEN follow-up: `npm run test:ai-eval-config` -> passed after adding `.env*` ignore rules and `git check-ignore` checks.
+- Privacy boundary: `git check-ignore -v` confirmed `.env`, `.env.local`, `.env.production`, nested `ai-eval/.env*`, private manifests/samples, and generated result rows are ignored.
+- Default suite: `npm test` now includes `node tests/ai-eval-config.test.mjs` and passed.
 
 ## Blockers
 
-- 无。
+- 无实现卡点；等待 code-quality re-review 通过后关闭 Task 6。
 
 ## Handoff Notes
 
 - This task creates the evaluation surface only; actual provider adapter wiring starts in Task 7.
 - The runner intentionally references `DASHSCOPE_API_KEY` and the future provider handoff, but it does not import or call any provider in Task 6.
-- I did not update roadmap/project-memory docs because the user-scoped allowed-file list for Task 6 excluded them.
+- The follow-up keeps Task 6 limited to harness privacy and test coverage; no Qwen/provider wiring was added.
+- Roadmap progress is updated because the reviewer failure changed verification status.
 
 ## Leader Review
 
-- Review status:
-- Review notes:
-- Required follow-up:
+- Review status: failed once, follow-up fixed, pending re-review.
+- Review notes: first code-quality review found `.env*` files were not ignored, ignore behavior was not tested through git, and the normal `npm test` suite did not include the ai-eval privacy harness.
+- Required follow-up: run code-quality re-review before Task 7.
 
 ## Commit
 

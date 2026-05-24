@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-05-23
+最后更新：2026-05-24
 
 ## 路线图
 
@@ -1633,6 +1633,39 @@
 
 - 提交并推送 Task 6 派发准备日志。
 - 派出 Task 6 implementer，按 TDD 创建默认禁用的本机评测脚手架和隐私保护 ignore 规则。
+
+### 2026-05-24：真实 AI 识别 Task 6 隐私边界返工
+
+本轮任务是什么：
+
+- 根据 Task 6 code-quality review 的失败结论，修复本机 AI 评测脚手架在 `.env*` 凭据文件、git ignore 行为验证和默认测试套件里的隐私边界缺口。
+
+已完成什么：
+
+- 复核 reviewer 反馈：Task 6 harness 默认禁用、API key gate 和 placeholder 输出方向正确，但 `.env`、`.env.local`、`.env.*` 未被 git ignore 保护。
+- 在 `.gitignore` 添加 `.env`、`.env.local`、`.env.*`，覆盖根目录和 nested `ai-eval/.env*` 本地配置文件。
+- 扩展 `tests/ai-eval-config.test.mjs`，用 `git check-ignore --quiet` 验证 `.env*`、私有样本、私有 manifest、generated results 被忽略，同时确认 `.gitkeep`、`manifest.example.json`、`results/.gitignore` 不被误忽略。
+- 将 `node tests/ai-eval-config.test.mjs` 纳入默认 `npm test`，避免真实 provider 接入后隐私边界测试被跳过。
+- 更新 Task 6 implementer log、code-quality review log 和 run ledger，把 Task 6 状态从误标完成调整为等待 code-quality re-review。
+
+卡在哪里：
+
+- 无实现卡点；Task 6 必须在 follow-up commit/push 后通过 code-quality re-review，才能进入 Task 7 Qwen Adapter Spike。
+
+执行的是什么命令：
+
+- `npm run test:ai-eval-config`（修复前按预期失败，修复后通过）
+- `git diff --check`
+- `git check-ignore -v .env .env.local .env.production ai-eval/.env ai-eval/.env.local ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl`
+- `npm test`
+- `node scripts/evaluate-ai-samples.mjs`
+- `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs`
+- `EVOCRAFT_AI_EVAL_ENABLED=1 DASHSCOPE_API_KEY=dummy node scripts/evaluate-ai-samples.mjs ai-eval/samples/manifest.example.json /tmp/evocraft-ai-eval-test.jsonl`
+
+下一步的计划：
+
+- 提交并推送 Task 6 follow-up fix。
+- 派发 Task 6 code-quality re-review；通过后再创建并派发 Task 7 Qwen Adapter Spike。
 
 ## 下一步
 

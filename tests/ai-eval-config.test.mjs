@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 
 assert.ok(existsSync("scripts/evaluate-ai-samples.mjs"), "evaluation script should exist");
@@ -32,11 +33,37 @@ assert.match(resultsIgnore, /^\*/m);
 assert.match(resultsIgnore, /^!\.gitignore$/m);
 
 const rootIgnore = readFileSync(".gitignore", "utf8");
+assert.match(rootIgnore, /^\.env$/m);
+assert.match(rootIgnore, /^\.env\.local$/m);
+assert.match(rootIgnore, /^\.env\.\*$/m);
 assert.match(rootIgnore, /^ai-eval\/samples\/\*$/m);
 assert.match(rootIgnore, /^!ai-eval\/samples\/\.gitkeep$/m);
 assert.match(rootIgnore, /^!ai-eval\/samples\/manifest\.example\.json$/m);
 assert.match(rootIgnore, /^ai-eval\/results\/\*$/m);
 assert.match(rootIgnore, /^!ai-eval\/results\/\.gitignore$/m);
 
+assertGitIgnored(".env");
+assertGitIgnored(".env.local");
+assertGitIgnored(".env.production");
+assertGitIgnored("ai-eval/.env");
+assertGitIgnored("ai-eval/.env.local");
+assertGitIgnored("ai-eval/samples/manifest.local.json");
+assertGitIgnored("ai-eval/samples/private/math.jpg");
+assertGitIgnored("ai-eval/results/result-123.jsonl");
+assertGitNotIgnored("ai-eval/samples/.gitkeep");
+assertGitNotIgnored("ai-eval/samples/manifest.example.json");
+assertGitNotIgnored("ai-eval/results/.gitignore");
+
 const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 assert.equal(pkg.scripts["test:ai-eval-config"], "node tests/ai-eval-config.test.mjs");
+assert.match(pkg.scripts.test, /tests\/ai-eval-config\.test\.mjs/);
+
+function assertGitIgnored(path) {
+  const result = spawnSync("git", ["check-ignore", "--quiet", path], { encoding: "utf8" });
+  assert.equal(result.status, 0, `${path} should be ignored by git`);
+}
+
+function assertGitNotIgnored(path) {
+  const result = spawnSync("git", ["check-ignore", "--quiet", path], { encoding: "utf8" });
+  assert.notEqual(result.status, 0, `${path} should not be ignored by git`);
+}

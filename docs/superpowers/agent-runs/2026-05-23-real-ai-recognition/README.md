@@ -38,7 +38,7 @@
 | 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | completed | Electron main/preload IPC, desktop bridge | `npm run test:electron-config`, `npm run test:electron-store` | `9a78dbb`, `61441ba`, `a2fa40c` |
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | completed | App store selection and tests | `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts`, `npm run build`, `git diff --check` | `32b8fe7` |
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | completed | AI contract, mock adapter, domain tests | `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, `npm run build`, `git diff --check` | `ea08fc4` |
-| 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | completed | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config`, runner gate checks, `npm test`, `git diff --check` | 待提交 |
+| 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | pending re-review | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config`, runner gate checks, `npm test`, `git diff --check` | `58c827a`, follow-up 待提交 |
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | pending | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter` | 未开始 |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | pending | Electron AI IPC, desktop AI adapter | Electron config + adapter tests | 未开始 |
 | 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | pending | UI mode, authorization copy, final verification | Full verification suite | 未开始 |
@@ -65,9 +65,9 @@
 | `agents/task-05-ai-adapter-contract.md` | implementer | Task 5 | done | 已按 TDD 扩展 AI adapter failure contract，mock adapter 现对缺失题目区域截图返回可恢复错误，adapter/domain 验证与 build 均通过。 |
 | `agents/task-05-spec-review.md` | spec-reviewer | Task 5 | passed | 已确认 Task 5 AI adapter contract 扩展符合计划，且 focused verification 通过。 |
 | `agents/task-05-code-quality-review.md` | code-quality-reviewer | Task 5 | passed | 已确认共享失败契约、mock 缺失截图失败路径、测试覆盖和范围边界均满足要求，Task 5 质量 review 通过。 |
-| `agents/task-06-ai-eval-harness.md` | implementer | Task 6 | done | 已按 TDD 添加默认禁用的本机 AI 评测脚手架、隐私 ignore 规则、manifest example、README、结果目录 ignore 和静态测试，并完成 gate 验证与回归测试。 |
+| `agents/task-06-ai-eval-harness.md` | implementer | Task 6 | changes_requested_fixed | 已补上 `.env*` ignore、`git check-ignore` 隐私回归测试，并把 `test:ai-eval-config` 纳入默认 `npm test`，等待 code-quality re-review。 |
 | `agents/task-06-spec-review.md` | spec-reviewer | Task 6 | passed | 已确认 Task 6 本机 AI 评测脚手架符合计划，且 focused verification 通过。 |
-| `agents/task-06-code-quality-review.md` | code-quality-reviewer | Task 6 | pending | 已创建日志，等待 Task 6 spec review 通过后复审。 |
+| `agents/task-06-code-quality-review.md` | code-quality-reviewer | Task 6 | failed | 首轮质量 review 确认 harness 核心正确，但 `.env*` 未被 git ignore、测试未覆盖 ignore 生效、默认 `npm test` 未运行 ai-eval config，需返工复审。 |
 
 ## Global Progress
 
@@ -352,6 +352,23 @@
 - Confirmed no real provider adapter, `fetch` provider call, dependency addition, Electron/React/storage runtime change, private sample file, generated result file, API key file, or `.env` file was introduced.
 - Required verification passed: `git status --short --branch`, `git diff --check`, `npm run test:ai-eval-config`, and `npm test`.
 - Task 6 spec review is passed; Task 6 overall remains pending code-quality review.
+
+### 2026-05-24 Task 6 Code Quality Review Failed
+
+- Code-quality reviewer Harvey (`019e591e-a265-73d2-bafe-97d3247cafa5`) confirmed the disabled-by-default harness behavior and scope containment were sound.
+- Review failed on a privacy boundary gap: root `.gitignore` did not ignore `.env`, `.env.local`, or `.env.*`, so provider credentials could be staged once Task 7 begins.
+- Review also found the static harness test only inspected pattern text and did not prove git ignore behavior via `git check-ignore`.
+- Default `npm test` did not include `node tests/ai-eval-config.test.mjs`, so the privacy harness could drift outside the normal regression suite.
+- Task 6 may not advance to Task 7 until the follow-up fix is committed, pushed, and code-quality re-review passes.
+
+### 2026-05-24 Task 6 Follow-Up Fix Prepared
+
+- Added `.env`, `.env.local`, and `.env.*` to root `.gitignore`; git basename matching covers nested `ai-eval/.env*` paths as well.
+- Expanded `tests/ai-eval-config.test.mjs` to assert the ignore patterns and run `git check-ignore --quiet` against local env files, private sample paths, generated result paths, and the allowed keep/example files.
+- Added a default-suite guard so `package.json` `npm test` must run `node tests/ai-eval-config.test.mjs`.
+- Verified the new test failed before the `.env*` ignore fix, then passed after the fix.
+- Re-ran `npm run test:ai-eval-config`, `git diff --check`, `git check-ignore` probes, `npm test`, and the runner disabled/key-gated/placeholder smoke probes; all passed in the follow-up workspace.
+- Task 6 is ready for code-quality re-review. Task 7 remains blocked until that review passes.
 
 ## Global Blockers
 
