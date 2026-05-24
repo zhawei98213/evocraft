@@ -3,13 +3,19 @@ import type { RegionCandidate, Subject, WrongQuestionDraft } from "../domain/wro
 export type AiAdapterFailureReason =
   | "image_missing"
   | "region_missing"
+  | "region_image_missing"
   | "region_detection_failed"
-  | "recognition_failed";
+  | "recognition_failed"
+  | "real_ai_disabled"
+  | "provider_not_configured"
+  | "provider_request_failed"
+  | "provider_response_invalid";
 
 export interface AiAdapterFailure {
   ok: false;
   reason: AiAdapterFailureReason;
   message: string;
+  retryable?: boolean;
 }
 
 export interface DetectRegionsInput {

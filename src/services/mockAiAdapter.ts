@@ -42,6 +42,14 @@ export const mockAiAdapter: AiAdapter = {
       };
     }
 
+    if (!input.selectedRegionImageUri) {
+      return {
+        ok: false,
+        reason: "region_image_missing",
+        message: "题目区域截图生成失败，请重新确认区域。",
+      };
+    }
+
     return {
       ok: true,
       draft: createMockRecognition({
