@@ -39,7 +39,7 @@
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | completed | App store selection and tests | `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts`, `npm run build`, `git diff --check` | `32b8fe7` |
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | completed | AI contract, mock adapter, domain tests | `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, `npm run build`, `git diff --check` | `ea08fc4` |
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | completed | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config`, runner gate checks, `npm test`, `git diff --check` | `58c827a`, `85028ee` |
-| 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | assigned | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check` | 未开始 |
+| 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | in_review | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check` | 待补 |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | pending | Electron AI IPC, desktop AI adapter | Electron config + adapter tests | 未开始 |
 | 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | pending | UI mode, authorization copy, final verification | Full verification suite | 未开始 |
 
@@ -68,7 +68,7 @@
 | `agents/task-06-ai-eval-harness.md` | implementer | Task 6 | done | 已补上 `.env*` ignore、`git check-ignore` 隐私回归测试，并把 `test:ai-eval-config` 纳入默认 `npm test`，复审通过。 |
 | `agents/task-06-spec-review.md` | spec-reviewer | Task 6 | passed | 已确认 Task 6 本机 AI 评测脚手架符合计划，且 focused verification 通过。 |
 | `agents/task-06-code-quality-review.md` | code-quality-reviewer | Task 6 | passed | 复审确认 `.env*` ignore、`git check-ignore` 隐私回归、默认 `npm test` 覆盖和 runner gate 均通过。 |
-| `agents/task-07-qwen-adapter-spike.md` | implementer | Task 7 | assigned | 已创建日志，准备按 TDD 添加 Electron/Node 侧 Qwen adapter spike、fake-fetch contract test 和 eval runner 接入。 |
+| `agents/task-07-qwen-adapter-spike.md` | implementer | Task 7 | done | 已按 TDD 先写并跑出缺失模块的 RED 合约测试，再实现 recognition prompt、Qwen adapter、eval runner 接入和 `test:qwen-adapter` 脚本；focused verification 与 runner safety probes 已通过，等待 reviewer 复核。 |
 | `agents/task-07-spec-review.md` | spec-reviewer | Task 7 | pending | 已创建日志，等待 Task 7 implementation 完成后核对计划范围。 |
 | `agents/task-07-code-quality-review.md` | code-quality-reviewer | Task 7 | pending | 已创建日志，等待 Task 7 spec review 通过后复审 adapter 安全、测试覆盖和范围边界。 |
 

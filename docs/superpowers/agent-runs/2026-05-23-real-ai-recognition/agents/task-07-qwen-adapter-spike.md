@@ -8,8 +8,8 @@
 - Task title: Add Qwen Adapter Spike With Fake-Fetch Tests
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-24
-- Completed at:
-- Status: `assigned`
+- Completed at: 2026-05-24
+- Status: `done`
 
 ## Scope
 
@@ -49,19 +49,67 @@ Forbidden scope:
 - Leader created this task log after Task 6 passed code-quality re-review.
 - Implementation has not started yet.
 
+### 2026-05-24 RED -> GREEN
+
+- Added `tests/qwen-adapter-contract.test.mjs` first and ran `node tests/qwen-adapter-contract.test.mjs`.
+- Captured the expected RED failure before implementation: `ERR_MODULE_NOT_FOUND` for `electron/ai/qwenAdapter.cjs`.
+- Implemented `electron/ai/recognitionPrompt.cjs` with a strict recognition-only JSON prompt that forbids solving, explanations, wrong-cause analysis, knowledge points, and similar-question generation.
+- Implemented `electron/ai/qwenAdapter.cjs` with:
+  - conservative placeholder `detectRegions()` output for non-empty images,
+  - required recoverable failures for `image_missing`, `region_missing`, `region_image_missing`,
+  - provider failures for `provider_not_configured`, `provider_request_failed`, and `provider_response_invalid`,
+  - fake-fetch injectable provider calls using only `selectedRegionImageUri`,
+  - Qwen response parsing for raw JSON and fenced ```json blocks,
+  - wrong-question draft mapping with Qwen model traces and `providerMeta.usage` / `providerMeta.elapsedMs`.
+- Updated `scripts/evaluate-ai-samples.mjs` to instantiate `createQwenAdapter()` only after the existing disabled/key gates pass, then evaluate each sample via a full-image manual region and emit JSONL rows `{ sampleId, subject, ok, elapsedMs, result }`.
+- Added `test:qwen-adapter` to `package.json`.
+- Re-ran the Node contract test and focused verification to GREEN without using a real API key.
+
 ## Commands Run
 
 ```bash
-# No commands run yet.
+sed -n '1,220p' /Users/zha/.codex/prompts/test-engineer.md
+sed -n '1,260p' docs/planning/evocraft-project-memory.md
+sed -n '1,260p' docs/planning/evocraft-roadmap-progress.md
+sed -n '1,240p' docs/ideas/2026-05-10-evocraft-seed-capsule.md
+sed -n '1,260p' scripts/evaluate-ai-samples.mjs
+sed -n '1,260p' package.json
+sed -n '1,260p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md
+sed -n '1,260p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-07-qwen-adapter-spike.md
+sed -n '1,260p' src/services/aiAdapter.ts
+sed -n '1,260p' src/domain/wrongQuestion.ts
+sed -n '1,260p' src/services/aiAdapter.test.ts
+sed -n '1,260p' src/services/mockAiAdapter.ts
+sed -n '1,260p' tests/ai-eval-config.test.mjs
+sed -n '1132,1468p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md
+node tests/qwen-adapter-contract.test.mjs
+node tests/qwen-adapter-contract.test.mjs
+npm run test:qwen-adapter
+npm run test:ai-eval-config
+git diff --check
+node scripts/evaluate-ai-samples.mjs
+EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs
 ```
 
 ## Files Changed
 
-- No files changed yet.
+- `tests/qwen-adapter-contract.test.mjs`
+- `electron/ai/recognitionPrompt.cjs`
+- `electron/ai/qwenAdapter.cjs`
+- `scripts/evaluate-ai-samples.mjs`
+- `package.json`
+- `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-07-qwen-adapter-spike.md`
+- `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
 
 ## Verification
 
-- Not run yet.
+- RED: `node tests/qwen-adapter-contract.test.mjs` -> `ERR_MODULE_NOT_FOUND` for missing `electron/ai/qwenAdapter.cjs`
+- GREEN: `node tests/qwen-adapter-contract.test.mjs` -> exit `0`
+- GREEN: `npm run test:qwen-adapter` -> exit `0`
+- GREEN: `npm run test:ai-eval-config` -> exit `0`
+- GREEN: `git diff --check` -> exit `0`
+- GREEN safety probe: `node scripts/evaluate-ai-samples.mjs` -> exit `2`, `AI evaluation is disabled. Set EVOCRAFT_AI_EVAL_ENABLED=1 to call the provider.`
+- GREEN safety probe: `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs` -> exit `2`, `DASHSCOPE_API_KEY is required for Qwen evaluation.`
 
 ## Blockers
 
