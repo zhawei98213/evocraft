@@ -34,7 +34,7 @@
 | --- | --- | --- | --- | --- | --- |
 | 0. Preflight And Baseline | `agents/task-00-preflight.md` | completed | 基线命令，允许 docs-only task log / ledger 更新 | `npm test`, `npm run test:electron-config`, `npm run build` | `02c1c03` |
 | 1. Async RecordStore | `agents/task-01-async-record-store.md` | completed | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | `55b4fba`, `2e29c9d` |
-| 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | review | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | `ed78c4f`, 待本次 follow-up 提交 |
+| 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | completed | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | `ed78c4f`, `09ec94c` |
 | 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | pending | Electron main/preload IPC, desktop bridge | `npm run test:electron-config` | 未开始 |
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | pending | App store selection and tests | Focused app/storage tests | 未开始 |
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | pending | AI contract, mock adapter, domain tests | Adapter/domain tests | 未开始 |
@@ -55,7 +55,7 @@
 | `agents/task-01-code-quality-review.md` | code-quality-reviewer | Task 1 | passed | 已确认 follow-up fix 关闭 pre-hydration save race，并用 delayed-load 回归测试覆盖真实异步时序。 |
 | `agents/task-02-electron-local-record-store.md` | implementer | Task 2 | changes_requested_fixed | 已补上路径边界修复与回归测试，等待 code-quality re-review。 |
 | `agents/task-02-spec-review.md` | spec-reviewer | Task 2 | passed | 已核对 temp-root 文件存储、CommonJS 导出、原子写入、图片资产重建和范围边界，未发现阻塞问题。 |
-| `agents/task-02-code-quality-review.md` | code-quality-reviewer | Task 2 | failed | 已确认类型检查和脚本验证通过，但发现 `record.json` 路径逃逸与外部 `file://` 资产未收口到本地根目录的阻塞问题；Task 3 不得开始。 |
+| `agents/task-02-code-quality-review.md` | code-quality-reviewer | Task 2 | passed | 已确认 follow-up fix 关闭路径逃逸与外部 `file://` 资产透传问题，并补齐 traversal、external file、prune、broken record、updatedAt 排序回归覆盖。 |
 
 ## Global Progress
 
@@ -165,9 +165,17 @@
 - Re-ran `node tests/electron-local-record-store.test.mjs`, `npm run test:electron-store`, `npm run test:electron-config`, and `git diff --check`; all passed.
 - Task 2 is back in review and ready for code-quality re-review. Task 3 remains blocked until that review passes.
 
+### 2026-05-24 Task 2 Code Quality Re-review Passed
+
+- Re-reviewed the original Task 2 implementation plus follow-up fix at `09ec94c` and confirmed the change stays inside the Electron local record store boundary with no Task 3 IPC/preload/renderer scope creep.
+- Re-ran `git diff --check`, `npm run test:electron-store`, `npm run test:electron-config`, and fallback `npx tsc --noEmit --pretty false --project tsconfig.json`; all passed.
+- Re-ran the earlier manual probes and confirmed the traversal payload no longer hydrates an outside `file://` URL, while external `file://` assets are copied into `wrong-question/records/<id>/assets/...` and reload as contained record-local URLs.
+- Confirmed the expanded Node test now covers traversal rejection, external file containment, prune-on-save behavior, broken-record tolerance, and descending `updatedAt` order.
+- Task 2 fully passed both reviews and is complete. Task 3 may proceed when assigned.
+
 ## Global Blockers
 
-- Task 2 is awaiting code-quality re-review after the local-record-store path-boundary follow-up. Task 3 must not start until that review passes.
+- 无。
 
 ## Review Rules
 

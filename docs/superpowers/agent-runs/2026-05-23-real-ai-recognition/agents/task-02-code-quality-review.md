@@ -9,7 +9,7 @@
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at:
 - Completed at: 2026-05-24
-- Status: `failed`
+- Status: `passed`
 
 ## Scope
 
@@ -59,6 +59,16 @@ Forbidden scope:
 - Confirmed the blocker with manual Node probes instead of changing implementation code.
 - Found test-adequacy gaps around traversal rejection and external `file://` normalization, so the current suite would not catch the blocker above.
 - Task 2 does not fully pass code-quality review. Do not start Task 3 until the path-boundary bug is fixed and covered by regression tests.
+
+### 2026-05-24 Re-review Complete
+
+- Re-reviewed the original Task 2 implementation plus follow-up fix at `09ec94c` against the earlier blocker, the parent plan, and the required regression coverage.
+- Confirmed the fix stays within Task 2 scope: only the Electron local record store, its focused Node test, and task logs changed; there is still no IPC, preload, renderer, AI adapter, dependency, or generated-output scope creep.
+- Re-ran `git diff --check`, `npm run test:electron-store`, and `npm run test:electron-config`; all passed on the re-review head.
+- Re-ran the exact manual probes behind the earlier blocker. The traversal probe now leaves the crafted `originalImageUri` unset instead of hydrating an outside `file://` URL, and the external-file probe now stores `./assets/...` plus reloads a contained `file://` URL under the record directory.
+- Confirmed the expanded Node test now covers traversal rejection, external `file://` containment, prune-on-save behavior, broken-record tolerance, and descending `updatedAt` order.
+- Attempted `lsp_diagnostics` and `ast_grep_search` again, but the `omx_code_intel` transport is closed in this session. Fallback `npx tsc --noEmit --pretty false --project tsconfig.json` passed, and fallback `rg` scanning found no `console.log` usage or hardcoded `apiKey` assignment in Task 2 files.
+- No remaining code-quality findings block Task 2. The earlier HIGH and MEDIUM findings are resolved, so Task 2 passes re-review and Task 3 may proceed when assigned.
 
 ## Commands Run
 
@@ -134,6 +144,69 @@ const { createLocalRecordStore } = require('./electron/storage/localRecordStore.
   }
 })();
 NODE
+git show --stat --oneline 09ec94c
+git show --unified=120 09ec94c -- electron/storage/localRecordStore.cjs tests/electron-local-record-store.test.mjs package.json docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-02-electron-local-record-store.md docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md
+nl -ba electron/storage/localRecordStore.cjs | sed -n '1,280p'
+nl -ba tests/electron-local-record-store.test.mjs | sed -n '1,260p'
+npx tsc --noEmit --pretty false --project tsconfig.json
+node <<'NODE'
+const { mkdtemp, mkdir, writeFile, rm } = require('node:fs/promises');
+const { tmpdir } = require('node:os');
+const { join } = require('node:path');
+const { pathToFileURL } = require('node:url');
+const { createLocalRecordStore } = require('./electron/storage/localRecordStore.cjs');
+(async () => {
+  const root = await mkdtemp(join(tmpdir(), 'evocraft-review-'));
+  try {
+    const outside = join(root, 'outside.txt');
+    await writeFile(outside, 'outside');
+    const recordDir = join(root, 'wrong-question', 'records', 'attack');
+    await mkdir(recordDir, { recursive: true });
+    await writeFile(join(recordDir, 'record.json'), JSON.stringify({
+      id: 'attack',
+      title: 'attack',
+      subject: 'math',
+      createdAt: '2026-05-24T09:00:00.000Z',
+      updatedAt: '2026-05-24T09:00:00.000Z',
+      originalImageUri: './../../../outside.txt'
+    }));
+    const store = createLocalRecordStore(root);
+    const loaded = await store.load();
+    console.log(JSON.stringify({ hydrated: loaded[0]?.originalImageUri ?? null, outsideUrl: pathToFileURL(outside).toString() }, null, 2));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+})();
+NODE
+node <<'NODE'
+const { mkdtemp, writeFile, readFile, rm } = require('node:fs/promises');
+const { tmpdir } = require('node:os');
+const { join } = require('node:path');
+const { pathToFileURL } = require('node:url');
+const { createLocalRecordStore } = require('./electron/storage/localRecordStore.cjs');
+(async () => {
+  const root = await mkdtemp(join(tmpdir(), 'evocraft-review-'));
+  try {
+    const outside = join(root, 'external.png');
+    await writeFile(outside, 'png');
+    const store = createLocalRecordStore(root);
+    const record = {
+      id: 'external-file',
+      title: 'external-file',
+      subject: 'math',
+      createdAt: '2026-05-24T09:00:00.000Z',
+      updatedAt: '2026-05-24T09:00:00.000Z',
+      originalImageUri: pathToFileURL(outside).toString()
+    };
+    await store.save([record]);
+    const saved = JSON.parse(await readFile(join(root, 'wrong-question', 'records', 'external-file', 'record.json'), 'utf8'));
+    const loaded = await store.load();
+    console.log(JSON.stringify({ saved: saved.originalImageUri, loaded: loaded[0]?.originalImageUri, externalUrl: pathToFileURL(outside).toString() }, null, 2));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+})();
+NODE
 ```
 
 ## Files Changed
@@ -146,35 +219,33 @@ NODE
 - `git diff --check` exited `0`.
 - `npm run test:electron-store` exited `0`.
 - `npm run test:electron-config` exited `0`.
-- `lsp_diagnostics` reported `0` diagnostics for `electron/storage/localRecordStore.cjs`.
-- `lsp_diagnostics` reported `0` diagnostics for `tests/electron-local-record-store.test.mjs`.
-- `ast_grep_search` was unavailable because `ast-grep` is not installed in this environment; fallback `rg` scanning found no `console.log` usage or hardcoded `apiKey` assignment in Task 2 files.
-- Manual path-traversal probe confirmed that `originalImageUri: "./../../../outside.txt"` is hydrated to the exact outside file URL, proving the record loader can escape the record root.
-- Manual external-file probe confirmed that saving an external `file://.../external.png` leaves the absolute file URL in `record.json` and returns the same external `file://` URL on load instead of normalizing assets into the record root.
+- `git diff --check` exited `0` again on the re-review head.
+- `npm run test:electron-store` exited `0` again on the re-review head.
+- `npm run test:electron-config` exited `0` again on the re-review head.
+- `lsp_diagnostics` could not run because the `omx_code_intel` transport is closed in this session.
+- Fallback `npx tsc --noEmit --pretty false --project tsconfig.json` exited `0`.
+- `ast_grep_search` could not run because the `omx_code_intel` transport is closed in this session; fallback `rg` scanning found no `console.log` usage or hardcoded `apiKey` assignment in Task 2 files.
+- Manual path-traversal probe now leaves the crafted `originalImageUri` unset (`null`) instead of hydrating an outside `file://` URL.
+- Manual external-file probe now stores `./assets/originalImageUri-...` in `record.json` and reloads a contained `file://` URL under `wrong-question/records/external-file/assets/...`.
+- The expanded Node test covers traversal rejection, external-file containment, prune-on-save behavior, broken-record tolerance, and descending `updatedAt` order.
 
 ## Findings
 
-- [HIGH] `electron/storage/localRecordStore.cjs:102-107` and `electron/storage/localRecordStore.cjs:130-139`
-  Issue: `hydrateRecord()` resolves any stored `./...` asset path without checking that it stays under the current record directory, and `normalizeFileUrlToRelativePath()` preserves external `file://` assets unchanged. A crafted or corrupted `record.json` can therefore expose arbitrary local files via hydrated `file://` URLs, and saved records are not forced back into the intended `userData/wrong-question` root.
-  Fix: Reject or skip relative paths that resolve outside `recordDir`, and treat external `file://` assets like foreign inputs by copying them into the record's `assets/` directory or failing the save with a specific reason.
-
-- [MEDIUM] `tests/electron-local-record-store.test.mjs:8-38`
-  Issue: The focused test only covers a happy-path data URL save/load plus clear. It does not assert traversal rejection, external `file://` normalization, prune behavior, broken-record tolerance, or descending `updatedAt` order, so the current suite would not catch the blocking filesystem-boundary bug.
-  Fix: Add regression coverage for `./../../` traversal attempts, saving external `file://` assets, broken `record.json` skipping, prune-on-save semantics, and multi-record sort order before advancing Task 3.
+- No open code-quality findings remain for Task 2. The earlier path-boundary and regression-coverage findings are resolved by `09ec94c`.
 
 ## Blockers
 
-- Task 2 is blocked on the filesystem-boundary bug in `electron/storage/localRecordStore.cjs`.
+- 无。
 
 ## Handoff Notes
 
-- Task 3 must not start until Task 2 fixes the path-boundary bug and adds regression coverage for traversal rejection and external `file://` handling.
+- Task 2 passed re-review. Task 3 can consume this local store when assigned, without changing the on-disk format introduced in Task 2.
 
 ## Leader Review
 
-- Review status: failed
-- Review notes: Task 2 stays in review. The current implementation violates the intended local-root-only asset boundary and needs regression tests before Task 3 can safely consume it.
-- Required follow-up: Fix the filesystem-boundary handling in `electron/storage/localRecordStore.cjs`, extend the Node test coverage for that behavior, then re-run code-quality review.
+- Review status: passed
+- Review notes: Re-review confirmed the follow-up fix closes the earlier filesystem-boundary bug and adds the missing regression coverage without widening into Task 3 scope.
+- Required follow-up: None for Task 2. Proceed to Task 3 only when assigned.
 
 ## Commit
 
