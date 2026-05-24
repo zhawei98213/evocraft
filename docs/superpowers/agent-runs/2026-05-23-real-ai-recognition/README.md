@@ -60,7 +60,7 @@
 | `agents/task-03-spec-review.md` | spec-reviewer | Task 3 | passed | 已核对 Task 3 IPC channel、preload API、typed bridge 和 type-only helper 兼容修复，未发现 spec 问题。 |
 | `agents/task-03-code-quality-review.md` | code-quality-reviewer | Task 3 | passed | 第二次 re-review 确认 sparse-safe array helper 已在 IPC 和 direct store 边界生效，sparse malformed payload 回归测试通过，Task 3 质量 review 全部通过。 |
 | `agents/task-04-react-desktop-store.md` | implementer | Task 4 | done | 已补上 desktop store 回归测试，`App` 现按 injected store -> desktop bridge -> localStorage 顺序选 store，等待 reviewer 复审。 |
-| `agents/task-04-spec-review.md` | spec-reviewer | Task 4 | pending | 已创建日志，等待 Task 4 implementer 完成后复审。 |
+| `agents/task-04-spec-review.md` | spec-reviewer | Task 4 | passed | 已确认 Task 4 React desktop store 选择逻辑、桌面回归测试和范围边界，等待 code-quality 复审。 |
 | `agents/task-04-code-quality-review.md` | code-quality-reviewer | Task 4 | pending | 已创建日志，等待 Task 4 spec review 通过后复审。 |
 
 ## Global Progress
@@ -265,6 +265,21 @@
 - Kept the existing async hydration/save flow unchanged after store selection so browser mode and injected test stores still behave as before.
 - Verification passed: `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts`, `npm run build`, and `git diff --check`.
 - Task 4 implementer scope is complete and ready for spec review. Overall Task 4 remains pending review and scoped commit/push.
+
+### 2026-05-24 Task 4 Spec Review Passed
+
+- Confirmed `src/app/App.tsx` imports `createDesktopRecordStore` and selects it only when `getDesktopBridge()` returns an API, while injected `recordStore` props still take precedence for tests.
+- Confirmed browser fallback remains intact with `createLocalStorageRecordStore(getBrowserStorage())` when no desktop bridge exists.
+- Confirmed `src/app/App.test.tsx` includes the desktop regression that loads records from `window.evocraft.loadRecords()` and not browser `localStorage`.
+- Confirmed the reviewed commit stays inside Task 4 scope with no Electron main/preload IPC changes, no disk format changes, no AI adapter changes, no dependencies, and no generated outputs.
+- Re-ran `git diff --check`, `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts`, and `npm run build`; all passed.
+- Task 4 remains in review until the code-quality review completes.
+
+### 2026-05-24 Task 4 Review Status Updated
+
+- Recorded the Task 4 spec-review result as `passed` in the agent ledger.
+- Set the Task 4 commit anchor to `32b8fe7` for downstream reviewers.
+- Task 4 overall remains in review pending code-quality review.
 
 ## Global Blockers
 

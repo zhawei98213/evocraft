@@ -8,8 +8,8 @@
 - Task title: React Desktop Store Spec Compliance Review
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-24
-- Completed at:
-- Status: `pending`
+- Completed at: 2026-05-24
+- Status: `passed`
 
 ## Scope
 
@@ -49,19 +49,40 @@ Forbidden scope:
 - Leader created this reviewer log before spec-review dispatch.
 - Review is pending until the Task 4 implementer completes.
 
+### 2026-05-24 Review Complete
+
+- Confirmed `src/app/App.tsx` imports `createDesktopRecordStore` and selects it only when `getDesktopBridge()` returns an API, while the injected `recordStore` prop still takes precedence for tests and custom harnesses.
+- Confirmed the browser fallback remains `createLocalStorageRecordStore(getBrowserStorage())` when no desktop bridge exists.
+- Confirmed `src/app/App.test.tsx` includes the required desktop-mode regression: it installs `window.evocraft`, asserts `loadRecords()` is called, and proves browser `localStorage` is not read for desktop hydration.
+- Confirmed the reviewed commit stays within Task 4 scope with no Electron main/preload IPC edits, no local disk format changes, no AI adapter changes, no dependency changes, and no generated outputs committed.
+- Focused verification passed on the current HEAD: `git diff --check`, `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts`, and `npm run build`.
+- No spec blockers found.
+
 ## Commands Run
 
 ```bash
-# No commands run yet.
+git status --short --branch
+git diff --check
+npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts
+npm run build
+sed -n '1,220p' src/app/App.tsx
+sed -n '1,260p' src/app/App.test.tsx
+sed -n '1,220p' src/services/desktopBridge.ts
+sed -n '1,220p' src/services/desktopRecordStore.ts
+sed -n '1,220p' src/services/storage.ts
+git show --no-ext-diff --unified=80 32b8fe7 -- src/app/App.tsx src/app/App.test.tsx docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-04-react-desktop-store.md
 ```
 
 ## Files Changed
 
-- No files changed yet.
+- `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-04-spec-review.md`
+- `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
 
 ## Verification
 
-- Not run yet.
+- `git diff --check` passed.
+- `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts` passed with 2 files and 14 tests.
+- `npm run build` passed.
 
 ## Blockers
 
@@ -69,14 +90,15 @@ Forbidden scope:
 
 ## Handoff Notes
 
-- No handoff yet.
+- Task 4 remains in review until the code-quality reviewer completes the next pass.
+- Do not widen scope into Electron IPC, storage format changes, or AI adapter work.
 
 ## Leader Review
 
-- Review status:
-- Review notes:
-- Required follow-up:
+- Review status: passed
+- Review notes: Task 4 satisfies the React desktop store selection requirements, preserves injected-store precedence, keeps browser fallback behavior, and ships the desktop hydration regression without extra scope.
+- Required follow-up: Run the Task 4 code-quality review next.
 
 ## Commit
 
-- Commit hash:
+- Commit hash: `32b8fe7`
