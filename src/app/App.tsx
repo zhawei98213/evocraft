@@ -24,6 +24,7 @@ import {
   type Screen,
 } from "../features/wrongQuestion/wrongQuestionReducer";
 import { getDesktopBridge } from "../services/desktopBridge";
+import { createDesktopRecordStore } from "../services/desktopRecordStore";
 import { mockAiAdapter } from "../services/mockAiAdapter";
 import { createLocalStorageRecordStore, type RecordStore } from "../services/storage";
 
@@ -60,16 +61,20 @@ interface AppProps {
 }
 
 export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
+  const desktopBridge = getDesktopBridge();
   const recordStore = useMemo(
-    () => injectedRecordStore ?? createLocalStorageRecordStore(getBrowserStorage()),
-    [injectedRecordStore],
+    () =>
+      injectedRecordStore ??
+      (desktopBridge
+        ? createDesktopRecordStore(desktopBridge)
+        : createLocalStorageRecordStore(getBrowserStorage())),
+    [desktopBridge, injectedRecordStore],
   );
   const [state, dispatch] = useReducer(
     wrongQuestionReducer,
     undefined,
     () => createInitialWrongQuestionState([]),
   );
-  const desktopBridge = getDesktopBridge();
   const [isRecordStoreHydrated, setIsRecordStoreHydrated] = useState(false);
   const [reviewForm, setReviewForm] = useState<ReviewForm>(emptyReviewForm);
   const [regionDrag, setRegionDrag] = useState<RegionDragState | null>(null);

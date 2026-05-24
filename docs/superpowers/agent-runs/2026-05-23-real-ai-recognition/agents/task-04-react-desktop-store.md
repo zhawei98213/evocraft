@@ -8,8 +8,8 @@
 - Task title: Use Desktop Record Store When Available
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-24
-- Completed at:
-- Status: `pending`
+- Completed at: 2026-05-24
+- Status: `done`
 
 ## Scope
 
@@ -44,19 +44,40 @@ Forbidden scope:
 - Leader created this task log after Task 3 code-quality review passed.
 - Implementation has not started yet.
 
+### 2026-05-24 RED
+
+- Added a desktop-mode regression test in `src/app/App.test.tsx` that installs `window.evocraft`, seeds conflicting `localStorage` data, and asserts the app should call `loadRecords()` without reading browser storage.
+- Ran `npm run test:react -- src/app/App.test.tsx` and captured the expected RED failure: `desktopApi.loadRecords` was called `0` times, which proved `App` still selected the browser `localStorage` record store.
+
+### 2026-05-24 GREEN
+
+- Updated `src/app/App.tsx` so `recordStore` selection now stays in this order: injected `recordStore` prop for tests, desktop `createDesktopRecordStore(getDesktopBridge())` when `window.evocraft` exists, and browser `createLocalStorageRecordStore(getBrowserStorage())` as the fallback.
+- Kept the existing async hydration flow unchanged after store selection so browser mode, desktop mode, and injected test stores all reuse the same load/save behavior.
+- Re-ran the required focused React/storage suite, production build, and whitespace check; all passed.
+
 ## Commands Run
 
 ```bash
-# No commands run yet.
+git status --short --branch
+npm run test:react -- src/app/App.test.tsx
+npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts
+npm run build
+git diff --check
 ```
 
 ## Files Changed
 
-- No files changed yet.
+- `src/app/App.tsx`
+- `src/app/App.test.tsx`
+- `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-04-react-desktop-store.md`
+- `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
 
 ## Verification
 
-- Not run yet.
+- RED: `npm run test:react -- src/app/App.test.tsx` -> failed with `expected "vi.fn()" to be called 1 times, but got 0 times` for `desktopApi.loadRecords`.
+- GREEN: `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts` -> `2` files passed, `14` tests passed.
+- GREEN: `npm run build` -> exit `0`, Vite production bundle built successfully.
+- GREEN: `git diff --check` -> exit `0`.
 
 ## Blockers
 

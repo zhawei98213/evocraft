@@ -13,6 +13,7 @@ import type { EvoCraftDesktopApi } from "../services/desktopBridge";
 import type { RecordStore } from "../services/storage";
 
 afterEach(() => {
+  vi.restoreAllMocks();
   Reflect.deleteProperty(window, "evocraft");
   window.localStorage.clear();
 });
@@ -91,6 +92,37 @@ describe("App", () => {
       expect(screen.getByText("共 1 条")).toBeInTheDocument();
     });
     expect(screen.getByRole("button", { name: /预加载错题.*打开/ })).toBeInTheDocument();
+  });
+
+  it("loads records from the desktop bridge without reading localStorage", async () => {
+    const desktopRecord = createRecordFromDraft(createMockRecognition(), {
+      id: "wq-desktop",
+      now: "2026-05-24T08:00:00.000Z",
+      title: "桌面错题",
+    });
+    const browserRecord = createRecordFromDraft(createMockRecognition(), {
+      id: "wq-browser",
+      now: "2026-05-24T07:00:00.000Z",
+      title: "浏览器错题",
+    });
+    const localStorageGetItemSpy = vi.spyOn(Storage.prototype, "getItem");
+    const desktopApi = installDesktopBridge({
+      loadRecords: vi.fn().mockResolvedValue([desktopRecord]),
+    });
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([browserRecord]));
+    const user = userEvent.setup();
+
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题本" }));
+
+    await waitFor(() => {
+      expect(desktopApi.loadRecords).toHaveBeenCalledTimes(1);
+    });
+    expect(localStorageGetItemSpy).not.toHaveBeenCalled();
+    expect(screen.getByText("共 1 条")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /桌面错题.*打开/ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /浏览器错题.*打开/ })).not.toBeInTheDocument();
   });
 
   it("blocks early save until delayed hydration finishes so preexisting records survive", async () => {
