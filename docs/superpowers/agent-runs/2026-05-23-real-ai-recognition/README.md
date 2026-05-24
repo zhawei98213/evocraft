@@ -35,7 +35,7 @@
 | 0. Preflight And Baseline | `agents/task-00-preflight.md` | completed | 基线命令，允许 docs-only task log / ledger 更新 | `npm test`, `npm run test:electron-config`, `npm run build` | `02c1c03` |
 | 1. Async RecordStore | `agents/task-01-async-record-store.md` | completed | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | `55b4fba`, `2e29c9d` |
 | 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | completed | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | `ed78c4f`, `09ec94c` |
-| 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | pending | Electron main/preload IPC, desktop bridge | `npm run test:electron-config` | 未开始 |
+| 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | assigned | Electron main/preload IPC, desktop bridge | `npm run test:electron-config` | 未开始 |
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | pending | App store selection and tests | Focused app/storage tests | 未开始 |
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | pending | AI contract, mock adapter, domain tests | Adapter/domain tests | 未开始 |
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | pending | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config` | 未开始 |
@@ -56,6 +56,9 @@
 | `agents/task-02-electron-local-record-store.md` | implementer | Task 2 | changes_requested_fixed | 已补上路径边界修复与回归测试，等待 code-quality re-review。 |
 | `agents/task-02-spec-review.md` | spec-reviewer | Task 2 | passed | 已核对 temp-root 文件存储、CommonJS 导出、原子写入、图片资产重建和范围边界，未发现阻塞问题。 |
 | `agents/task-02-code-quality-review.md` | code-quality-reviewer | Task 2 | passed | 已确认 follow-up fix 关闭路径逃逸与外部 `file://` 资产透传问题，并补齐 traversal、external file、prune、broken record、updatedAt 排序回归覆盖。 |
+| `agents/task-03-record-store-ipc.md` | implementer | Task 3 | assigned | 将通过 Electron main/preload 白名单 IPC 暴露本地记录存储，并新增 renderer-side desktop store adapter。 |
+| `agents/task-03-spec-review.md` | spec-reviewer | Task 3 | pending | Task 3 implementer 完成后核对 IPC channel、preload API 和 typed bridge 是否符合计划。 |
+| `agents/task-03-code-quality-review.md` | code-quality-reviewer | Task 3 | pending | Task 3 spec review 通过后检查 IPC 安全、payload 校验、preload allowlist 和测试充分性。 |
 
 ## Global Progress
 
@@ -172,6 +175,11 @@
 - Re-ran the earlier manual probes and confirmed the traversal payload no longer hydrates an outside `file://` URL, while external `file://` assets are copied into `wrong-question/records/<id>/assets/...` and reload as contained record-local URLs.
 - Confirmed the expanded Node test now covers traversal rejection, external file containment, prune-on-save behavior, broken-record tolerance, and descending `updatedAt` order.
 - Task 2 fully passed both reviews and is complete. Task 3 may proceed when assigned.
+
+### 2026-05-24 Task 3 Logs Prepared
+
+- Created independent Task 3 implementer, spec-review, and code-quality-review logs before dispatch.
+- Task 3 is assigned to the implementer and must stay inside the safe desktop record-store IPC boundary.
 
 ## Global Blockers
 
