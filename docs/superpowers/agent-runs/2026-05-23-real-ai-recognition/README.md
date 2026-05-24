@@ -36,7 +36,7 @@
 | 1. Async RecordStore | `agents/task-01-async-record-store.md` | completed | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | `55b4fba`, `2e29c9d` |
 | 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | completed | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | `ed78c4f`, `09ec94c` |
 | 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | completed | Electron main/preload IPC, desktop bridge | `npm run test:electron-config`, `npm run test:electron-store` | `9a78dbb`, `61441ba`, `a2fa40c` |
-| 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | in_review | App store selection and tests | `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts`, `npm run build`, `git diff --check` | 待提交 |
+| 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | completed | App store selection and tests | `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts`, `npm run build`, `git diff --check` | `32b8fe7` |
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | pending | AI contract, mock adapter, domain tests | Adapter/domain tests | 未开始 |
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | pending | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config` | 未开始 |
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | pending | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter` | 未开始 |
@@ -61,7 +61,7 @@
 | `agents/task-03-code-quality-review.md` | code-quality-reviewer | Task 3 | passed | 第二次 re-review 确认 sparse-safe array helper 已在 IPC 和 direct store 边界生效，sparse malformed payload 回归测试通过，Task 3 质量 review 全部通过。 |
 | `agents/task-04-react-desktop-store.md` | implementer | Task 4 | done | 已补上 desktop store 回归测试，`App` 现按 injected store -> desktop bridge -> localStorage 顺序选 store，等待 reviewer 复审。 |
 | `agents/task-04-spec-review.md` | spec-reviewer | Task 4 | passed | 已确认 Task 4 React desktop store 选择逻辑、桌面回归测试和范围边界，等待 code-quality 复审。 |
-| `agents/task-04-code-quality-review.md` | code-quality-reviewer | Task 4 | pending | 已创建日志，等待 Task 4 spec review 通过后复审。 |
+| `agents/task-04-code-quality-review.md` | code-quality-reviewer | Task 4 | passed | 已确认 store 选择顺序、hydration guard、browser fallback、desktop upload bridge 覆盖和范围边界均满足要求。 |
 
 ## Global Progress
 
@@ -280,6 +280,15 @@
 - Recorded the Task 4 spec-review result as `passed` in the agent ledger.
 - Set the Task 4 commit anchor to `32b8fe7` for downstream reviewers.
 - Task 4 overall remains in review pending code-quality review.
+
+### 2026-05-24 Task 4 Code Quality Review Passed
+
+- Re-ran `git status --short --branch`, `git diff --check`, `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts`, `npm run build`, and `npm test`; all passed.
+- Confirmed `src/app/App.tsx` keeps the intended store selection order: injected `recordStore` first, desktop bridge second, browser `localStorage` fallback otherwise.
+- Confirmed the selected-store hydration flow remains async-safe: the existing hydration guard still blocks pre-hydration saves, and `RECORDS_LOADED` still hydrates from the chosen store without widening into Task 5 AI behavior.
+- Confirmed `src/app/App.test.tsx` adds a meaningful UI regression proving desktop hydration comes from `window.evocraft.loadRecords()` rather than browser `localStorage`, while existing delayed-hydration and desktop upload bridge tests still pass.
+- Confirmed `lsp_diagnostics` reported zero findings for the modified React files; `ast-grep` was unavailable in this environment, so the required pattern scan fell back to `rg` and found no `console.log`, empty `catch`, or hardcoded `apiKey` patterns.
+- Task 4 fully passed both reviews and is complete. Task 5 may proceed when assigned.
 
 ## Global Blockers
 
