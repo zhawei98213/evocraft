@@ -1,6 +1,6 @@
 const { createHash } = require("node:crypto");
 const { mkdir, readdir, readFile, rename, rm, writeFile } = require("node:fs/promises");
-const { dirname, join, relative, resolve } = require("node:path");
+const { dirname, extname, join, relative, resolve } = require("node:path");
 const { pathToFileURL, fileURLToPath } = require("node:url");
 
 const SCHEMA_VERSION = 1;
@@ -88,7 +88,7 @@ async function dehydrateRecord(record, recordDir) {
     }
 
     if (value.startsWith("file://")) {
-      nextRecord[field] = normalizeFileUrlToRelativePath(value, recordDir);
+      nextRecord[field] = await persistFileUrlAsset(value, recordDir, field);
     }
   }
 
@@ -104,7 +104,13 @@ function hydrateRecord(record, recordDir) {
     if (typeof value !== "string") continue;
     if (!value.startsWith("./")) continue;
 
-    nextRecord[field] = pathToFileURL(resolve(recordDir, value)).toString();
+    const hydratedPath = resolveContainedRecordPath(recordDir, value);
+    if (!hydratedPath) {
+      delete nextRecord[field];
+      continue;
+    }
+
+    nextRecord[field] = pathToFileURL(hydratedPath).toString();
   }
 
   return nextRecord;
@@ -116,29 +122,22 @@ async function persistDataUrlAsset(dataUrl, recordDir, field) {
 
   const mimeType = match[1].toLowerCase();
   const bytes = Buffer.from(match[2], "base64");
-  const assetDir = join(recordDir, "assets");
   const extension = getImageExtension(mimeType);
   const assetHash = createHash("sha256").update(bytes).digest("hex").slice(0, 16);
-  const fileName = `${field}-${assetHash}${extension}`;
-  const filePath = join(assetDir, fileName);
-
-  await ensureDir(assetDir);
-  await writeFile(filePath, bytes);
-  return toStoredRelativePath(join("assets", fileName));
+  return persistAssetBytes(bytes, recordDir, field, extension, assetHash);
 }
 
-function normalizeFileUrlToRelativePath(fileUrl, recordDir) {
-  try {
-    const filePath = fileURLToPath(fileUrl);
-    const relativePath = relative(recordDir, filePath);
-    if (relativePath.startsWith("..") || relativePath === "") {
-      return fileUrl;
-    }
+async function persistFileUrlAsset(fileUrl, recordDir, field) {
+  const filePath = resolve(fileURLToPath(fileUrl));
 
-    return toStoredRelativePath(relativePath);
-  } catch {
-    return fileUrl;
+  if (isContainedPath(join(recordDir, "assets"), filePath)) {
+    return toStoredRelativePath(relative(recordDir, filePath));
   }
+
+  const bytes = await readFile(filePath);
+  const extension = getImageExtensionFromPath(filePath);
+  const assetHash = createHash("sha256").update(bytes).digest("hex").slice(0, 16);
+  return persistAssetBytes(bytes, recordDir, field, extension, assetHash);
 }
 
 function getImageExtension(mimeType) {
@@ -146,6 +145,15 @@ function getImageExtension(mimeType) {
   if (mimeType === "image/webp") return ".webp";
   if (mimeType === "image/bmp") return ".bmp";
   if (mimeType === "image/heic") return ".heic";
+  return ".png";
+}
+
+function getImageExtensionFromPath(filePath) {
+  const extension = extname(filePath).toLowerCase();
+  if (extension === ".jpg" || extension === ".jpeg") return ".jpg";
+  if (extension === ".webp") return ".webp";
+  if (extension === ".bmp") return ".bmp";
+  if (extension === ".heic") return ".heic";
   return ".png";
 }
 
@@ -189,6 +197,16 @@ async function ensureDir(dirPath) {
   await mkdir(dirPath, { recursive: true });
 }
 
+async function persistAssetBytes(bytes, recordDir, field, extension, assetHash) {
+  const assetDir = join(recordDir, "assets");
+  const fileName = `${field}-${assetHash}${extension}`;
+  const filePath = join(assetDir, fileName);
+
+  await ensureDir(assetDir);
+  await writeFile(filePath, bytes);
+  return toStoredRelativePath(relative(recordDir, filePath));
+}
+
 function sanitizeRecordId(recordId) {
   const sanitized = String(recordId).replace(/[^a-zA-Z0-9_.-]/g, "-").replace(/^\.+/, "");
   if (sanitized.length > 0) return sanitized;
@@ -206,6 +224,18 @@ function toPortableRelativePath(filePath) {
 
 function toStoredRelativePath(filePath) {
   return `./${toPortableRelativePath(filePath).replace(/^\.?\//, "")}`;
+}
+
+function resolveContainedRecordPath(recordDir, storedPath) {
+  const resolvedPath = resolve(recordDir, storedPath);
+  if (!isContainedPath(recordDir, resolvedPath)) return null;
+
+  return resolvedPath;
+}
+
+function isContainedPath(rootDir, targetPath) {
+  const relativePath = relative(resolve(rootDir), resolve(targetPath));
+  return relativePath.length > 0 && !relativePath.startsWith("..") && !relativePath.startsWith("/");
 }
 
 module.exports = { createLocalRecordStore };

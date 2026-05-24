@@ -9,7 +9,7 @@
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-24
 - Completed at: 2026-05-24
-- Status: `done`
+- Status: `changes_requested_fixed`
 
 ## Scope
 
@@ -58,6 +58,14 @@ Forbidden scope:
 - Added `test:electron-store` to `package.json` without changing existing scripts.
 - Fixed one first-pass path bug after green attempt so stored asset paths always use the `./assets/...` form expected by hydration.
 
+### 2026-05-24 Code-Quality Follow-Up
+
+- Reviewed the Task 2 code-quality blocker at commit `12415ef` and kept the follow-up strictly inside the local record store plus its Node test and run docs.
+- Expanded `tests/electron-local-record-store.test.mjs` first to cover traversal rejection, external `file://` containment, prune-on-save behavior, broken-record tolerance, and descending `updatedAt` load order.
+- Verified the new test failed on the traversal escape before changing implementation.
+- Hardened `electron/storage/localRecordStore.cjs` so unsafe stored `./...` paths do not hydrate to outside `file://` URLs, external `file://` assets are copied into `./assets/...`, and already-contained asset URLs are only preserved after containment checks.
+- Re-ran the focused store and Electron config checks after the follow-up fix. Task 2 is ready for code-quality re-review; Task 3 still must not start until that review passes.
+
 ## Commands Run
 
 ```bash
@@ -73,6 +81,14 @@ npm run test:electron-store
 npm run test:electron-config
 git diff --check
 git status --short
+git rev-parse --short HEAD
+sed -n '1,260p' electron/storage/localRecordStore.cjs
+sed -n '1,260p' tests/electron-local-record-store.test.mjs
+node tests/electron-local-record-store.test.mjs
+node tests/electron-local-record-store.test.mjs
+npm run test:electron-store
+npm run test:electron-config
+git diff --check
 ```
 
 ## Files Changed
@@ -90,6 +106,11 @@ git status --short
 - `npm run test:electron-store` exited `0`.
 - `npm run test:electron-config` exited `0`.
 - `git diff --check` exited `0`.
+- FOLLOW-UP RED: `node tests/electron-local-record-store.test.mjs` failed on traversal-path hydration before the blocker fix.
+- FOLLOW-UP GREEN: `node tests/electron-local-record-store.test.mjs` exited `0` after the path-boundary fix and added regressions.
+- `npm run test:electron-store` exited `0` after the follow-up fix.
+- `npm run test:electron-config` exited `0` after the follow-up fix.
+- `git diff --check` exited `0` after the follow-up fix.
 
 ## Blockers
 
@@ -99,6 +120,7 @@ git status --short
 
 - Task 2 stays strictly inside the Electron main-process storage layer; no IPC handlers or preload APIs were added.
 - Task 3 can now wire this store into `electron/main.cjs` and preload without changing the on-disk format introduced here.
+- Task 3 remains blocked on process: it can start only after Task 2 code-quality review re-runs and passes this follow-up.
 
 ## Leader Review
 
