@@ -1538,6 +1538,36 @@
 - 提交并推送 sparse-array follow-up fix。
 - 再次派出 Task 3 code-quality re-review；通过后进入 Task 4 React Desktop Store。
 
+### 2026-05-24：真实 AI 识别 Task 4 派发准备
+
+本轮任务是什么：
+
+- 在 Task 3 record-store IPC 通过质量复审后，为 Task 4 React desktop store selection 创建 agent 日志和派发边界。
+
+已完成什么：
+
+- Task 3 已完成：renderer trust、record payload validation、sparse malformed arrays 均通过验证和质量复审记录。
+- 创建 Task 4 implementer、spec reviewer、code quality reviewer 三份独立 task log。
+- 更新 run ledger，将 Task 4 标记为 `assigned`。
+- 明确 Task 4 只做 `src/app/App.tsx` 桌面 record store 选择和 `src/app/App.test.tsx` 覆盖，不进入 AI adapter、Electron main/preload 或存储格式变更。
+
+卡在哪里：
+
+- 无。此前 code-quality reviewer 复用时遇到平台 usage limit；如 Task 4 新 subagent 仍不可用，将按同一 checklist 做 leader fallback 并记录。
+
+执行的是什么命令：
+
+- `sed -n '760,940p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+- `sed -n '1,280p' src/app/App.tsx`
+- `sed -n '1,360p' src/app/App.test.tsx`
+- `sed -n '1,160p' src/services/desktopRecordStore.ts`
+- `git status --short --branch`
+
+下一步的计划：
+
+- 提交并推送 Task 4 派发准备日志。
+- 派出 Task 4 implementer；如果 subagent 受 usage limit 阻塞，则由 leader 按 TDD fallback 实现并记录。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。

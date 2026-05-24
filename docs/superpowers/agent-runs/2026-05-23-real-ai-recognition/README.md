@@ -36,7 +36,7 @@
 | 1. Async RecordStore | `agents/task-01-async-record-store.md` | completed | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | `55b4fba`, `2e29c9d` |
 | 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | completed | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | `ed78c4f`, `09ec94c` |
 | 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | completed | Electron main/preload IPC, desktop bridge | `npm run test:electron-config`, `npm run test:electron-store` | `9a78dbb`, `61441ba`, `a2fa40c` |
-| 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | pending | App store selection and tests | Focused app/storage tests | 未开始 |
+| 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | assigned | App store selection and tests | Focused app/storage tests | 未开始 |
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | pending | AI contract, mock adapter, domain tests | Adapter/domain tests | 未开始 |
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | pending | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config` | 未开始 |
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | pending | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter` | 未开始 |
@@ -59,6 +59,9 @@
 | `agents/task-03-record-store-ipc.md` | implementer | Task 3 | changes_requested_fixed | 已补上 renderer URL 精确匹配、sparse-safe record payload 运行时校验、恶意近似 URL、dense malformed save 与 sparse malformed save 回归测试，等待 code-quality re-review。 |
 | `agents/task-03-spec-review.md` | spec-reviewer | Task 3 | passed | 已核对 Task 3 IPC channel、preload API、typed bridge 和 type-only helper 兼容修复，未发现 spec 问题。 |
 | `agents/task-03-code-quality-review.md` | code-quality-reviewer | Task 3 | passed | 第二次 re-review 确认 sparse-safe array helper 已在 IPC 和 direct store 边界生效，sparse malformed payload 回归测试通过，Task 3 质量 review 全部通过。 |
+| `agents/task-04-react-desktop-store.md` | implementer | Task 4 | pending | 已创建日志，等待实现 React 桌面 record store 选择。 |
+| `agents/task-04-spec-review.md` | spec-reviewer | Task 4 | pending | 已创建日志，等待 Task 4 implementer 完成后复审。 |
+| `agents/task-04-code-quality-review.md` | code-quality-reviewer | Task 4 | pending | 已创建日志，等待 Task 4 spec review 通过后复审。 |
 
 ## Global Progress
 
@@ -248,6 +251,12 @@
 - Confirmed `tests/electron-local-record-store.test.mjs` now covers both dense malformed arrays and sparse malformed arrays with zero-write assertions.
 - Confirmed the previously fixed renderer trust helper, runtime URL tests, invoke-only preload surface, and no-Task-4 scope boundary all remain sound.
 - Task 3 fully passed code-quality re-review and is complete. Task 4 may proceed when assigned.
+
+### 2026-05-24 Task 4 Logs Prepared
+
+- Created independent Task 4 implementer, spec-review, and code-quality-review logs before implementation.
+- Task 4 is assigned to the implementer and must stay inside React app store selection plus focused tests.
+- Task 4 starts after Task 3 completed the record-store IPC boundary.
 
 ## Global Blockers
 
