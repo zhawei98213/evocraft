@@ -9,7 +9,7 @@
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-24
 - Completed at: 2026-05-24
-- Status: `concerns_fixed_pending_re-review`
+- Status: `passed`
 
 ## Scope
 
@@ -84,6 +84,16 @@ Forbidden scope:
 - Updated `recognitionPrompt.cjs` so the auto-subject instruction is appended only for auto mode.
 - Focused and broader verification passed after the fix.
 
+### 2026-05-24 Re-review Passed
+
+- Reviewed follow-up commits `338e55b` and `f090b93`.
+- Result: `PASS`.
+- Confirmed `buildRecognitionPrompt({ subject: "chinese" })` no longer includes the auto-subject return instruction, while `buildRecognitionPrompt({ subject: "auto" })` still includes it.
+- Confirmed the prompt remains recognition-only and still forbids solving, explanations, wrong-cause analysis, knowledge points, and similar-question generation.
+- Confirmed the earlier adapter fixes remain closed: explicit subjects are preserved, auto mode requires a valid provider subject and returns `provider_response_invalid` when missing/invalid, and invalid `reviewItems[*].status` values still normalize to `需复核`.
+- Confirmed the contract test now covers explicit prompt containment, auto prompt containment, `response.ok === false`, invalid review-item status normalization, auto mode without provider subject, and auto mode with a valid provider subject.
+- Confirmed the follow-up range stays contained to prompt/test/docs updates and does not touch Electron main/preload, renderer runtime, storage, dependencies, API key/`.env`, private samples, generated results, `dist`, or `release`.
+
 ## Commands Run
 
 ```bash
@@ -106,6 +116,54 @@ npm test
 npm run build
 node scripts/evaluate-ai-samples.mjs
 EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs
+git diff --name-only 338e55b..f090b93
+git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl
+node - <<'EOF'
+const { buildRecognitionPrompt } = require('./electron/ai/recognitionPrompt.cjs');
+const explicit = buildRecognitionPrompt({ subject: 'chinese' });
+const auto = buildRecognitionPrompt({ subject: 'auto' });
+console.log(JSON.stringify({
+  explicitHasAutoInstruction: /自动判断，必须返回 subject/.test(explicit),
+  autoHasAutoInstruction: /自动判断，必须返回 subject/.test(auto),
+}, null, 2));
+EOF
+node - <<'EOF'
+const { createQwenAdapter } = require('./electron/ai/qwenAdapter.cjs');
+(async () => {
+  const base = {
+    imageUri: 'data:image/png;base64,b3JpZw==',
+    selectedRegion: { id:'r', label:'R', x:0, y:0, width:1, height:1, unit:'ratio', source:'manual', confidence:1 },
+    selectedRegionImageUri: 'data:image/png;base64,cmVnaW9u',
+  };
+  const explicit = await createQwenAdapter({
+    apiKey: 'test-key',
+    fetchImpl: async () => ({ ok: true, async json() { return { choices: [{ message: { content: JSON.stringify({ subject:'english', title:'t', questionText:'q', reviewItems:[{label:'x', status:'可信'}] }) } }] }; } }),
+  }).recognizeQuestion({ ...base, subject: 'chinese' });
+  const autoMissing = await createQwenAdapter({
+    apiKey: 'test-key',
+    fetchImpl: async () => ({ ok: true, async json() { return { choices: [{ message: { content: JSON.stringify({ title:'t', questionText:'q', reviewItems:[{label:'x', status:'可信'}] }) } }] }; } }),
+  }).recognizeQuestion({ ...base, subject: 'auto' });
+  const autoInvalid = await createQwenAdapter({
+    apiKey: 'test-key',
+    fetchImpl: async () => ({ ok: true, async json() { return { choices: [{ message: { content: JSON.stringify({ subject:'science', title:'t', questionText:'q', reviewItems:[{label:'x', status:'可信'}] }) } }] }; } }),
+  }).recognizeQuestion({ ...base, subject: 'auto' });
+  const autoValid = await createQwenAdapter({
+    apiKey: 'test-key',
+    fetchImpl: async () => ({ ok: true, async json() { return { choices: [{ message: { content: JSON.stringify({ subject:'english', title:'t', questionText:'q', reviewItems:[{label:'x', status:'可信'}] }) } }] }; } }),
+  }).recognizeQuestion({ ...base, subject: 'auto' });
+  const badStatus = await createQwenAdapter({
+    apiKey: 'test-key',
+    fetchImpl: async () => ({ ok: true, async json() { return { choices: [{ message: { content: JSON.stringify({ title:'t', questionText:'q', reviewItems:[{label:'x', status:'bad status'}] }) } }] }; } }),
+  }).recognizeQuestion({ ...base, subject: 'english' });
+  console.log(JSON.stringify({
+    explicitSubject: explicit.ok && explicit.draft.subject,
+    autoMissing,
+    autoInvalid,
+    autoValidSubject: autoValid.ok && autoValid.draft.subject,
+    badStatus: badStatus.ok && badStatus.draft.reviewItems,
+  }, null, 2));
+})();
+EOF
 ```
 
 ## Files Changed
@@ -135,22 +193,31 @@ EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs
 - Re-review result: `FAIL` because explicit-subject prompts still included the auto-subject instruction.
 - Prompt follow-up RED: `npm run test:qwen-adapter` failed before the prompt containment fix.
 - Prompt follow-up GREEN: `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build`, `node scripts/evaluate-ai-samples.mjs`, and `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs` passed after the fix.
+- `git diff --name-only 338e55b..f090b93` stayed within prompt/test/docs scope and did not include Electron main/preload IPC, renderer runtime, storage, dependencies, `dist`, or `release`.
+- `git ls-files` again found no tracked `.env`, private sample, or generated result files.
+- Direct prompt probe printed `explicitHasAutoInstruction: false` and `autoHasAutoInstruction: true`.
+- Direct adapter probe confirmed:
+  - explicit subject remains `chinese`
+  - missing/invalid auto subject returns `provider_response_invalid`
+  - valid auto subject maps to `english`
+  - invalid review-item status normalizes to `需复核`
+- `lsp_diagnostics` / `ast-grep` were unavailable in this re-review lane because the `omx_code_intel` transport closed, so `npx tsc --noEmit --pretty false --project tsconfig.json` plus direct `rg` pattern checks were used as fallback diagnostics.
 
 ## Blockers
 
-- 无实现卡点；Task 7 must pass code-quality re-review before Task 8 starts.
+- 无。
 
 ## Handoff Notes
 
-- The adapter-normalization concerns have been fixed locally and require code-quality re-review.
-- Task 8 remains blocked until that re-review passes.
+- Task 7 code-quality review is now fully passed.
+- Task 8 has not started in this lane.
 
 ## Leader Review
 
-- Review status: concerns fixed, pending re-review.
-- Review notes: first quality review found auto-subject corruption and unchecked `reviewItems[*].status`; the first follow-up fixed those. Re-review then found prompt containment still too broad for explicit subjects; the prompt follow-up now adds a regression and limits the auto-subject instruction to auto mode.
-- Required follow-up: run code-quality re-review before Task 8.
+- Review status: passed.
+- Review notes: the prompt follow-up at `f090b93` closes the last containment issue without reopening the earlier adapter concerns, and the required prompt/adapter contract coverage is now in place.
+- Required follow-up: Task 7 quality lane is complete; do not infer Task 8 execution from this review.
 
 ## Commit
 
-- Reviewed commits: `5f9ba4f`, `0c8e488`, `309f8aa`, `a5c4c83`
+- Reviewed commits: `5f9ba4f`, `0c8e488`, `309f8aa`, `a5c4c83`, `338e55b`, `f090b93`
