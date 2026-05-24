@@ -38,7 +38,7 @@
 | 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | completed | Electron main/preload IPC, desktop bridge | `npm run test:electron-config`, `npm run test:electron-store` | `9a78dbb`, `61441ba`, `a2fa40c` |
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | completed | App store selection and tests | `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts`, `npm run build`, `git diff --check` | `32b8fe7` |
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | completed | AI contract, mock adapter, domain tests | `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, `npm run build`, `git diff --check` | `ea08fc4` |
-| 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | pending | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config` | 未开始 |
+| 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | assigned | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config` | 未开始 |
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | pending | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter` | 未开始 |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | pending | Electron AI IPC, desktop AI adapter | Electron config + adapter tests | 未开始 |
 | 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | pending | UI mode, authorization copy, final verification | Full verification suite | 未开始 |
@@ -65,6 +65,9 @@
 | `agents/task-05-ai-adapter-contract.md` | implementer | Task 5 | done | 已按 TDD 扩展 AI adapter failure contract，mock adapter 现对缺失题目区域截图返回可恢复错误，adapter/domain 验证与 build 均通过。 |
 | `agents/task-05-spec-review.md` | spec-reviewer | Task 5 | passed | 已确认 Task 5 AI adapter contract 扩展符合计划，且 focused verification 通过。 |
 | `agents/task-05-code-quality-review.md` | code-quality-reviewer | Task 5 | passed | 已确认共享失败契约、mock 缺失截图失败路径、测试覆盖和范围边界均满足要求，Task 5 质量 review 通过。 |
+| `agents/task-06-ai-eval-harness.md` | implementer | Task 6 | pending | 已创建日志，等待创建默认禁用的本机 AI 评测脚手架。 |
+| `agents/task-06-spec-review.md` | spec-reviewer | Task 6 | pending | 已创建日志，等待 Task 6 implementer 完成后复审。 |
+| `agents/task-06-code-quality-review.md` | code-quality-reviewer | Task 6 | pending | 已创建日志，等待 Task 6 spec review 通过后复审。 |
 
 ## Global Progress
 
@@ -326,6 +329,12 @@
 - Re-ran `git status --short --branch`, `git diff --check`, `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, `npm run build`, and `npm test`; all passed.
 - Confirmed `lsp_diagnostics` reported zero findings for all modified Task 5 source files, and the fallback `rg` hygiene scan found no `console.log`, empty `catch`, or hardcoded `apiKey` patterns.
 - Task 5 fully passed both reviews and is complete. Task 6 may proceed when assigned.
+
+### 2026-05-24 Task 6 Logs Prepared
+
+- Created independent Task 6 implementer, spec-review, and code-quality-review logs before implementation.
+- Task 6 is assigned to the implementer and must stay inside the local AI evaluation harness, privacy ignore rules, disabled-by-default runner, package script, and static harness test.
+- Task 6 must not connect Qwen/provider calls or commit private samples, generated results, API keys, or `.env` files.
 
 ## Global Blockers
 

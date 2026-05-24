@@ -1601,6 +1601,39 @@
 - 提交并推送 Task 5 派发准备日志。
 - 派出 Task 5 implementer，按 TDD 扩展 adapter contract 和 mock recoverable failure，不接真实 AI。
 
+### 2026-05-24：真实 AI 识别 Task 5 关闭与 Task 6 派发准备
+
+本轮任务是什么：
+
+- 完成 Task 5 AI Adapter Contract 的实现、spec review、code quality review，并为 Task 6 本机 AI 评测脚手架创建 agent 日志。
+
+已完成什么：
+
+- Task 5 implementer 扩展 `AiAdapterFailureReason`，加入 `region_image_missing` 和后续真实 provider 所需失败原因。
+- mock adapter 现在会在题目区域截图缺失时返回可恢复、用户可读的 `region_image_missing`，而不是伪造成功 draft。
+- Task 5 spec review 通过，确认未接入真实 AI、未改 Electron/storage/UI runtime。
+- Task 5 code-quality review 通过，确认 contract、mock 行为、测试覆盖和范围边界均满足要求。
+- 创建 Task 6 implementer、spec reviewer、code quality reviewer 三份独立 task log。
+- 更新 run ledger，将 Task 6 标记为 `assigned`。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `sed -n '920,1120p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+- `sed -n '1120,1260p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+- `sed -n '1,360p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
+- `tail -n 130 docs/planning/evocraft-roadmap-progress.md`
+- `ls -la`
+
+下一步的计划：
+
+- 提交并推送 Task 6 派发准备日志。
+- 派出 Task 6 implementer，按 TDD 创建默认禁用的本机评测脚手架和隐私保护 ignore 规则。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。
