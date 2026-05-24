@@ -1772,6 +1772,42 @@
 - 提交并推送 Task 7 leader follow-up fix。
 - 派发 Task 7 spec reviewer；通过后再派 code-quality reviewer。
 
+### 2026-05-24：真实 AI 识别 Task 7 规格复审
+
+本轮任务是什么：
+
+- 记录 Task 7 Qwen Adapter Spike 的 spec review 结果，并同步 reviewed commit range。
+
+已完成什么：
+
+- Spec reviewer Mencius 复审 `5f9ba4f`、`0c8e488`、`309f8aa` 后返回 `PASS_WITH_CONCERNS`。
+- 复审确认 recognition prompt 保持识别-only，明确禁止解题、讲解、错因、知识点和相似题。
+- 复审确认 Qwen adapter 留在 Electron/Node 侧，要求 API key，只发送 `selectedRegionImageUri`，测试通过 fake-fetch 注入，不调用真实 provider。
+- 复审确认 eval runner 仍保留 `EVOCRAFT_AI_EVAL_ENABLED=1` 和 `DASHSCOPE_API_KEY` 双 gate。
+- 复审确认没有 Electron main/preload、renderer、`dist`、`release` 变更，也没有 tracked `.env`、local manifest、private sample 或 generated result。
+- 已把 Task 7 task ledger、implementer log 和 spec-review log 的 commit range 补齐到 `5f9ba4f`、`0c8e488`、`309f8aa`。
+
+卡在哪里：
+
+- 无阻塞卡点；spec review 的 concerns 只涉及 leader follow-up scope 和文档同步，当前已记录。Task 7 仍需 code-quality review 通过后才能进入 Task 8。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git diff --check`
+- `npm run test:qwen-adapter`
+- `npm run test:ai-eval-config`
+- `npm test`
+- `node scripts/evaluate-ai-samples.mjs`
+- `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs`
+- `git diff --name-only 704afd3..309f8aa`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/results/result-123.jsonl`
+
+下一步的计划：
+
+- 提交并推送 Task 7 spec-review docs。
+- 派发 Task 7 code-quality reviewer；通过后再创建并派发 Task 8 Real AI IPC。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。

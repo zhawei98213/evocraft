@@ -137,10 +137,10 @@ npm test
 
 ## Leader Review
 
-- Review status:
-- Review notes:
-- Required follow-up:
+- Review status: spec review passed with concerns; code-quality review pending.
+- Review notes: leader follow-up commit `309f8aa` aligned `tests/ai-eval-config.test.mjs` with the Task 7 runner contract and removed stale Task 6 placeholder comments from `scripts/evaluate-ai-samples.mjs`.
+- Required follow-up: run Task 7 code-quality review before Task 8.
 
 ## Commit
 
-- Commit hash: `5f9ba4f`, follow-up pending
+- Commit hash: `5f9ba4f`, evidence/docs `0c8e488`, leader follow-up `309f8aa`

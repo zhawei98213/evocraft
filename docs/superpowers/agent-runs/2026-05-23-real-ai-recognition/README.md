@@ -39,7 +39,7 @@
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | completed | App store selection and tests | `npm run test:react -- src/app/App.test.tsx src/services/storage.test.ts`, `npm run build`, `git diff --check` | `32b8fe7` |
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | completed | AI contract, mock adapter, domain tests | `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, `npm run build`, `git diff --check` | `ea08fc4` |
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | completed | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config`, runner gate checks, `npm test`, `git diff --check` | `58c827a`, `85028ee` |
-| 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | in_review | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check` | `5f9ba4f` |
+| 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | pending code-quality review | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check` | `5f9ba4f`, `0c8e488`, `309f8aa` |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | pending | Electron AI IPC, desktop AI adapter | Electron config + adapter tests | 未开始 |
 | 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | pending | UI mode, authorization copy, final verification | Full verification suite | 未开始 |
 
@@ -68,8 +68,8 @@
 | `agents/task-06-ai-eval-harness.md` | implementer | Task 6 | done | 已补上 `.env*` ignore、`git check-ignore` 隐私回归测试，并把 `test:ai-eval-config` 纳入默认 `npm test`，复审通过。 |
 | `agents/task-06-spec-review.md` | spec-reviewer | Task 6 | passed | 已确认 Task 6 本机 AI 评测脚手架符合计划，且 focused verification 通过。 |
 | `agents/task-06-code-quality-review.md` | code-quality-reviewer | Task 6 | passed | 复审确认 `.env*` ignore、`git check-ignore` 隐私回归、默认 `npm test` 覆盖和 runner gate 均通过。 |
-| `agents/task-07-qwen-adapter-spike.md` | implementer | Task 7 | done | 已按 TDD 先写并跑出缺失模块的 RED 合约测试，再实现 recognition prompt、Qwen adapter、eval runner 接入和 `test:qwen-adapter` 脚本；focused verification 与 runner safety probes 已通过，等待 reviewer 复核。 |
-| `agents/task-07-spec-review.md` | spec-reviewer | Task 7 | pending | 已创建日志，等待 Task 7 implementation 完成后核对计划范围。 |
+| `agents/task-07-qwen-adapter-spike.md` | implementer | Task 7 | done | 已按 TDD 完成 Qwen adapter spike，并通过 leader follow-up 将 ai-eval config test 对齐到 Task 7 runner contract。 |
+| `agents/task-07-spec-review.md` | spec-reviewer | Task 7 | passed_with_concerns | Spec review 确认核心 Task 7 范围通过；关注点是 leader follow-up 涉及测试/进度文档，已在本次 docs sync 中补齐 reviewed range。 |
 | `agents/task-07-code-quality-review.md` | code-quality-reviewer | Task 7 | pending | 已创建日志，等待 Task 7 spec review 通过后复审 adapter 安全、测试覆盖和范围边界。 |
 
 ## Global Progress
@@ -408,6 +408,17 @@
 - Verified the new config assertion failed before the comment removal, then passed after the fix.
 - Re-ran `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `node scripts/evaluate-ai-samples.mjs`, `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs`, and `npm test`; all expected checks passed.
 - Task 7 remains in implementation-complete state and is ready for spec review after the follow-up commit/push.
+
+### 2026-05-24 Task 7 Spec Review Passed With Concerns
+
+- Spec reviewer Mencius reviewed commits `5f9ba4f`, `0c8e488`, and `309f8aa` and returned `PASS_WITH_CONCERNS`.
+- Confirmed `recognitionPrompt.cjs` keeps the prompt recognition-only and explicitly forbids solving, explanations, wrong-cause analysis, knowledge points, and similar-question generation.
+- Confirmed `qwenAdapter.cjs` keeps provider execution in the Node/Electron-side adapter, requires an API key, sends only `selectedRegionImageUri`, and uses fake-fetch injection in tests.
+- Confirmed `scripts/evaluate-ai-samples.mjs` preserves eval gates: disabled unless `EVOCRAFT_AI_EVAL_ENABLED=1`, then blocked unless `DASHSCOPE_API_KEY` exists.
+- Confirmed `package.json` only adds `test:qwen-adapter` and no dependencies.
+- Confirmed `git diff --name-only 704afd3..309f8aa` shows no Electron main/preload, renderer, `dist`, or `release` changes, and `git ls-files` found no forbidden env/sample/result files.
+- Concerns were non-blocking: `tests/ai-eval-config.test.mjs` and `docs/planning/evocraft-roadmap-progress.md` were outside the original Task 7 implementation list but justified by leader follow-up and repo progress rules; tracking docs also needed to list the full reviewed commit range.
+- This docs sync records the full reviewed range. Task 7 may proceed to code-quality review.
 
 ## Global Blockers
 
