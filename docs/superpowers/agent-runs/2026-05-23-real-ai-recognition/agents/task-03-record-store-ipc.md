@@ -8,8 +8,8 @@
 - Task title: Expose Desktop Record Store Through IPC
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-24
-- Completed at:
-- Status: `assigned`
+- Completed at: 2026-05-24 10:08:44 CST
+- Status: `done`
 
 ## Scope
 
@@ -50,19 +50,50 @@ Forbidden scope:
 - Task 2 is fully reviewed and complete.
 - Implementation has not started yet.
 
+### 2026-05-24 Implementation
+
+- Extended `tests/electron-config.test.mjs` first to assert the record-store IPC import and channel registration, preload `loadRecords` / `saveRecords` / `clearRecords`, and absence of `DASHSCOPE_API_KEY` exposure while preserving the existing raw `ipcRenderer.send` negative assertion.
+- Confirmed the required RED state with `npm run test:electron-config`; the failure showed `electron/main.cjs` did not yet contain `createLocalRecordStore`.
+- Registered allowlisted `records:load`, `records:save`, and `records:clear` handlers in `electron/main.cjs`, instantiated `createLocalRecordStore(app.getPath("userData"))` during `app.whenReady()`, and exposed matching invoke-only preload methods.
+- Extended `src/services/desktopBridge.ts` with typed record-store methods and added `src/services/desktopRecordStore.ts` as a thin renderer-side adapter that preserves the existing async `RecordStore` contract.
+- `npm run build` initially failed because the stricter `EvoCraftDesktopApi` contract made the existing desktop bridge test helper in `src/app/App.test.tsx` incomplete. Added no-op `loadRecords` / `saveRecords` / `clearRecords` methods there only to keep the existing type tests compiling, with no Task 4 runtime behavior changes.
+- Re-ran focused verification after the type-only test helper fix; Electron config, focused React tests, build, and `git diff --check` all passed.
+
 ## Commands Run
 
 ```bash
-# No commands run yet.
+git rev-parse --abbrev-ref HEAD
+git rev-parse --short HEAD
+sed -n '1,260p' tests/electron-config.test.mjs
+sed -n '1,260p' electron/main.cjs
+sed -n '1,220p' electron/preload.cjs
+sed -n '1,260p' src/services/storage.ts
+sed -n '240,320p' src/app/App.test.tsx
+npm run test:electron-config
+npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx
+npm run build
+git diff --check
+git status --short
 ```
 
 ## Files Changed
 
-- No files changed yet.
+- `tests/electron-config.test.mjs`
+- `electron/main.cjs`
+- `electron/preload.cjs`
+- `src/services/desktopBridge.ts`
+- `src/services/desktopRecordStore.ts`
+- `src/app/App.test.tsx` (type-only test helper compatibility fix required by the new desktop API surface)
+- `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-03-record-store-ipc.md`
+- `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
 
 ## Verification
 
-- Not run yet.
+- RED: `npm run test:electron-config` failed before implementation with `AssertionError [ERR_ASSERTION]` because `/createLocalRecordStore/` was missing from `electron/main.cjs`.
+- GREEN: `npm run test:electron-config` passed after implementation.
+- GREEN: `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx` passed with `2` files and `13` tests passing.
+- GREEN: `npm run build` passed after the `src/app/App.test.tsx` compatibility fix.
+- GREEN: `git diff --check` passed.
 
 ## Blockers
 

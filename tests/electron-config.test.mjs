@@ -19,9 +19,13 @@ const main = readFileSync("electron/main.cjs", "utf8");
 assert.match(main, /nodeIntegration:\s*false/);
 assert.match(main, /contextIsolation:\s*true/);
 assert.match(main, /sandbox:\s*true/);
+assert.match(main, /createLocalRecordStore/);
 assert.match(main, /setWindowOpenHandler/);
 assert.match(main, /will-navigate/);
 assert.match(main, /ipcMain\.handle\("dialog:select-image"/);
+assert.match(main, /ipcMain\.handle\("records:load"/);
+assert.match(main, /ipcMain\.handle\("records:save"/);
+assert.match(main, /ipcMain\.handle\("records:clear"/);
 assert.match(
   main,
   /if \(process\.env\.ELECTRON_OPEN_DEVTOOLS === "1"\) \{\s*window\.webContents\.openDevTools/,
@@ -30,5 +34,9 @@ assert.match(
 const preload = readFileSync("electron/preload.cjs", "utf8");
 assert.match(preload, /contextBridge\.exposeInMainWorld\("evocraft"/);
 assert.doesNotMatch(preload, /ipcRenderer\.send\(/);
+assert.doesNotMatch(preload, /DASHSCOPE_API_KEY/);
 assert.match(preload, /selectImage/);
 assert.match(preload, /readImageAsDataUrl/);
+assert.match(preload, /loadRecords/);
+assert.match(preload, /saveRecords/);
+assert.match(preload, /clearRecords/);

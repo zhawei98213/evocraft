@@ -1,6 +1,7 @@
 const { app, BrowserWindow, dialog, ipcMain, session } = require("electron");
 const { readFile } = require("node:fs/promises");
 const { extname, join } = require("node:path");
+const { createLocalRecordStore } = require("./storage/localRecordStore.cjs");
 
 const isDev = Boolean(process.env.ELECTRON_RENDERER_URL);
 const devRendererUrl = process.env.ELECTRON_RENDERER_URL ?? "http://127.0.0.1:5173";
@@ -54,6 +55,8 @@ app.whenReady().then(() => {
     });
   });
 
+  const recordStore = createLocalRecordStore(app.getPath("userData"));
+  registerRecordIpc(recordStore);
   createWindow();
 });
 
@@ -96,6 +99,28 @@ ipcMain.handle("file:read-image-data-url", async (event, filePath) => {
   const bytes = await readFile(filePath);
   return `data:${mime};base64,${bytes.toString("base64")}`;
 });
+
+function registerRecordIpc(recordStore) {
+  ipcMain.handle("records:load", async (event) => {
+    assertAllowedSender(event);
+    return recordStore.load();
+  });
+
+  ipcMain.handle("records:save", async (event, records) => {
+    assertAllowedSender(event);
+
+    if (!Array.isArray(records)) {
+      throw new Error("Invalid records payload");
+    }
+
+    return recordStore.save(records);
+  });
+
+  ipcMain.handle("records:clear", async (event) => {
+    assertAllowedSender(event);
+    return recordStore.clear();
+  });
+}
 
 function assertAllowedSender(event) {
   const url = event.senderFrame?.url ?? "";

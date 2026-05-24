@@ -274,6 +274,9 @@ function installDesktopBridge(overrides: Partial<EvoCraftDesktopApi>) {
   const desktopApi = {
     selectImage: vi.fn().mockResolvedValue(null),
     readImageAsDataUrl: vi.fn(),
+    loadRecords: vi.fn().mockResolvedValue([]),
+    saveRecords: vi.fn().mockResolvedValue({ ok: true }),
+    clearRecords: vi.fn().mockResolvedValue({ ok: true }),
     ...overrides,
   } satisfies EvoCraftDesktopApi;
 
