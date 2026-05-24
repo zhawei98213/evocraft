@@ -1,5 +1,11 @@
 import assert from "node:assert/strict";
+import { createRequire } from "node:module";
 import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
+import { pathToFileURL } from "node:url";
+
+const require = createRequire(import.meta.url);
+const { isTrustedRendererUrl } = require("../electron/security/rendererTrust.cjs");
 
 assert.ok(existsSync("electron/main.cjs"), "electron/main.cjs should exist");
 assert.ok(existsSync("electron/preload.cjs"), "electron/preload.cjs should exist");
@@ -40,3 +46,30 @@ assert.match(preload, /readImageAsDataUrl/);
 assert.match(preload, /loadRecords/);
 assert.match(preload, /saveRecords/);
 assert.match(preload, /clearRecords/);
+
+const appDirname = join(process.cwd(), "electron");
+const trustedProductionUrl = pathToFileURL(join(process.cwd(), "dist/index.html")).toString();
+
+assert.equal(
+  isTrustedRendererUrl("http://127.0.0.1:5173/", {
+    devRendererUrl: "http://127.0.0.1:5173",
+    isDev: true,
+  }),
+  true,
+);
+assert.equal(
+  isTrustedRendererUrl("http://127.0.0.1:5173.evil.test/pwn", {
+    devRendererUrl: "http://127.0.0.1:5173",
+    isDev: true,
+  }),
+  false,
+);
+assert.equal(
+  isTrustedRendererUrl("http://127.0.0.1:5173/other", {
+    devRendererUrl: "http://127.0.0.1:5173",
+    isDev: true,
+  }),
+  false,
+);
+assert.equal(isTrustedRendererUrl(trustedProductionUrl, { appDirname, isDev: false }), true);
+assert.equal(isTrustedRendererUrl("file:///tmp/evil.html", { appDirname, isDev: false }), false);

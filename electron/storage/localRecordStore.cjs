@@ -42,6 +42,10 @@ function createLocalRecordStore(userDataDir) {
 
     async save(records) {
       try {
+        if (!Array.isArray(records) || !records.every(isValidWrongQuestionRecord)) {
+          return { ok: false, reason: "storage_write_failed" };
+        }
+
         await ensureDir(recordsDir);
         const savedRecords = [];
 
@@ -218,6 +222,83 @@ function sortRecords(records) {
   return [...records].sort((left, right) => String(right.updatedAt).localeCompare(String(left.updatedAt)));
 }
 
+function isValidWrongQuestionRecord(record) {
+  return (
+    isPlainObject(record) &&
+    hasNonEmptyString(record.id) &&
+    record.appId === "wrong_question_capture" &&
+    isValidSubject(record.subject) &&
+    hasNonEmptyString(record.title) &&
+    hasString(record.createdAt) &&
+    hasString(record.updatedAt) &&
+    hasString(record.questionText) &&
+    hasString(record.originalImageUri) &&
+    isValidRegionCandidate(record.selectedRegion) &&
+    hasString(record.selectedRegionImageUri) &&
+    hasString(record.cleanedQuestionImageUri) &&
+    hasString(record.visualSnippetUri) &&
+    hasString(record.studentAnswer) &&
+    hasString(record.correctAnswer) &&
+    hasString(record.notes) &&
+    record.recognitionStatus === "reviewed" &&
+    isFiniteNumber(record.recognitionConfidence) &&
+    record.cleanupStatus === "reviewed" &&
+    isFiniteNumber(record.cleanupConfidence) &&
+    Array.isArray(record.modelTraces) &&
+    record.modelTraces.every(isValidModelTrace) &&
+    Array.isArray(record.reviewItems) &&
+    record.reviewItems.every(isValidReviewItem)
+  );
+}
+
+function isValidRegionCandidate(candidate) {
+  return (
+    isPlainObject(candidate) &&
+    hasNonEmptyString(candidate.id) &&
+    hasString(candidate.label) &&
+    isFiniteNumber(candidate.x) &&
+    isFiniteNumber(candidate.y) &&
+    isFiniteNumber(candidate.width) &&
+    isFiniteNumber(candidate.height) &&
+    candidate.unit === "ratio" &&
+    (candidate.source === "ai_candidate" || candidate.source === "manual") &&
+    isFiniteNumber(candidate.confidence)
+  );
+}
+
+function isValidModelTrace(trace) {
+  return (
+    isPlainObject(trace) &&
+    hasString(trace.provider) &&
+    hasString(trace.modelId) &&
+    ["region_detection", "ocr", "structure", "cleanup"].includes(trace.task)
+  );
+}
+
+function isValidReviewItem(item) {
+  return isPlainObject(item) && hasString(item.label) && hasString(item.status);
+}
+
+function isValidSubject(subject) {
+  return subject === "chinese" || subject === "math" || subject === "english";
+}
+
+function hasString(value) {
+  return typeof value === "string";
+}
+
+function hasNonEmptyString(value) {
+  return typeof value === "string" && value.length > 0;
+}
+
+function isFiniteNumber(value) {
+  return typeof value === "number" && Number.isFinite(value);
+}
+
+function isPlainObject(value) {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
 function toPortableRelativePath(filePath) {
   return filePath.replace(/\\/g, "/");
 }
@@ -238,4 +319,4 @@ function isContainedPath(rootDir, targetPath) {
   return relativePath.length > 0 && !relativePath.startsWith("..") && !relativePath.startsWith("/");
 }
 
-module.exports = { createLocalRecordStore };
+module.exports = { createLocalRecordStore, isValidWrongQuestionRecord };

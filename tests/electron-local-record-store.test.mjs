@@ -104,6 +104,16 @@ await runTest("prunes record directories removed from a later save", async (user
   );
 });
 
+await runTest("rejects malformed records without writing them", async (userDataDir) => {
+  const store = createLocalRecordStore(userDataDir);
+
+  assert.deepEqual(await store.save([{ id: "broken-only-id" }, "bad-record"]), {
+    ok: false,
+    reason: "storage_write_failed",
+  });
+  assert.deepEqual(await store.load(), []);
+});
+
 await runTest("skips broken record json and sorts by descending updatedAt", async (userDataDir) => {
   const recordsDir = join(userDataDir, "wrong-question", "records");
   const validOlderDir = join(recordsDir, "valid-older");
@@ -155,13 +165,36 @@ await runTest("skips broken record json and sorts by descending updatedAt", asyn
 function createRecord(overrides = {}) {
   return {
     id: "record-default",
+    appId: "wrong_question_capture",
     title: "Local record store test",
     subject: "math",
     createdAt: "2026-05-24T09:00:00.000Z",
     updatedAt: "2026-05-24T09:00:00.000Z",
+    questionText: "23. 如图，求函数解析式。",
     originalImageUri: "data:image/png;base64,b3JpZ2luYWw=",
+    selectedRegion: {
+      id: "candidate-1",
+      label: "候选 1",
+      x: 0.1,
+      y: 0.2,
+      width: 0.7,
+      height: 0.3,
+      unit: "ratio",
+      source: "ai_candidate",
+      confidence: 0.92,
+    },
     selectedRegionImageUri: "data:image/png;base64,cmVnaW9u",
     cleanedQuestionImageUri: "data:image/png;base64,Y2xlYW4=",
+    visualSnippetUri: "data:image/png;base64,c25pcHBldA==",
+    studentAnswer: "",
+    correctAnswer: "",
+    notes: "",
+    recognitionStatus: "reviewed",
+    recognitionConfidence: 0.91,
+    cleanupStatus: "reviewed",
+    cleanupConfidence: 0.88,
+    modelTraces: [{ provider: "mock", modelId: "mock-v1", task: "ocr" }],
+    reviewItems: [{ label: "题干文字", status: "reviewed" }],
     ...overrides,
   };
 }

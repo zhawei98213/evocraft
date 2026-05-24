@@ -1,7 +1,8 @@
 const { app, BrowserWindow, dialog, ipcMain, session } = require("electron");
 const { readFile } = require("node:fs/promises");
 const { extname, join } = require("node:path");
-const { createLocalRecordStore } = require("./storage/localRecordStore.cjs");
+const { isTrustedRendererUrl } = require("./security/rendererTrust.cjs");
+const { createLocalRecordStore, isValidWrongQuestionRecord } = require("./storage/localRecordStore.cjs");
 
 const isDev = Boolean(process.env.ELECTRON_RENDERER_URL);
 const devRendererUrl = process.env.ELECTRON_RENDERER_URL ?? "http://127.0.0.1:5173";
@@ -109,7 +110,7 @@ function registerRecordIpc(recordStore) {
   ipcMain.handle("records:save", async (event, records) => {
     assertAllowedSender(event);
 
-    if (!Array.isArray(records)) {
+    if (!Array.isArray(records) || !records.every(isValidWrongQuestionRecord)) {
       throw new Error("Invalid records payload");
     }
 
@@ -130,7 +131,11 @@ function assertAllowedSender(event) {
 }
 
 function isAllowedRendererUrl(url) {
-  return isDev ? url.startsWith(devRendererUrl) : url.startsWith("file://");
+  return isTrustedRendererUrl(url, {
+    appDirname: __dirname,
+    devRendererUrl,
+    isDev,
+  });
 }
 
 function getImageMimeType(extension) {

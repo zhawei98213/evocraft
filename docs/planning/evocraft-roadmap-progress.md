@@ -1470,6 +1470,41 @@
 
 - 提交并推送 Task 3 派发准备日志；随后派出 Task 3 implementer subagent。
 
+### 2026-05-24：真实 AI 识别 Task 3 安全返工
+
+本轮任务是什么：
+
+- 根据 Task 3 code quality review 结果，修复 Electron record-store IPC 的信任边界和 payload 校验问题，避免在进入 Task 4 前把本地错题数据暴露给过宽的 renderer IPC surface。
+
+已完成什么：
+
+- Task 3 spec review 已通过，但 code quality review 阻止继续：原 sender allowlist 接受 dev URL 前缀和任意 `file://`，`records:save` 只校验数组不校验记录形状。
+- 新增 `electron/security/rendererTrust.cjs`，把 dev renderer URL 收紧为精确 origin/path/search，把生产 renderer 收紧为 packaged `dist/index.html` 文件 URL。
+- 更新 `electron/main.cjs`，所有 record IPC 继续走 `assertAllowedSender(event)`，并在 `records:save` 写入前逐条验证 `WrongQuestionRecord` 形状。
+- 更新 `electron/storage/localRecordStore.cjs`，直接调用 store 时也拒绝 malformed record arrays，避免绕过 IPC 后写坏本地数据。
+- 给 `tests/electron-config.test.mjs` 增加运行时 URL trust 回归测试，覆盖近似恶意 dev URL 和任意生产 `file://`。
+- 给 `tests/electron-local-record-store.test.mjs` 增加 malformed save 回归测试。
+- 更新 Task 3 implementer log 和 run ledger，Task 3 当前等待 code-quality re-review，Task 4 仍未启动。
+
+卡在哪里：
+
+- 无实现卡点；Task 3 需要 code-quality re-review 通过后才能进入 Task 4。
+
+执行的是什么命令：
+
+- `npm run test:electron-config`
+- `npm run test:electron-store`
+- `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx`
+- `npm run build`
+- `npm test`
+- `git diff --check`
+- `git status --short --ignored`
+
+下一步的计划：
+
+- 提交并推送 Task 3 follow-up fix。
+- 派出 Task 3 code-quality re-review agent；通过后再创建并派发 Task 4 React Desktop Store。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。

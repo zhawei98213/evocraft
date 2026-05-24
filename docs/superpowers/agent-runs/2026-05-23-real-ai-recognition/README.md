@@ -35,7 +35,7 @@
 | 0. Preflight And Baseline | `agents/task-00-preflight.md` | completed | 基线命令，允许 docs-only task log / ledger 更新 | `npm test`, `npm run test:electron-config`, `npm run build` | `02c1c03` |
 | 1. Async RecordStore | `agents/task-01-async-record-store.md` | completed | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | `55b4fba`, `2e29c9d` |
 | 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | completed | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | `ed78c4f`, `09ec94c` |
-| 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | blocked | Electron main/preload IPC, desktop bridge | `npm run test:electron-config` | `9a78dbb` |
+| 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | pending re-review | Electron main/preload IPC, desktop bridge | `npm run test:electron-config`, `npm run test:electron-store` | `9a78dbb`, follow-up pending |
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | pending | App store selection and tests | Focused app/storage tests | 未开始 |
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | pending | AI contract, mock adapter, domain tests | Adapter/domain tests | 未开始 |
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | pending | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config` | 未开始 |
@@ -56,7 +56,7 @@
 | `agents/task-02-electron-local-record-store.md` | implementer | Task 2 | changes_requested_fixed | 已补上路径边界修复与回归测试，等待 code-quality re-review。 |
 | `agents/task-02-spec-review.md` | spec-reviewer | Task 2 | passed | 已核对 temp-root 文件存储、CommonJS 导出、原子写入、图片资产重建和范围边界，未发现阻塞问题。 |
 | `agents/task-02-code-quality-review.md` | code-quality-reviewer | Task 2 | passed | 已确认 follow-up fix 关闭路径逃逸与外部 `file://` 资产透传问题，并补齐 traversal、external file、prune、broken record、updatedAt 排序回归覆盖。 |
-| `agents/task-03-record-store-ipc.md` | implementer | Task 3 | done | 已按 TDD 先扩展 Electron config test 并记录 RED，再完成白名单 record-store IPC、preload invoke-only API、typed desktop bridge 与 renderer-side adapter；另对 `src/app/App.test.tsx` 做了仅限类型兼容的 helper 补齐。 |
+| `agents/task-03-record-store-ipc.md` | implementer | Task 3 | changes_requested_fixed | 已补上 renderer URL 精确匹配、record payload 运行时校验、恶意近似 URL 与 malformed save 回归测试，等待 code-quality re-review。 |
 | `agents/task-03-spec-review.md` | spec-reviewer | Task 3 | passed | 已核对 Task 3 IPC channel、preload API、typed bridge 和 type-only helper 兼容修复，未发现 spec 问题。 |
 | `agents/task-03-code-quality-review.md` | code-quality-reviewer | Task 3 | failed | 已确认 preload/typed bridge 范围正确，但 sender allowlist 过宽、`records:save` 只做 `Array.isArray` 校验且静态测试无法覆盖这些边界，Task 3 需返工后复审。 |
 
@@ -214,9 +214,17 @@
 - Confirmed the current `tests/electron-config.test.mjs` coverage is regex-only and would not catch either runtime failure mode.
 - Task 3 stays blocked. Do not start Task 4 until sender allowlist hardening, runtime payload validation, and regression coverage for both are in place and pass re-review.
 
+### 2026-05-24 Task 3 Follow-Up Fix Prepared
+
+- Tightened renderer trust checks by moving URL validation into `electron/security/rendererTrust.cjs`; dev now requires exact trusted origin/path/search, and production now requires the packaged `dist/index.html` file URL instead of any `file://` page.
+- Hardened `records:save` by validating every record against the expected wrong-question record shape before IPC writes, and added the same guard inside `createLocalRecordStore(...).save(...)` so direct store callers cannot persist malformed arrays.
+- Added runtime regression coverage for near-match dev URLs, arbitrary production `file://` URLs, and malformed record arrays.
+- Verification passed: `npm run test:electron-config`, `npm run test:electron-store`, `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx`, `npm run build`, `npm test`, and `git diff --check`.
+- Task 3 is ready for code-quality re-review. Task 4 remains pending until that re-review passes.
+
 ## Global Blockers
 
-- Task 3 is blocked by an overbroad renderer allowlist in `electron/main.cjs` and missing runtime record-shape validation for `records:save`; Task 4 must remain pending until those issues are fixed and re-reviewed.
+- Task 3 follow-up fix is ready for code-quality re-review; Task 4 must remain pending until that re-review passes.
 
 ## Review Rules
 

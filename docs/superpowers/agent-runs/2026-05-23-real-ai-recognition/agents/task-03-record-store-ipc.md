@@ -9,7 +9,8 @@
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-24
 - Completed at: 2026-05-24 10:08:44 CST
-- Status: `done`
+- Follow-up completed at: 2026-05-24 10:38 CST
+- Status: `changes_requested_fixed`
 
 ## Scope
 
@@ -59,6 +60,16 @@ Forbidden scope:
 - `npm run build` initially failed because the stricter `EvoCraftDesktopApi` contract made the existing desktop bridge test helper in `src/app/App.test.tsx` incomplete. Added no-op `loadRecords` / `saveRecords` / `clearRecords` methods there only to keep the existing type tests compiling, with no Task 4 runtime behavior changes.
 - Re-ran focused verification after the type-only test helper fix; Electron config, focused React tests, build, and `git diff --check` all passed.
 
+### 2026-05-24 Code Quality Follow-Up
+
+- Code-quality review found that `isAllowedRendererUrl()` trusted dev URL prefixes and any production `file://` page, which was too broad for the new `records:*` persistence IPC surface.
+- Code-quality review also found that `records:save` only checked `Array.isArray(records)`, allowing malformed arrays to persist as successful writes.
+- Added `electron/security/rendererTrust.cjs` so renderer sender checks can be exercised at runtime without loading Electron main; dev URLs now require exact origin/path/search and production URLs must match the packaged renderer `dist/index.html` URL.
+- Updated `electron/main.cjs` to use the tightened renderer trust helper and to validate each record before calling `recordStore.save(records)`.
+- Updated `electron/storage/localRecordStore.cjs` so direct store callers cannot persist malformed arrays, and exported `isValidWrongQuestionRecord` for the IPC boundary.
+- Added runtime regression tests for near-match dev origins, arbitrary `file://` production pages, and malformed record arrays.
+- Re-ran the focused verification suite; all commands passed.
+
 ## Commands Run
 
 ```bash
@@ -74,12 +85,17 @@ npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx
 npm run build
 git diff --check
 git status --short
+npm run test:electron-store
+npm test
 ```
 
 ## Files Changed
 
 - `tests/electron-config.test.mjs`
+- `tests/electron-local-record-store.test.mjs`
 - `electron/main.cjs`
+- `electron/security/rendererTrust.cjs`
+- `electron/storage/localRecordStore.cjs`
 - `electron/preload.cjs`
 - `src/services/desktopBridge.ts`
 - `src/services/desktopRecordStore.ts`
@@ -94,20 +110,27 @@ git status --short
 - GREEN: `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx` passed with `2` files and `13` tests passing.
 - GREEN: `npm run build` passed after the `src/app/App.test.tsx` compatibility fix.
 - GREEN: `git diff --check` passed.
+- FOLLOW-UP GREEN: `npm run test:electron-config` passed with runtime renderer URL trust checks.
+- FOLLOW-UP GREEN: `npm run test:electron-store` passed with malformed record rejection coverage.
+- FOLLOW-UP GREEN: `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx` passed with `2` files and `13` tests passing.
+- FOLLOW-UP GREEN: `npm run build` passed.
+- FOLLOW-UP GREEN: `npm test` passed with `5` files and `28` tests passing.
+- FOLLOW-UP GREEN: `git diff --check` passed.
 
 ## Blockers
 
-- 无。
+- 无。Task 3 正在等待 code-quality re-review。
 
 ## Handoff Notes
 
 - This task only exposes the local store through safe IPC and renderer-side service types. React app selection of the desktop store starts in Task 4.
+- Code-quality follow-up fixed the IPC trust-boundary blockers without adding Task 4 behavior.
 
 ## Leader Review
 
-- Review status: pending
-- Review notes:
-- Required follow-up:
+- Review status: failed, fixed pending re-review
+- Review notes: Code-quality review requested sender allowlist hardening, runtime record payload validation, and stronger regression coverage.
+- Required follow-up: Run Task 3 code-quality re-review.
 
 ## Commit
 
