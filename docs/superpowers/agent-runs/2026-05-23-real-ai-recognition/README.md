@@ -55,7 +55,7 @@
 | `agents/task-01-code-quality-review.md` | code-quality-reviewer | Task 1 | passed | 已确认 follow-up fix 关闭 pre-hydration save race，并用 delayed-load 回归测试覆盖真实异步时序。 |
 | `agents/task-02-electron-local-record-store.md` | implementer | Task 2 | done | 已按 TDD 完成 Electron main 侧文件夹 + JSON 索引本地记录存储、Node 测试和 package script。 |
 | `agents/task-02-spec-review.md` | spec-reviewer | Task 2 | passed | 已核对 temp-root 文件存储、CommonJS 导出、原子写入、图片资产重建和范围边界，未发现阻塞问题。 |
-| `agents/task-02-code-quality-review.md` | code-quality-reviewer | Task 2 | pending | Task 2 spec review 通过后检查文件系统安全、测试充分性和提交卫生。 |
+| `agents/task-02-code-quality-review.md` | code-quality-reviewer | Task 2 | failed | 已确认类型检查和脚本验证通过，但发现 `record.json` 路径逃逸与外部 `file://` 资产未收口到本地根目录的阻塞问题；Task 3 不得开始。 |
 
 ## Global Progress
 
@@ -150,9 +150,16 @@
 - Confirmed `git diff --check`, `npm run test:electron-store`, and `npm run test:electron-config` all passed.
 - Task 2 remains in `review` until the code-quality review completes.
 
+### 2026-05-24 Task 2 Code Quality Review Failed
+
+- Confirmed `git diff --check`, `npm run test:electron-store`, `npm run test:electron-config`, and `lsp_diagnostics` on the modified Task 2 JS files all passed.
+- Found a blocking filesystem-boundary issue in `electron/storage/localRecordStore.cjs`: `hydrateRecord()` resolves stored `./...` paths without verifying they stay inside the record directory, and `normalizeFileUrlToRelativePath()` preserves external `file://` assets unchanged instead of forcing them into the local record root.
+- Manual Node probes proved both failure modes: a crafted `record.json` can hydrate `./../../../outside.txt` into an arbitrary local `file://` URL, and saving an external `file://.../external.png` stores and reloads the absolute external path unchanged.
+- The current focused Node test does not cover traversal rejection or external `file://` normalization, so Task 2 stays blocked until implementation and regression coverage are fixed.
+
 ## Global Blockers
 
-- 无。
+- Task 2 code-quality review is blocked by the local-record-store path-boundary bug (`record.json` traversal hydration plus external `file://` asset passthrough). Task 3 must not start until Task 2 is fixed and re-reviewed.
 
 ## Review Rules
 
