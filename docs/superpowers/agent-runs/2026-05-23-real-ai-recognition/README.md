@@ -35,7 +35,7 @@
 | 0. Preflight And Baseline | `agents/task-00-preflight.md` | completed | 基线命令，允许 docs-only task log / ledger 更新 | `npm test`, `npm run test:electron-config`, `npm run build` | `02c1c03` |
 | 1. Async RecordStore | `agents/task-01-async-record-store.md` | completed | `src/services/storage.ts`, reducer, app loading | Focused React/Vitest tests | `55b4fba`, `2e29c9d` |
 | 2. Electron Local Record Store | `agents/task-02-electron-local-record-store.md` | completed | `electron/storage/localRecordStore.cjs`, Node test | `npm run test:electron-store` | `ed78c4f`, `09ec94c` |
-| 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | pending re-review | Electron main/preload IPC, desktop bridge | `npm run test:electron-config`, `npm run test:electron-store` | `9a78dbb`, `61441ba`, sparse fix pending |
+| 3. Record Store IPC | `agents/task-03-record-store-ipc.md` | completed | Electron main/preload IPC, desktop bridge | `npm run test:electron-config`, `npm run test:electron-store` | `9a78dbb`, `61441ba`, `a2fa40c` |
 | 4. React Desktop Store | `agents/task-04-react-desktop-store.md` | pending | App store selection and tests | Focused app/storage tests | 未开始 |
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | pending | AI contract, mock adapter, domain tests | Adapter/domain tests | 未开始 |
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | pending | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config` | 未开始 |
@@ -58,7 +58,7 @@
 | `agents/task-02-code-quality-review.md` | code-quality-reviewer | Task 2 | passed | 已确认 follow-up fix 关闭路径逃逸与外部 `file://` 资产透传问题，并补齐 traversal、external file、prune、broken record、updatedAt 排序回归覆盖。 |
 | `agents/task-03-record-store-ipc.md` | implementer | Task 3 | changes_requested_fixed | 已补上 renderer URL 精确匹配、sparse-safe record payload 运行时校验、恶意近似 URL、dense malformed save 与 sparse malformed save 回归测试，等待 code-quality re-review。 |
 | `agents/task-03-spec-review.md` | spec-reviewer | Task 3 | passed | 已核对 Task 3 IPC channel、preload API、typed bridge 和 type-only helper 兼容修复，未发现 spec 问题。 |
-| `agents/task-03-code-quality-review.md` | code-quality-reviewer | Task 3 | failed | Re-review 确认 renderer trust helper 和 dense malformed-array 修复已生效，但 sparse array 仍会绕过 `every(...)` 校验并在失败前部分写入记录，Task 3 继续 blocked。 |
+| `agents/task-03-code-quality-review.md` | code-quality-reviewer | Task 3 | passed | 第二次 re-review 确认 sparse-safe array helper 已在 IPC 和 direct store 边界生效，sparse malformed payload 回归测试通过，Task 3 质量 review 全部通过。 |
 
 ## Global Progress
 
@@ -239,9 +239,19 @@
 - Re-ran verification: `npm run test:electron-store`, `npm run test:electron-config`, `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx`, `npm run build`, `npm test`, and `git diff --check`; all passed.
 - Task 3 is ready for another code-quality re-review. Task 4 remains pending until that review passes.
 
+### 2026-05-24 Task 3 Code Quality Re-review Passed
+
+- The re-review agent retry hit a platform usage limit before it could return a committed final result; the leader completed the same code-quality checklist locally and recorded the evidence in the review log.
+- Re-ran `git status --short --branch`, `git diff --check`, `npm run test:electron-config`, `npm run test:electron-store`, `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx`, `npm run build`, `npm test`, and `npx tsc --noEmit --pretty false --project tsconfig.json`; all passed.
+- Confirmed `electron/main.cjs` now uses `isValidWrongQuestionRecordArray(...)` for `records:save` while still enforcing `assertAllowedSender(event)` on every `records:*` handler.
+- Confirmed `electron/storage/localRecordStore.cjs` uses the same sparse-safe helper before any write and direct sparse-array probes now fail with zero writes.
+- Confirmed `tests/electron-local-record-store.test.mjs` now covers both dense malformed arrays and sparse malformed arrays with zero-write assertions.
+- Confirmed the previously fixed renderer trust helper, runtime URL tests, invoke-only preload surface, and no-Task-4 scope boundary all remain sound.
+- Task 3 fully passed code-quality re-review and is complete. Task 4 may proceed when assigned.
+
 ## Global Blockers
 
-- Task 3 sparse-array fix is ready for code-quality re-review; Task 4 must remain pending until that re-review passes.
+- 无。
 
 ## Review Rules
 

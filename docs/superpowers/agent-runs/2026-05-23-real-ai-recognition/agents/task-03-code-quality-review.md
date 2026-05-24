@@ -8,8 +8,8 @@
 - Task title: Record Store IPC Code Quality Review
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-24
-- Completed at: 2026-05-24 10:41:30 CST
-- Status: `failed`
+- Completed at: 2026-05-24 10:50:38 CST
+- Status: `passed`
 
 ## Scope
 
@@ -74,15 +74,27 @@ Forbidden scope:
 - Confirmed the sparse-array bug with a direct probe: a payload whose keys were `[0, 2]` produced `every === true`, `store.save(...) => { ok: false, reason: "storage_write_failed" }`, and `store.load()` still returned the already-written `"valid"` record. That means malformed input can still partially mutate notebook state before the save fails.
 - Confirmed the new regression coverage does not exercise sparse arrays, so this remaining malformed-array case is still untested.
 
+### 2026-05-24 Second Re-review Complete
+
+- The code-quality re-review agent retry hit a platform usage limit before it could return a committed final result, so the leader completed the same checklist locally and recorded the evidence in this review log.
+- Reviewed the sparse-array follow-up at `a2fa40c` and current HEAD, then re-ran the full required suite: `git status --short --branch`, `git diff --check`, `npm run test:electron-config`, `npm run test:electron-store`, `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx`, `npm run build`, `npm test`, and `npx tsc --noEmit --pretty false --project tsconfig.json`; all passed.
+- Confirmed `electron/main.cjs` now uses `isValidWrongQuestionRecordArray(records)` for `records:save`, while still calling `assertAllowedSender(event)` before every `records:*` handler.
+- Confirmed `electron/storage/localRecordStore.cjs` now rejects malformed record arrays with the same sparse-safe helper before any write occurs.
+- Confirmed `tests/electron-local-record-store.test.mjs` now includes a sparse-array regression test that asserts zero writes on failure.
+- Re-ran a direct sparse-array probe and confirmed the helper returns `false`, `store.save(...)` returns `{ ok: false, reason: "storage_write_failed" }`, and `store.load()` remains empty.
+- Re-checked the previously fixed areas: `electron/security/rendererTrust.cjs` runtime URL trust logic remains exact-match based, `tests/electron-config.test.mjs` still exercises the dev/prod trust boundary at runtime, and the preload surface remains invoke-only with no raw `ipcRenderer.send` or secret exposure.
+- Attempted `lsp_diagnostics` again on the modified implementation files, but the `omx_code_intel` transport remained closed in this session. Fallback `npx tsc --noEmit --pretty false --project tsconfig.json` stayed clean.
+
 ## Code Review Summary
 
 **Files Reviewed:** 8
-**Total Issues:** 2
+**Total Issues:** 0
 
 ### By Severity
 
-- HIGH: 1
-- MEDIUM: 1
+- CRITICAL: 0
+- HIGH: 0
+- MEDIUM: 0
 - LOW: 0
 
 ### Strengths
@@ -92,36 +104,22 @@ Forbidden scope:
 - The Task 3 diff stays scoped: no React store selection, no storage-format churn, no dependency additions, and no generated output committed.
 - `electron/security/rendererTrust.cjs` closes the original allowlist flaw with exact dev origin/path/search matching and exact packaged production renderer URL matching.
 - The dense malformed-array path reported in the first review is now blocked at both the IPC boundary and direct store boundary, with matching runtime regression coverage.
+- The sparse-array follow-up closes the remaining partial-write bug by validating array indices with `hasOwnProperty` before any write and by covering that case in `tests/electron-local-record-store.test.mjs`.
 
 ### Issues
 
-#### HIGH
-
-1. **Sparse arrays still bypass the “validate every save entry” guard and can partially write notebook state**
-   - File: `electron/main.cjs:113-117`, `electron/storage/localRecordStore.cjs:45-63`
-   - Issue: both layers use `records.every(isValidWrongQuestionRecord)`. JavaScript `every(...)` skips sparse array holes, so payloads like `[validRecord, <hole>, validRecord]` pass the validation gate even though not every entry was checked.
-   - Why it matters: the store writes sequentially. A sparse payload can write one or more earlier valid records, then hit the hole, throw, and return `{ ok: false }` after the notebook has already been mutated. That violates the intended boundary and leaves persistence behavior non-atomic for malformed input.
-   - Fix: reject sparse arrays explicitly before writing, for example by requiring `records.length === Object.keys(records).length` plus shape validation, or by iterating with an index-based loop that fails on missing entries before any write occurs. Add a regression test that proves sparse arrays are rejected with zero writes.
-
-#### MEDIUM
-
-1. **Regression coverage still misses the sparse-array malformed payload that bypasses validation**
-   - File: `tests/electron-local-record-store.test.mjs:107-115`
-   - Issue: the new malformed-record test covers only a dense invalid array (`[{ id: "broken-only-id" }, "bad-record"]`). It does not cover sparse arrays, which are the remaining bypass for the current validation approach.
-   - Why it matters: the current suite will stay green while malformed sparse payloads continue to mutate persisted data before failing.
-   - Fix: add a regression test using a sparse array such as `[validRecord, <hole>, validRecord]` and assert that save fails without writing any record directory or index entry.
+- None.
 
 ### Recommendations
 
-- Keep the new renderer trust helper and runtime coverage; those parts are now sound.
-- Replace `every(...)`-based validation with a sparse-safe validation path before any write occurs in either `electron/main.cjs` or `createLocalRecordStore.save(...)`.
-- Extend the malformed-payload regression coverage to prove sparse arrays are rejected with zero writes.
+- Task 4 can proceed with the current storage IPC boundary.
+- When Task 4 starts using the desktop store in the renderer, keep the same discipline: runtime boundary tests for security-sensitive IPC and no broadening of the preload API surface.
 
 ### Assessment
 
-**Ready to merge?** No
+**Ready to merge?** Yes
 
-**Reasoning:** The sender-allowlist issue and the original dense malformed-array bug are fixed, but the follow-up still leaves one malformed-array bypass that can partially write notebook state. Task 3 still needs one more narrow fix before Task 4 can safely build on it.
+**Reasoning:** The original renderer-trust flaw, dense malformed-array acceptance, and sparse-array partial-write bug are all closed, and the runtime regression coverage now exercises the relevant trust and malformed-payload boundaries without widening into Task 4.
 
 ## Commands Run
 
@@ -211,6 +209,48 @@ sparse[2] = sparse[0];
   }, null, 2));
 })();
 NODE
+node <<'NODE'
+const { mkdtempSync } = require('node:fs');
+const { tmpdir } = require('node:os');
+const { join } = require('node:path');
+const { createLocalRecordStore, isValidWrongQuestionRecordArray } = require('./electron/storage/localRecordStore.cjs');
+const sparseRecords = [{
+  id: 'valid-before-hole',
+  appId: 'wrong_question_capture',
+  title: 'Local record store test',
+  subject: 'math',
+  createdAt: '2026-05-24T09:00:00.000Z',
+  updatedAt: '2026-05-24T09:00:00.000Z',
+  questionText: '23. 如图，求函数解析式。',
+  originalImageUri: 'data:image/png;base64,b3JpZ2luYWw=',
+  selectedRegion: { id: 'candidate-1', label: '候选 1', x: 0.1, y: 0.2, width: 0.7, height: 0.3, unit: 'ratio', source: 'ai_candidate', confidence: 0.92 },
+  selectedRegionImageUri: 'data:image/png;base64,cmVnaW9u',
+  cleanedQuestionImageUri: 'data:image/png;base64,Y2xlYW4=',
+  visualSnippetUri: 'data:image/png;base64,c25pcHBldA==',
+  studentAnswer: '',
+  correctAnswer: '',
+  notes: '',
+  recognitionStatus: 'reviewed',
+  recognitionConfidence: 0.91,
+  cleanupStatus: 'reviewed',
+  cleanupConfidence: 0.88,
+  modelTraces: [{ provider: 'mock', modelId: 'mock-v1', task: 'ocr' }],
+  reviewItems: [{ label: '题干文字', status: 'reviewed' }],
+}];
+sparseRecords.length = 2;
+(async () => {
+  const dir = mkdtempSync(join(tmpdir(), 'evocraft-sparse-pass-'));
+  const store = createLocalRecordStore(dir);
+  const result = await store.save(sparseRecords);
+  const loaded = await store.load();
+  console.log(JSON.stringify({
+    helper: isValidWrongQuestionRecordArray(sparseRecords),
+    hasHole: !(1 in sparseRecords),
+    result,
+    loaded,
+  }, null, 2));
+})();
+NODE
 ```
 
 ## Files Changed
@@ -230,27 +270,26 @@ NODE
 - `npm test` passed with 5 files and 28 tests.
 - `npx tsc --noEmit --pretty false --project tsconfig.json` passed.
 - Attempted `lsp_diagnostics` / `lsp_servers` on the modified follow-up files, but the `omx_code_intel` transport was closed in this session. Fallback type diagnostics via `tsc --noEmit` were clean.
+- Attempted `lsp_diagnostics` again on the modified implementation files during this second re-review, but the `omx_code_intel` transport was still closed in this session. Fallback type diagnostics via `tsc --noEmit` were clean.
 - `ast_grep_search` was unavailable in this environment (`ast-grep not installed`), so pattern checks fell back to direct source inspection and `rg`.
 - Runtime probe confirmed the tightened renderer trust helper accepts only the exact trusted dev and production URLs and rejects the prior bypass URLs.
 - Dense malformed-array probe now fails cleanly with no writes.
-- Sparse-array probe still bypasses `every(...)` validation and leaves a partially written record on disk before failure.
+- Sparse-array probe now fails cleanly with no writes, and `isValidWrongQuestionRecordArray(...)` returns `false` before any write occurs.
 
 ## Blockers
 
-- Sparse arrays still bypass the `isValidWrongQuestionRecord` guard in `electron/main.cjs` and `electron/storage/localRecordStore.cjs`, so malformed input can partially mutate notebook state before save returns failure.
-- `tests/electron-local-record-store.test.mjs` does not yet cover that sparse-array malformed payload.
+- 无。
 
 ## Handoff Notes
 
-- Do not start Task 4 until Task 3 is reworked and re-reviewed.
-- Keep the new renderer trust helper and dense malformed-array guard as-is.
-- Next fix should make malformed-array validation sparse-safe before any write occurs, then add a sparse-array regression test that proves zero writes on failure.
+- Task 3 is clear. Task 4 can proceed to renderer-side desktop store selection.
+- Keep the shared `isValidWrongQuestionRecordArray(...)` helper aligned between the IPC boundary and the direct store boundary if the record shape evolves.
 
 ## Leader Review
 
-- Review status: failed
-- Review notes: Request changes. The original blockers are largely resolved, but the persistence guard still misses sparse arrays and can partially write notebook state before failure.
-- Required follow-up: Return Task 3 to the implementer for sparse-safe payload validation and matching regression coverage.
+- Review status: passed
+- Review notes: The sparse-array follow-up closes the last remaining Task 3 integrity gap without widening scope into Task 4.
+- Required follow-up: Move to Task 4 when assigned.
 
 ## Commit
 
