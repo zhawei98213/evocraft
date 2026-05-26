@@ -75,7 +75,7 @@
 | `agents/task-08-spec-review.md` | spec-reviewer | Task 8 | passed | 复审确认 `tests/electron-ai-ipc.test.mjs` 已关闭上一轮 runtime coverage 阻塞点；Task 8 现满足 spec，可进入 code-quality review。 |
 | `agents/task-08-code-quality-review.md` | code-quality-reviewer | Task 8 | passed_with_concerns_fixed | 质量审查未发现 HIGH/MEDIUM 问题；LOW 测试 payload 形状问题已在 `3240f03` 修复，Task 8 可进入 Task 9。 |
 | `agents/task-09-app-runtime-switch.md` | implementer | Task 9 | review | 已实现 app runtime switch、默认 mock、真实 AI 测试模式提示、外部 AI 授权拦截、desktop AI adapter selection 和 focused/full verification；等待 spec review。 |
-| `agents/task-09-spec-review.md` | spec-reviewer | Task 9 | pending | 等待 Task 9 implementation 完成后核对范围、默认 mock、授权拦截和测试覆盖。 |
+| `agents/task-09-spec-review.md` | spec-reviewer | Task 9 | passed | 已确认 Task 9 满足 runtime switch、默认 mock、授权拦截、测试覆盖和文档同步要求，可进入 code-quality review；Task 9 总状态保持 `review`。 |
 | `agents/task-09-code-quality-review.md` | code-quality-reviewer | Task 9 | pending | 等待 Task 9 spec review 通过后审查 reducer/effect/adapter selection/UI/tests 质量。 |
 
 ## Global Progress
@@ -502,6 +502,14 @@
 - Task 8 is assigned to the implementer and must stay inside Electron main/preload AI IPC, typed desktop bridge, `desktopAiAdapter`, AI runtime status type, and focused tests.
 - Task 8 must not modify app runtime switch UI, authorization copy, styles, Electron renderer behavior selection, storage format, dependencies, private samples/results, API keys, or `.env` files.
 - Task 9 remains responsible for app-level runtime switch, user-facing authorization notice, and final verification.
+
+### 2026-05-26 Task 9 Spec Review Passed
+
+- Reviewed range `4908ac1..f620485` with implementation focus on `c3d2f21` and docs-only anchor `f620485`.
+- Confirmed Task 9 stayed inside scope: only the allowed app/reducer/style files changed, plus required project-memory, idea-capsule, roadmap-progress, run-ledger, and implementer-log updates.
+- Confirmed browser and desktop-disabled mode default to mock, desktop enabled mode renders explicit real-AI test-mode copy, missing authorization blocks detection non-destructively, and authorized desktop mode delegates through the desktop AI adapter into region selection.
+- Confirmed the required verification suite passed on current HEAD, including focused React tests, full `npm test`, `test:electron-config`, `test:electron-store`, `test:ai-eval-config`, `test:qwen-adapter`, `build`, `desktop:build`, `git diff --check`, reviewed-range file checks, and tracked-secret/generated-file checks.
+- Task 9 spec review is `passed`; Task 9 overall remains in `review` until code-quality review completes.
 
 ## Global Blockers
 
