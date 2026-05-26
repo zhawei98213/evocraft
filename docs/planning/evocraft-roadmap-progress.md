@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-05-24
+最后更新：2026-05-26
 
 ## 路线图
 
@@ -1875,6 +1875,40 @@
 
 - 提交并推送 Task 7 prompt follow-up。
 - 再次派发 Task 7 code-quality re-review；通过后再创建并派发 Task 8 Real AI IPC。
+
+### 2026-05-26：真实 AI 识别 Task 8 派发准备
+
+本轮任务是什么：
+
+- 在 Task 7 Qwen adapter spike 完整通过 code-quality re-review 后，为 Task 8 Real AI IPC 创建 agent 日志和派发边界。
+
+已完成什么：
+
+- 确认 Task 7 已完成：Qwen adapter、评测 runner、auto subject、review status 和 prompt containment 全部通过复审。
+- 创建 Task 8 implementer、spec reviewer、code-quality reviewer 三份独立 task log。
+- 更新 run ledger，将 Task 8 标记为 `assigned`。
+- 明确 Task 8 只做 Electron main/preload AI IPC、typed desktop bridge、`desktopAiAdapter`、`AiRuntimeStatus` 和 focused tests。
+- 明确 Task 8 不做 app runtime switch、UI 授权文案、样式、真实/Mock 选择逻辑；这些留给 Task 9。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `sed -n '1460,1720p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+- `sed -n '1,260p' electron/main.cjs`
+- `sed -n '1,240p' electron/preload.cjs`
+- `sed -n '1,260p' src/services/desktopBridge.ts`
+- `sed -n '1,220p' src/services/desktopRecordStore.ts`
+- `sed -n '1,260p' tests/electron-config.test.mjs`
+- `sed -n '1,220p' src/services/aiAdapter.test.ts`
+
+下一步的计划：
+
+- 提交并推送 Task 8 派发准备日志。
+- 派出 Task 8 implementer，按 TDD 添加 Electron AI IPC、preload API、typed desktop bridge、desktop AI adapter 和 focused tests。
 
 ## 下一步
 

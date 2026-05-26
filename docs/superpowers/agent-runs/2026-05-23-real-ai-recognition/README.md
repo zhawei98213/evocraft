@@ -40,7 +40,7 @@
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | completed | AI contract, mock adapter, domain tests | `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, `npm run build`, `git diff --check` | `ea08fc4` |
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | completed | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config`, runner gate checks, `npm test`, `git diff --check` | `58c827a`, `85028ee` |
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | completed | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build` | `5f9ba4f`, `0c8e488`, `309f8aa`, `338e55b`, `f090b93` |
-| 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | pending | Electron AI IPC, desktop AI adapter | Electron config + adapter tests | 未开始 |
+| 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | assigned | Electron AI IPC, desktop AI adapter | `npm run test:electron-config`, `npm run test:react -- src/services/aiAdapter.test.ts`, `npm run build`, `git diff --check` | 未开始 |
 | 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | pending | UI mode, authorization copy, final verification | Full verification suite | 未开始 |
 
 ## Agent Ledger
@@ -71,6 +71,9 @@
 | `agents/task-07-qwen-adapter-spike.md` | implementer | Task 7 | done | 已修复全部 Task 7 code-quality concerns：`auto` 科目不再静默落成数学，`reviewItems.status` 归一到 `可信/需复核`，并补齐 HTTP non-ok、非法 status、auto subject、以及 prompt containment 合约测试。 |
 | `agents/task-07-spec-review.md` | spec-reviewer | Task 7 | passed_with_concerns | Spec review 确认核心 Task 7 范围通过；关注点是 leader follow-up 涉及测试/进度文档，已在本次 docs sync 中补齐 reviewed range。 |
 | `agents/task-07-code-quality-review.md` | code-quality-reviewer | Task 7 | passed | 二次 follow-up 复审确认 prompt containment 已收紧，且 earlier adapter/test fixes 仍然成立；Task 7 质量 review 全部通过。 |
+| `agents/task-08-real-ai-ipc.md` | implementer | Task 8 | assigned | 已创建日志，准备按 TDD 添加 Electron main/preload AI IPC、typed desktop bridge、desktop AI adapter 和 focused config/adapter tests。 |
+| `agents/task-08-spec-review.md` | spec-reviewer | Task 8 | pending | 已创建日志，等待 Task 8 implementation 完成后核对计划范围。 |
+| `agents/task-08-code-quality-review.md` | code-quality-reviewer | Task 8 | pending | 已创建日志，等待 Task 8 spec review 通过后复审 IPC trust、runtime gate、preload exposure 和 renderer key boundary。 |
 
 ## Global Progress
 
@@ -462,6 +465,13 @@
 - Confirmed `tests/qwen-adapter-contract.test.mjs` now covers explicit prompt containment, auto prompt containment, `response.ok === false`, invalid review-item status normalization, auto mode without provider subject, and auto mode with a valid provider subject.
 - Confirmed the re-review range stayed contained to prompt/test/docs updates only, with no Electron main/preload IPC, renderer runtime, storage, dependency, API key/`.env`, private sample, generated result, `dist`, or `release` scope creep.
 - Task 7 fully passed both spec and code-quality review and is complete. Task 8 has not started in this review lane.
+
+### 2026-05-26 Task 8 Logs Prepared
+
+- Created independent Task 8 implementer, spec-review, and code-quality-review logs before implementation.
+- Task 8 is assigned to the implementer and must stay inside Electron main/preload AI IPC, typed desktop bridge, `desktopAiAdapter`, AI runtime status type, and focused tests.
+- Task 8 must not modify app runtime switch UI, authorization copy, styles, Electron renderer behavior selection, storage format, dependencies, private samples/results, API keys, or `.env` files.
+- Task 9 remains responsible for app-level runtime switch, user-facing authorization notice, and final verification.
 
 ## Global Blockers
 
