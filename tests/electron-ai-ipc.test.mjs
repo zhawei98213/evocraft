@@ -75,7 +75,33 @@ async function callHandler(handler, event, input) {
 {
   let detectCalls = 0;
   let recognizeCalls = 0;
+  let forwardedDetectInput = null;
+  let forwardedRecognizeInput = null;
   const fakeIpcMain = createFakeIpcMain();
+  const selectedRegion = {
+    id: "candidate-1",
+    label: "候选 1",
+    x: 0.1,
+    y: 0.2,
+    width: 0.7,
+    height: 0.3,
+    unit: "ratio",
+    source: "ai_candidate",
+    confidence: 0.91,
+  };
+  const detectInput = { imageUri: "data:image/png;base64,original" };
+  const recognizeInput = {
+    subject: "math",
+    imageUri: detectInput.imageUri,
+    selectedRegion,
+    selectedRegionImageUri: "data:image/png;base64,region",
+  };
+  const recognitionDraft = {
+    id: "draft-1",
+    subject: "math",
+    selectedRegion,
+    selectedRegionImageUri: recognizeInput.selectedRegionImageUri,
+  };
 
   registerAiIpc(
     {
@@ -83,11 +109,13 @@ async function callHandler(handler, event, input) {
       adapter: {
         detectRegions(input) {
           detectCalls += 1;
-          return { ok: true, regions: [{ id: input.imageId }] };
+          forwardedDetectInput = input;
+          return { ok: true, candidates: [selectedRegion] };
         },
         recognizeQuestion(input) {
           recognizeCalls += 1;
-          return { ok: true, draft: { id: input.regionId } };
+          forwardedRecognizeInput = input;
+          return { ok: true, draft: recognitionDraft };
         },
       },
     },
@@ -95,13 +123,15 @@ async function callHandler(handler, event, input) {
   );
 
   assert.deepEqual(
-    await fakeIpcMain.handlers.get("ai:detect-regions")(trustedEvent, { imageId: "img-1" }),
-    { ok: true, regions: [{ id: "img-1" }] },
+    await fakeIpcMain.handlers.get("ai:detect-regions")(trustedEvent, detectInput),
+    { ok: true, candidates: [selectedRegion] },
   );
   assert.deepEqual(
-    await fakeIpcMain.handlers.get("ai:recognize-question")(trustedEvent, { regionId: "region-1" }),
-    { ok: true, draft: { id: "region-1" } },
+    await fakeIpcMain.handlers.get("ai:recognize-question")(trustedEvent, recognizeInput),
+    { ok: true, draft: recognitionDraft },
   );
+  assert.deepEqual(forwardedDetectInput, detectInput);
+  assert.deepEqual(forwardedRecognizeInput, recognizeInput);
   assert.equal(detectCalls, 1);
   assert.equal(recognizeCalls, 1);
 }
