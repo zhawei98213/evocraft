@@ -1944,6 +1944,37 @@
 - 提交并推送 Task 8 进度记录。
 - 派发 Task 8 spec reviewer；通过后再派发 code-quality reviewer。
 
+### 2026-05-26：真实 AI 识别 Task 8 spec review follow-up
+
+本轮任务是什么：
+
+- 根据 Task 8 spec review 的 `FAIL` 结论，补齐 AI IPC handler 的可执行运行时边界测试。
+
+已完成什么：
+
+- 确认 spec review 反馈成立：原测试只做源码字符串和 desktop adapter 委托断言，没有执行 `ai:*` IPC handlers。
+- 先新增 `tests/electron-ai-ipc.test.mjs` 并纳入 `npm run test:electron-config`，验证当前实现无法在 Node 测试中 require `electron/main.cjs`，RED 失败为 `app.whenReady` 启动副作用。
+- 最小重构 `electron/main.cjs`：普通 Node require 不启动 Electron app；真实 Electron app 仍通过 `app.whenReady` 启动；`registerAiIpc(...)` 支持注入 fake `ipcMain` 和 sender trust 函数。
+- 新测试实际调用 `ai:runtime-status`、`ai:detect-regions`、`ai:recognize-question`，覆盖不可信 sender 拒绝、disabled mode 返回 `real_ai_disabled`、disabled 时不调用 provider、enabled 时调用 provider。
+- 重新运行 `npm run test:electron-config`、`npm run test:react -- src/services/aiAdapter.test.ts`、`npm run build` 均通过。
+
+卡在哪里：
+
+- 无实现卡点；Task 8 仍需 spec re-review 通过后才能进入 code-quality review。
+
+执行的是什么命令：
+
+- `npm run test:electron-config`（修复前 RED，修复后通过）
+- `npm run test:react -- src/services/aiAdapter.test.ts`
+- `npm run build`
+- `git status --short --branch`
+
+下一步的计划：
+
+- 运行 `git diff --check` 和隐私文件追踪检查。
+- 提交并推送 Task 8 runtime boundary test follow-up。
+- 派发 Task 8 spec re-review；通过后再派发 code-quality review。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。

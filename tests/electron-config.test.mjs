@@ -32,9 +32,9 @@ assert.match(main, /ipcMain\.handle\("dialog:select-image"/);
 assert.match(main, /ipcMain\.handle\("records:load"/);
 assert.match(main, /ipcMain\.handle\("records:save"/);
 assert.match(main, /ipcMain\.handle\("records:clear"/);
-assert.match(main, /ipcMain\.handle\("ai:runtime-status"/);
-assert.match(main, /ipcMain\.handle\("ai:detect-regions"/);
-assert.match(main, /ipcMain\.handle\("ai:recognize-question"/);
+assert.match(main, /targetIpcMain\.handle\("ai:runtime-status"/);
+assert.match(main, /targetIpcMain\.handle\("ai:detect-regions"/);
+assert.match(main, /targetIpcMain\.handle\("ai:recognize-question"/);
 assert.match(main, /EVOCRAFT_AI_ENABLED/);
 assert.match(main, /DASHSCOPE_API_KEY/);
 assert.match(

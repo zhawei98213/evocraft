@@ -39,69 +39,71 @@ function createWindow() {
   }
 }
 
-app.whenReady().then(() => {
-  session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
-    callback({
-      responseHeaders: {
-        ...details.responseHeaders,
-        "Content-Security-Policy": [
-          [
-            "default-src 'self'",
-            "img-src 'self' data: blob: file:",
-            "style-src 'self' 'unsafe-inline'",
-            "script-src 'self'",
-            "connect-src 'self' http://127.0.0.1:5173 ws://127.0.0.1:5173",
-          ].join("; "),
-        ],
-      },
+if (app?.whenReady) {
+  app.whenReady().then(() => {
+    session.defaultSession.webRequest.onHeadersReceived((details, callback) => {
+      callback({
+        responseHeaders: {
+          ...details.responseHeaders,
+          "Content-Security-Policy": [
+            [
+              "default-src 'self'",
+              "img-src 'self' data: blob: file:",
+              "style-src 'self' 'unsafe-inline'",
+              "script-src 'self'",
+              "connect-src 'self' http://127.0.0.1:5173 ws://127.0.0.1:5173",
+            ].join("; "),
+          ],
+        },
+      });
     });
+
+    const recordStore = createLocalRecordStore(app.getPath("userData"));
+    registerRecordIpc(recordStore);
+    registerAiIpc(createAiRuntime());
+    createWindow();
   });
 
-  const recordStore = createLocalRecordStore(app.getPath("userData"));
-  registerRecordIpc(recordStore);
-  registerAiIpc(createAiRuntime());
-  createWindow();
-});
-
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
-});
-
-app.on("activate", () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
-});
-
-ipcMain.handle("dialog:select-image", async (event) => {
-  assertAllowedSender(event);
-
-  const result = await dialog.showOpenDialog({
-    title: "选择错题照片",
-    properties: ["openFile"],
-    filters: [
-      { name: "Images", extensions: ["png", "jpg", "jpeg", "webp", "bmp", "heic"] },
-    ],
+  app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") app.quit();
   });
 
-  if (result.canceled || result.filePaths.length === 0) return null;
-  return result.filePaths[0];
-});
+  app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  });
 
-ipcMain.handle("file:read-image-data-url", async (event, filePath) => {
-  assertAllowedSender(event);
+  ipcMain.handle("dialog:select-image", async (event) => {
+    assertAllowedSender(event);
 
-  if (typeof filePath !== "string" || filePath.length === 0) {
-    throw new Error("Invalid file path");
-  }
+    const result = await dialog.showOpenDialog({
+      title: "选择错题照片",
+      properties: ["openFile"],
+      filters: [
+        { name: "Images", extensions: ["png", "jpg", "jpeg", "webp", "bmp", "heic"] },
+      ],
+    });
 
-  const extension = extname(filePath).toLowerCase();
-  if (!allowedImageExtensions.has(extension)) {
-    throw new Error("Unsupported image type");
-  }
+    if (result.canceled || result.filePaths.length === 0) return null;
+    return result.filePaths[0];
+  });
 
-  const mime = getImageMimeType(extension);
-  const bytes = await readFile(filePath);
-  return `data:${mime};base64,${bytes.toString("base64")}`;
-});
+  ipcMain.handle("file:read-image-data-url", async (event, filePath) => {
+    assertAllowedSender(event);
+
+    if (typeof filePath !== "string" || filePath.length === 0) {
+      throw new Error("Invalid file path");
+    }
+
+    const extension = extname(filePath).toLowerCase();
+    if (!allowedImageExtensions.has(extension)) {
+      throw new Error("Unsupported image type");
+    }
+
+    const mime = getImageMimeType(extension);
+    const bytes = await readFile(filePath);
+    return `data:${mime};base64,${bytes.toString("base64")}`;
+  });
+}
 
 function registerRecordIpc(recordStore) {
   ipcMain.handle("records:load", async (event) => {
@@ -142,14 +144,17 @@ function createAiRuntime() {
   };
 }
 
-function registerAiIpc(runtime) {
-  ipcMain.handle("ai:runtime-status", (event) => {
-    assertAllowedSender(event);
+function registerAiIpc(runtime, options = {}) {
+  const targetIpcMain = options.ipcMain ?? ipcMain;
+  const isRendererUrlAllowed = options.isAllowedRendererUrl ?? isAllowedRendererUrl;
+
+  targetIpcMain.handle("ai:runtime-status", (event) => {
+    assertAllowedSender(event, isRendererUrlAllowed);
     return runtime.status;
   });
 
-  ipcMain.handle("ai:detect-regions", async (event, input) => {
-    assertAllowedSender(event);
+  targetIpcMain.handle("ai:detect-regions", async (event, input) => {
+    assertAllowedSender(event, isRendererUrlAllowed);
 
     if (!runtime.status.enabled) {
       return {
@@ -163,8 +168,8 @@ function registerAiIpc(runtime) {
     return runtime.adapter.detectRegions(input);
   });
 
-  ipcMain.handle("ai:recognize-question", async (event, input) => {
-    assertAllowedSender(event);
+  targetIpcMain.handle("ai:recognize-question", async (event, input) => {
+    assertAllowedSender(event, isRendererUrlAllowed);
 
     if (!runtime.status.enabled) {
       return {
@@ -179,9 +184,9 @@ function registerAiIpc(runtime) {
   });
 }
 
-function assertAllowedSender(event) {
+function assertAllowedSender(event, isRendererUrlAllowed = isAllowedRendererUrl) {
   const url = event.senderFrame?.url ?? "";
-  if (!isAllowedRendererUrl(url)) {
+  if (!isRendererUrlAllowed(url)) {
     throw new Error("Blocked IPC from untrusted renderer");
   }
 }
@@ -201,3 +206,10 @@ function getImageMimeType(extension) {
   if (extension === ".heic") return "image/heic";
   return "image/png";
 }
+
+module.exports = {
+  assertAllowedSender,
+  createAiRuntime,
+  isAllowedRendererUrl,
+  registerAiIpc,
+};

@@ -9,7 +9,7 @@
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-26
 - Completed at: 2026-05-26
-- Status: `done`
+- Status: `changes_requested_fixed`
 
 ## Scope
 
@@ -77,6 +77,21 @@ Forbidden scope:
 - Resolved that within Task 8 scope by making the new AI methods optional on `EvoCraftDesktopApi` and requiring them only in `createDesktopAiAdapter(...)`.
 - Re-ran the full Task 8 verification set to GREEN after the typing fix.
 
+### 2026-05-26 Spec Review Follow-Up
+
+- Task 8 spec review failed because the tests only checked source text and desktop adapter delegation; they did not execute the new `ai:*` IPC handlers.
+- Added `tests/electron-ai-ipc.test.mjs` first and wired it into `npm run test:electron-config`.
+- Captured the expected RED failure: requiring `electron/main.cjs` under Node hit the Electron app startup side effect before `registerAiIpc(...)` could be tested.
+- Refactored `electron/main.cjs` minimally so ordinary Node tests can require it without starting the Electron app.
+- Kept production startup behavior behind the real Electron `app.whenReady` object, and exported the AI IPC helpers needed by tests.
+- Added injection points to `registerAiIpc(...)` for fake `ipcMain` and sender trust checks.
+- The new test now executes the three AI IPC handlers and proves:
+  - untrusted sender URLs are rejected for `ai:runtime-status`, `ai:detect-regions`, and `ai:recognize-question`,
+  - trusted disabled mode returns `real_ai_disabled`,
+  - disabled mode does not call the provider adapter,
+  - enabled mode delegates to provider methods exactly once.
+- Re-ran focused Task 8 verification after the fix: `npm run test:electron-config`, `npm run test:react -- src/services/aiAdapter.test.ts`, and `npm run build` passed.
+
 ## Commands Run
 
 ```bash
@@ -107,6 +122,9 @@ npm run test:react -- src/services/aiAdapter.test.ts
 npm run build
 git diff --check
 git status --short --branch
+npm run test:electron-config
+npm run test:react -- src/services/aiAdapter.test.ts
+npm run build
 ```
 
 ## Files Changed
@@ -118,6 +136,8 @@ git status --short --branch
 - `src/services/desktopAiAdapter.ts`
 - `src/services/aiAdapter.test.ts`
 - `tests/electron-config.test.mjs`
+- `tests/electron-ai-ipc.test.mjs`
+- `package.json`
 - `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-08-real-ai-ipc.md`
 - `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
 
@@ -133,14 +153,19 @@ git status --short --branch
 - GREEN follow-up: `npm run build` -> exit `0`
 - GREEN: `git diff --check` -> exit `0`
 - GREEN: `git status --short --branch` -> only the scoped Task 8 files plus the new `src/services/desktopAiAdapter.ts` were modified
+- RED spec follow-up: `npm run test:electron-config` -> `TypeError: Cannot read properties of undefined (reading 'whenReady')` when the new runtime IPC test required `electron/main.cjs` before testable exports existed.
+- GREEN spec follow-up: `npm run test:electron-config` -> exit `0`
+- GREEN spec follow-up: `npm run test:react -- src/services/aiAdapter.test.ts` -> `1` file passed, `5` tests passed
+- GREEN spec follow-up: `npm run build` -> exit `0`
 
 ## Blockers
 
-- 无。唯一阻塞是 build 暴露的现有 desktop bridge helper 类型兼容问题，已在允许范围内修复。
+- 无。Spec review 提出的 runtime IPC coverage gap 已补齐，等待 spec re-review。
 
 ## Handoff Notes
 
 - Task 8 exposes the real AI adapter through Electron main/preload and typed renderer bridge only.
+- `tests/electron-ai-ipc.test.mjs` is the executable boundary proof for sender validation, disabled-mode gating, and provider delegation.
 - Task 9 owns choosing mock vs desktop AI in the running app and showing external AI authorization copy.
 - Keep API keys in Electron main process only.
 
