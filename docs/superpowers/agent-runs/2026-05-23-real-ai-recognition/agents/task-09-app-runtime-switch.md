@@ -9,7 +9,7 @@
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-26
 - Completed at: 2026-05-26
-- Status: `review`
+- Status: `changes_requested_fixed`
 
 ## Scope
 
@@ -83,6 +83,15 @@ Forbidden scope:
 - Added an app test proving that, after external authorization is checked, real desktop mode calls the desktop AI adapter with the selected image URI and enters region selection.
 - Re-ran the focused and full Task 9 verification suite successfully.
 
+### 2026-05-26 Code-Quality Follow-Up
+
+- Code-quality review found that a delayed `getAiRuntimeStatus()` flip from mock to real could reach `rerunRegionDetection()` and `confirmSelectedRegion()` without re-checking `externalAiAcknowledged`.
+- Added RED app regressions for delayed real-mode flips on both select-region entry points, plus a visible fallback regression for `enabled: true` runtime status when the desktop bridge is missing `detectRegions` / `recognizeQuestion`.
+- Implemented an effective runtime mode in `App.tsx`: real mode now requires both `status.enabled` and the desktop AI bridge methods; otherwise the upload screen stays in mock mode with `真实 AI 桥接能力不可用，已回退到本地 mock。`.
+- Centralized the external-AI authorization guard and applied it to initial region detection, rerun region detection, and final recognition.
+- Re-ran the focused Task 9 suite successfully: `npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts` -> `28` tests passed.
+- Re-ran the full verification suite successfully: focused React tests, `npm test`, Electron config/store tests, AI eval config, Qwen adapter, web build, desktop build, `git diff --check`, and tracked secret/generated artifact checks.
+
 ## Commands Run
 
 ```bash
@@ -115,6 +124,16 @@ npm run build
 npm run desktop:build
 git diff --check
 git status --short --branch
+npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts
+npm test
+npm run test:electron-config
+npm run test:electron-store
+npm run test:ai-eval-config
+npm run test:qwen-adapter
+npm run build
+npm run desktop:build
+git diff --check
+git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl release dist
 ```
 
 ## Files Changed
@@ -146,22 +165,32 @@ git status --short --branch
 - GREEN leader follow-up: `npm run build` -> exit `0`.
 - GREEN leader follow-up: `npm run desktop:build` -> exit `0`, produced unpacked mac build and skipped code signing because `identity` is explicitly `null`.
 - GREEN leader follow-up: `git diff --check` -> exit `0`.
+- RED code-quality follow-up: `npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts` -> exit `1`; delayed runtime flip and missing bridge fallback tests failed before the fix.
+- GREEN code-quality follow-up: `npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts` -> exit `0`; `28` tests passed.
+- Full code-quality follow-up: `npm test` -> exit `0`; `5` test files / `41` tests passed.
+- Full code-quality follow-up: `npm run test:electron-config`, `npm run test:electron-store`, `npm run test:ai-eval-config`, and `npm run test:qwen-adapter` -> all exited `0`.
+- Full code-quality follow-up: `npm run build` -> exit `0`.
+- Full code-quality follow-up: `npm run desktop:build` -> exit `0`, produced unpacked mac build and skipped macOS signing because `identity` is explicitly `null`.
+- Full code-quality follow-up: `git diff --check` -> exit `0`.
+- Full code-quality follow-up: tracked secret/generated artifact check returned no tracked `.env`, private sample/result, `release`, or `dist` files.
 
 ## Blockers
 
-- 无。
+- 无。等待 code-quality re-review。
 
 ## Handoff Notes
 
 - Task 9 owns app runtime selection, explicit external AI authorization copy, and final verification for the real-AI desktop slice.
 - Missing external-AI authorization is intentionally a non-destructive upload gate: it sets `uploadError` but keeps the selected image visible.
+- Any new real-AI call path must use the shared authorization guard before invoking `aiAdapter`; runtime status can resolve after the user has already entered the select-region flow.
+- Runtime status alone is not enough to show real mode. The renderer must also have both desktop AI bridge methods; otherwise it visibly falls back to mock.
 - Phase 2 learning features remain out of scope.
 
 ## Leader Review
 
-- Review status: ready_for_spec_review.
-- Review notes: implementation and leader follow-up are verified; Task 9 should enter spec review next.
-- Required follow-up: dispatch Task 9 spec reviewer.
+- Review status: ready_for_code_quality_re_review.
+- Review notes: code-quality blockers have RED/GREEN coverage, implementation fix, and fresh full verification evidence.
+- Required follow-up: commit/push the follow-up, then dispatch Task 9 code-quality re-review.
 
 ## Commit
 

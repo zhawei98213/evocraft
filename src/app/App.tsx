@@ -58,6 +58,9 @@ const emptyReviewForm: ReviewForm = {
   notes: "",
 };
 
+const externalAiAuthorizationMessage = "请先确认外部 AI 识别授权。";
+const missingDesktopAiBridgeMessage = "真实 AI 桥接能力不可用，已回退到本地 mock。";
+
 interface AppProps {
   recordStore?: RecordStore;
 }
@@ -129,10 +132,11 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
       .getAiRuntimeStatus()
       .then((status: AiRuntimeStatus) => {
         if (!active) return;
+        const canUseRealAi = status.enabled && hasDesktopAiBridge(desktopBridge);
         dispatch({
           type: "AI_RUNTIME_READY",
-          mode: status.enabled ? "real" : "mock",
-          message: status.message,
+          mode: canUseRealAi ? "real" : "mock",
+          message: status.enabled && !canUseRealAi ? missingDesktopAiBridgeMessage : status.message,
         });
       })
       .catch(() => undefined);
@@ -170,6 +174,18 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
 
   function goToScreen(screen: Screen) {
     dispatch({ type: "GO_TO_SCREEN", screen });
+  }
+
+  function blockMissingExternalAiAuthorization(surface: "upload" | "region") {
+    if (state.aiRuntimeMode !== "real" || state.externalAiAcknowledged) return false;
+
+    if (surface === "upload") {
+      dispatch({ type: "UPLOAD_BLOCKED", message: externalAiAuthorizationMessage });
+    } else {
+      dispatch({ type: "REGION_SELECTION_FAILED", message: externalAiAuthorizationMessage });
+    }
+
+    return true;
   }
 
   async function handleFileSelected(event: ChangeEvent<HTMLInputElement>) {
@@ -217,10 +233,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
       return;
     }
 
-    if (state.aiRuntimeMode === "real" && !state.externalAiAcknowledged) {
-      dispatch({ type: "UPLOAD_BLOCKED", message: "请先确认外部 AI 识别授权。" });
-      return;
-    }
+    if (blockMissingExternalAiAuthorization("upload")) return;
 
     const result = await aiAdapter.detectRegions({ imageUri: state.uploadedImageUri });
     if (!result.ok) {
@@ -236,6 +249,8 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
       dispatch({ type: "REGION_SELECTION_FAILED", message: "请先选择一张错题照片。" });
       return;
     }
+
+    if (blockMissingExternalAiAuthorization("region")) return;
 
     const result = await aiAdapter.detectRegions({ imageUri: state.uploadedImageUri });
     if (!result.ok) {
@@ -292,6 +307,8 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
       dispatch({ type: "REGION_SELECTION_FAILED", message: "请先选择或手动画出一道题目区域。" });
       return;
     }
+
+    if (blockMissingExternalAiAuthorization("region")) return;
 
     const selectedRegionImageUri = await createSelectedRegionImage(
       state.uploadedImageUri,

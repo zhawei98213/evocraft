@@ -2075,6 +2075,47 @@
 - 提交并推送 Task 9 implementation。
 - 派发 Task 9 spec reviewer；通过后再派发 code-quality reviewer。
 
+### 2026-05-26：真实 AI 识别 Task 9 代码质量回修
+
+本轮任务是什么：
+
+- 根据 Task 9 code-quality review 结果，修复真实 AI runtime 延迟切换后的授权边界和缺失桥接方法时的 UI/行为不一致。
+
+已完成什么：
+
+- 新增延迟 `getAiRuntimeStatus()` 从 mock 切到 real 后，在 `重新自动找题` 和 `确认此区域并识别` 两个入口必须继续要求外部 AI 授权的回归测试。
+- 新增 `getAiRuntimeStatus()` 返回 real 但 desktop bridge 缺少 `detectRegions` / `recognizeQuestion` 时，应明确回退到本地 mock 的 UI 回归测试。
+- `App.tsx` 现在把真实 AI 有效模式收敛为 `runtime enabled + desktop AI bridge methods present`，缺少方法时显示 `真实 AI 桥接能力不可用，已回退到本地 mock。`。
+- 初次找题、重新自动找题和确认识别三个真实 AI 调用入口现在共用外部 AI 授权 gate，避免运行时状态晚到后绕过授权。
+- focused verification 已通过：`npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts` 共 28 tests。
+- full verification 已通过：`npm test` 共 5 files / 41 tests；`test:electron-config`、`test:electron-store`、`test:ai-eval-config`、`test:qwen-adapter`、`build`、`desktop:build`、`git diff --check` 和隐私/生成产物追踪检查均退出 0。
+- 已更新 Task 9 implementer log 和 run ledger；Task 9 状态为 `changes_requested_fixed`，等待提交推送与 code-quality re-review。
+
+卡在哪里：
+
+- 无。尚需提交推送 follow-up、派发 code-quality re-review。
+
+执行的是什么命令：
+
+- `npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts`（新增回归修复前 RED，修复后 28 tests 通过）
+- `npm test`
+- `npm run test:electron-config`
+- `npm run test:electron-store`
+- `npm run test:ai-eval-config`
+- `npm run test:qwen-adapter`
+- `npm run build`
+- `npm run desktop:build`
+- `git diff --check`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl release dist`
+- `git status --short --branch`
+- `rg --files docs/superpowers/agent-runs docs/planning docs/ideas`
+- `sed -n ...` / `tail -n ...` 读取 Task 9 logs、run ledger、项目记忆、想法胶囊和 roadmap progress
+
+下一步的计划：
+
+- 提交并推送代码质量回修。
+- 派发 Task 9 code-quality re-review；通过后再把 Task 9 标记完成并进入下一项。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。

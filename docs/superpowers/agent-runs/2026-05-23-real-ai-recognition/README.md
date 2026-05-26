@@ -41,7 +41,7 @@
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | completed | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config`, runner gate checks, `npm test`, `git diff --check` | `58c827a`, `85028ee` |
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | completed | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build` | `5f9ba4f`, `0c8e488`, `309f8aa`, `338e55b`, `f090b93` |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | completed | Electron AI IPC, desktop AI adapter | `npm run test:electron-config`, `npm run test:react -- src/services/aiAdapter.test.ts`, `npm run build`, `git diff --check`, `npm test` | `37f5ad9`, `5e58cbb`, `3240f03` |
-| 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | changes_requested | UI mode, authorization copy, final verification | Full verification suite | `c3d2f21` |
+| 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | changes_requested_fixed | UI mode, authorization copy, final verification | Full verification suite | `c3d2f21`, follow-up pending |
 
 ## Agent Ledger
 
@@ -74,7 +74,7 @@
 | `agents/task-08-real-ai-ipc.md` | implementer | Task 8 | changes_requested_fixed | 已补上 Task 8 spec review 要求的可执行 IPC handler 边界测试，覆盖 sender validation、disabled-mode gate、provider not-called 和 enabled delegation；等待 spec re-review。 |
 | `agents/task-08-spec-review.md` | spec-reviewer | Task 8 | passed | 复审确认 `tests/electron-ai-ipc.test.mjs` 已关闭上一轮 runtime coverage 阻塞点；Task 8 现满足 spec，可进入 code-quality review。 |
 | `agents/task-08-code-quality-review.md` | code-quality-reviewer | Task 8 | passed_with_concerns_fixed | 质量审查未发现 HIGH/MEDIUM 问题；LOW 测试 payload 形状问题已在 `3240f03` 修复，Task 8 可进入 Task 9。 |
-| `agents/task-09-app-runtime-switch.md` | implementer | Task 9 | changes_requested | 已实现 app runtime switch、默认 mock、真实 AI 测试模式提示、外部 AI 授权拦截、desktop AI adapter selection 和 focused/full verification；code-quality review 发现 late runtime flip 可绕过显式外部 AI 授权，需修复后复审。 |
+| `agents/task-09-app-runtime-switch.md` | implementer | Task 9 | changes_requested_fixed | 已补 delayed runtime flip 和缺失 AI bridge methods 回归；真实 AI 有效模式必须同时满足 runtime enabled + bridge methods，所有真实 AI 调用入口共用外部授权 gate；等待 full verification 与 code-quality 复审。 |
 | `agents/task-09-spec-review.md` | spec-reviewer | Task 9 | passed | 已确认 Task 9 满足 runtime switch、默认 mock、授权拦截、测试覆盖和文档同步要求，可进入 code-quality review；Task 9 总状态保持 `review`。 |
 | `agents/task-09-code-quality-review.md` | code-quality-reviewer | Task 9 | changes_requested | 发现一个 HIGH 授权绕过竞态问题和一个 MEDIUM 缺失方法回退一致性问题；Task 9 不能标记完成，需回 implementer 修复并补回归测试。 |
 
@@ -520,9 +520,19 @@
 - Current Task 9 tests cover steady-state enabled/disabled startup and the first authorization gate, but they do not cover the delayed runtime flip or missing-method fallback cases that expose these paths.
 - Task 9 moves to `changes_requested`; do not mark it completed until the shared authorization gate and the missing-method fallback behavior are fixed and re-reviewed.
 
+### 2026-05-26 Task 9 Code Quality Follow-Up Prepared
+
+- Added RED regressions in `src/app/App.test.tsx` for delayed runtime flips on `重新自动找题` and `确认此区域并识别`, proving both paths must block before reaching the desktop AI adapter until external-AI authorization is checked.
+- Added a missing-method fallback regression: when `getAiRuntimeStatus()` reports real mode but the bridge lacks `detectRegions` / `recognizeQuestion`, the upload page must show `本地 mock 识别` plus `真实 AI 桥接能力不可用，已回退到本地 mock。` instead of the real-AI consent block.
+- Implemented effective runtime dispatch in `App.tsx`: real mode now requires both `status.enabled` and `hasDesktopAiBridge(desktopBridge)`.
+- Added one shared authorization guard and applied it to initial region detection, rerun region detection, and final recognition.
+- Focused verification passed: `npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts` -> `28` tests.
+- Full verification passed: `npm test` -> `5` files / `41` tests; `test:electron-config`, `test:electron-store`, `test:ai-eval-config`, `test:qwen-adapter`, `build`, `desktop:build`, `git diff --check`, and tracked secret/generated artifact checks all exited `0`.
+- Task 9 is no longer blocked on the known code-quality findings, but still requires commit/push and code-quality re-review before completion.
+
 ## Global Blockers
 
-- Task 9 is blocked on a real-AI opt-in enforcement bug in `src/app/App.tsx`: delayed runtime-mode flips can route select-region actions to the real desktop adapter without explicit external-AI authorization.
+- 无当前实现 blocker。Task 9 等待 follow-up commit 和 code-quality re-review。
 
 ## Review Rules
 

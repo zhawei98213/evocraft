@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
@@ -413,6 +413,112 @@ describe("App", () => {
       });
     });
     expect(screen.getByRole("heading", { name: "选择题目区域" })).toBeInTheDocument();
+  });
+
+  it("blocks rerun detection after a delayed real AI runtime flip until authorization is acknowledged", async () => {
+    const runtimeStatus = createDeferred<{
+      enabled: boolean;
+      provider: string;
+      mode: "mock" | "real";
+      message: string;
+    }>();
+    const desktopApi = installDesktopBridge({
+      selectImage: vi.fn().mockResolvedValue("/Users/zha/Desktop/question.png"),
+      readImageAsDataUrl: vi.fn().mockResolvedValue("data:image/png;base64,desktop-image"),
+      getAiRuntimeStatus: vi.fn().mockReturnValue(runtimeStatus.promise),
+      detectRegions: vi.fn().mockResolvedValue({
+        ok: true,
+        candidates: createMockRegionCandidates(),
+      }),
+      recognizeQuestion: vi.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+    expect(screen.getByText("本地 mock 识别")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "从电脑选择图片" }));
+    await waitFor(() => {
+      expect(screen.getByText("question.png")).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("checkbox", { name: /本地隐私确认/ }));
+    await user.click(screen.getByRole("button", { name: "下一步：选择题目区域" }));
+
+    expect(screen.getByRole("heading", { name: "选择题目区域" })).toBeInTheDocument();
+    await act(async () => {
+      runtimeStatus.resolve({ enabled: true, provider: "qwen", mode: "real", message: "" });
+      await runtimeStatus.promise;
+    });
+    await user.click(screen.getByRole("button", { name: "重新自动找题" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("请先确认外部 AI 识别授权。");
+    expect(desktopApi.detectRegions).not.toHaveBeenCalled();
+  });
+
+  it("blocks recognition after a delayed real AI runtime flip until authorization is acknowledged", async () => {
+    const runtimeStatus = createDeferred<{
+      enabled: boolean;
+      provider: string;
+      mode: "mock" | "real";
+      message: string;
+    }>();
+    const desktopApi = installDesktopBridge({
+      selectImage: vi.fn().mockResolvedValue("/Users/zha/Desktop/question.png"),
+      readImageAsDataUrl: vi.fn().mockResolvedValue("data:image/png;base64,desktop-image"),
+      getAiRuntimeStatus: vi.fn().mockReturnValue(runtimeStatus.promise),
+      detectRegions: vi.fn().mockResolvedValue({
+        ok: true,
+        candidates: createMockRegionCandidates(),
+      }),
+      recognizeQuestion: vi.fn().mockResolvedValue({
+        ok: true,
+        draft: createMockRecognition(),
+      }),
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+    await user.click(screen.getByRole("button", { name: "从电脑选择图片" }));
+    await waitFor(() => {
+      expect(screen.getByText("question.png")).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("checkbox", { name: /本地隐私确认/ }));
+    await user.click(screen.getByRole("button", { name: "下一步：选择题目区域" }));
+
+    expect(screen.getByRole("heading", { name: "选择题目区域" })).toBeInTheDocument();
+    await act(async () => {
+      runtimeStatus.resolve({ enabled: true, provider: "qwen", mode: "real", message: "" });
+      await runtimeStatus.promise;
+    });
+    await user.click(screen.getByRole("button", { name: "确认此区域并识别" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("请先确认外部 AI 识别授权。");
+    expect(desktopApi.recognizeQuestion).not.toHaveBeenCalled();
+  });
+
+  it("falls back visibly to mock when runtime is enabled but desktop AI methods are unavailable", async () => {
+    installDesktopBridge({
+      getAiRuntimeStatus: vi.fn().mockResolvedValue({
+        enabled: true,
+        provider: "qwen",
+        mode: "real",
+        message: "",
+      }),
+      detectRegions: undefined,
+      recognizeQuestion: undefined,
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+
+    expect(await screen.findByText("本地 mock 识别")).toBeInTheDocument();
+    expect(screen.getByText("真实 AI 桥接能力不可用，已回退到本地 mock。")).toBeInTheDocument();
+    expect(screen.queryByText("真实 AI 测试模式")).not.toBeInTheDocument();
   });
 });
 
