@@ -40,7 +40,7 @@
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | completed | AI contract, mock adapter, domain tests | `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, `npm run build`, `git diff --check` | `ea08fc4` |
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | completed | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config`, runner gate checks, `npm test`, `git diff --check` | `58c827a`, `85028ee` |
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | completed | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build` | `5f9ba4f`, `0c8e488`, `309f8aa`, `338e55b`, `f090b93` |
-| 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | review | Electron AI IPC, desktop AI adapter | `npm run test:electron-config`, `npm run test:react -- src/services/aiAdapter.test.ts`, `npm run build`, `git diff --check` | `37f5ad9`, `5e58cbb` |
+| 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | completed | Electron AI IPC, desktop AI adapter | `npm run test:electron-config`, `npm run test:react -- src/services/aiAdapter.test.ts`, `npm run build`, `git diff --check`, `npm test` | `37f5ad9`, `5e58cbb`, `3240f03` |
 | 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | pending | UI mode, authorization copy, final verification | Full verification suite | 未开始 |
 
 ## Agent Ledger
@@ -73,7 +73,7 @@
 | `agents/task-07-code-quality-review.md` | code-quality-reviewer | Task 7 | passed | 二次 follow-up 复审确认 prompt containment 已收紧，且 earlier adapter/test fixes 仍然成立；Task 7 质量 review 全部通过。 |
 | `agents/task-08-real-ai-ipc.md` | implementer | Task 8 | changes_requested_fixed | 已补上 Task 8 spec review 要求的可执行 IPC handler 边界测试，覆盖 sender validation、disabled-mode gate、provider not-called 和 enabled delegation；等待 spec re-review。 |
 | `agents/task-08-spec-review.md` | spec-reviewer | Task 8 | passed | 复审确认 `tests/electron-ai-ipc.test.mjs` 已关闭上一轮 runtime coverage 阻塞点；Task 8 现满足 spec，可进入 code-quality review。 |
-| `agents/task-08-code-quality-review.md` | code-quality-reviewer | Task 8 | pending | Spec re-review 已通过；可开始 Task 8 code-quality review。 |
+| `agents/task-08-code-quality-review.md` | code-quality-reviewer | Task 8 | passed_with_concerns_fixed | 质量审查未发现 HIGH/MEDIUM 问题；LOW 测试 payload 形状问题已在 `3240f03` 修复，Task 8 可进入 Task 9。 |
 
 ## Global Progress
 

@@ -1975,6 +1975,40 @@
 - 提交并推送 Task 8 runtime boundary test follow-up。
 - 派发 Task 8 spec re-review；通过后再派发 code-quality review。
 
+### 2026-05-26：真实 AI 识别 Task 8 code-quality review 完成
+
+本轮任务是什么：
+
+- 完成 Task 8 Real AI IPC 的代码质量审查闭环，确认是否可以进入 Task 9 App Runtime Switch。
+
+已完成什么：
+
+- Task 8 spec re-review 已通过，确认 `tests/electron-ai-ipc.test.mjs` 关闭了运行时 IPC 边界测试缺口。
+- code-quality reviewer 返回 `PASS_WITH_CONCERNS`，未发现 `HIGH` / `MEDIUM` 问题。
+- 审查确认 API key 仍只在 Electron main process，preload/renderer 不泄漏 secret；`registerAiIpc(...)` 默认仍使用真实 `ipcMain` 和 `isAllowedRendererUrl`；disabled mode 在 provider 调用前返回 `real_ai_disabled`。
+- 处理唯一 LOW concern：enabled-path IPC 测试原先用了假 `imageId` / `regionId` payload 和 `regions` 返回形状。
+- 在 `3240f03` 中把 enabled-path 测试改成真实 adapter contract 形状：`imageUri`、`selectedRegion`、`selectedRegionImageUri` 和 `candidates`，并断言 handler 转发的 exact input。
+- 更新 Task 8 code-quality review log 和 run ledger；Task 8 现在可以进入 Task 9。
+
+卡在哪里：
+
+- 无。Task 9 尚未开始。
+
+执行的是什么命令：
+
+- `npm run test:electron-config`
+- `npm run test:react -- src/services/aiAdapter.test.ts`
+- `npm run build`
+- `npm test`
+- `git diff --check`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl`
+
+下一步的计划：
+
+- 提交并推送 Task 8 code-quality review 记录。
+- 创建/确认 Task 9 App Runtime Switch agent 计划边界。
+- 派发 Task 9 implementer：只做 app runtime switch、授权文案、mock/real adapter selection 和最终验证，不扩大到解题/讲解/相似题。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。
