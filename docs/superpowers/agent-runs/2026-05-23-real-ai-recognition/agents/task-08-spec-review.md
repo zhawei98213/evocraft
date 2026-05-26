@@ -9,7 +9,7 @@
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-26
 - Completed at: 2026-05-26
-- Status: `failed`
+- Status: `passed`
 
 ## Scope
 
@@ -26,7 +26,9 @@ Read-only review targets:
 - `src/services/desktopAiAdapter.ts`
 - `src/services/aiAdapter.ts`
 - `tests/electron-config.test.mjs`
+- `tests/electron-ai-ipc.test.mjs`
 - `src/services/aiAdapter.test.ts`
+- `package.json`
 - Task 8 implementation commit
 
 Forbidden scope:
@@ -69,6 +71,28 @@ Forbidden scope:
 - Non-blocking concern: `src/services/desktopBridge.ts` keeps AI methods optional for pre-Task-9 helper compatibility, but `createDesktopAiAdapter(...)` narrows `detectRegions` and `recognizeQuestion` with `Required<Pick<...>>`; this is acceptable as a compatibility choice and does not cause the spec failure on its own.
 - Code-quality review should not start yet. Add executable runtime coverage for the AI IPC gate and sender boundary first, then re-run spec review.
 
+### 2026-05-26 Re-review Passed
+
+- Re-reviewed range: `259e5de..5e58cbb`, with follow-up focus on `5e58cbb`.
+- Result: `PASS`.
+- The previous blocking gap is closed:
+  - `tests/electron-ai-ipc.test.mjs` now requires `electron/main.cjs` under ordinary Node, calls `registerAiIpc(...)` with a fake `ipcMain`, and executes all three `ai:*` handlers.
+  - The new runtime test proves untrusted senders are rejected for `ai:runtime-status`, `ai:detect-regions`, and `ai:recognize-question`.
+  - The same test proves trusted disabled mode returns `real_ai_disabled` and that the provider adapter is not called while disabled because both adapter methods would throw if reached.
+  - The enabled-path portion of the same test proves the handlers delegate to the provider adapter exactly once each.
+- Re-confirmed the remaining Task 8 spec boundaries still hold on current HEAD:
+  - `git diff --name-only 259e5de..HEAD` stays within Electron main/preload AI IPC, typed desktop bridge/types/adapter, focused tests, package script wiring for the IPC proof, and Task 8 docs/progress files.
+  - No Task 9 runtime switch, UI authorization copy, style work, `App.tsx` runtime selection, or real/mock app behavior switch landed in the reviewed range.
+  - `electron/main.cjs` keeps `DASHSCOPE_API_KEY` reads in main only, while `electron/preload.cjs` still does not expose `DASHSCOPE_API_KEY`.
+  - `src/services/desktopAiAdapter.ts` remains a typed preload-bridge delegator and does not access provider code or secrets directly.
+  - `src/services/desktopBridge.ts` keeping AI methods optional is still acceptable because `createDesktopAiAdapter(...)` narrows the required runtime methods at the usage boundary.
+- Assessed the `if (app?.whenReady)` startup guard and exported helpers in `electron/main.cjs` as spec-safe:
+  - The new guard only skips Electron startup side effects when the file is required outside a real Electron app.
+  - In real Electron startup, `app.whenReady` exists, so the existing `whenReady`, `window-all-closed`, `activate`, dialog, file, record, and AI IPC registration paths still execute.
+  - The passing `tests/electron-ai-ipc.test.mjs` requirement-import path demonstrates the Node-test benefit without changing the real Electron entrypoint contract.
+- Problems found in this re-review: none.
+- Code-quality review is now allowed to start.
+
 ## Commands Run
 
 ```bash
@@ -89,11 +113,13 @@ nl -ba src/services/desktopBridge.ts | sed -n '1,220p'
 nl -ba src/services/desktopAiAdapter.ts | sed -n '1,240p'
 nl -ba src/services/aiAdapter.ts | sed -n '1,260p'
 nl -ba tests/electron-config.test.mjs | sed -n '1,260p'
+nl -ba tests/electron-ai-ipc.test.mjs | sed -n '1,260p'
 nl -ba src/services/aiAdapter.test.ts | sed -n '1,260p'
 rg -n "createDesktopAiAdapter|getAiRuntimeStatus|detectRegions\\(|recognizeQuestion\\(|window\\.evocraft|mock|real_ai_disabled|DASHSCOPE_API_KEY|EVOCRAFT_AI_ENABLED|App\\.tsx|authorization|授权|runtime switch" src electron tests -g '!dist'
 npm run test:electron-config
 npm run test:react -- src/services/aiAdapter.test.ts
 npm run build
+npm test
 rg -n "console\\.log\\(|catch \\([^)]*\\) \\{\\s*\\}|apiKey\\s*=\\s*\\\"" electron src/services tests
 ```
 
@@ -109,16 +135,20 @@ rg -n "console\\.log\\(|catch \\([^)]*\\) \\{\\s*\\}|apiKey\\s*=\\s*\\\"" electr
 - `npm run test:electron-config` passed.
 - `npm run test:react -- src/services/aiAdapter.test.ts` passed with 1 file / 5 tests.
 - `npm run build` passed.
+- `npm test` passed with 5 files / 31 tests.
 - `git diff --name-only 259e5de..HEAD` matched the intended Task 8 scope plus progress / run-log docs:
   - `docs/planning/evocraft-roadmap-progress.md`
   - `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
   - `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-08-real-ai-ipc.md`
+  - `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-08-spec-review.md`
   - `electron/main.cjs`
   - `electron/preload.cjs`
+  - `package.json`
   - `src/services/aiAdapter.test.ts`
   - `src/services/aiAdapter.ts`
   - `src/services/desktopAiAdapter.ts`
   - `src/services/desktopBridge.ts`
+  - `tests/electron-ai-ipc.test.mjs`
   - `tests/electron-config.test.mjs`
 - `git ls-files -- ...` returned no tracked `.env`, local manifest, private sample, or generated result files.
 - `lsp_diagnostics` returned zero diagnostics for:
@@ -128,36 +158,27 @@ rg -n "console\\.log\\(|catch \\([^)]*\\) \\{\\s*\\}|apiKey\\s*=\\s*\\\"" electr
   - `src/services/desktopAiAdapter.ts`
   - `src/services/aiAdapter.ts`
   - `tests/electron-config.test.mjs`
+  - `tests/electron-ai-ipc.test.mjs`
   - `src/services/aiAdapter.test.ts`
 - `ast_grep_search` was unavailable in this session because `ast-grep` is not installed; fallback `rg` pattern scans found no `console.log(...)`, empty `catch {}` block, or hardcoded `apiKey = "..."` assignment in the reviewed files.
-- Spec conclusion is still `FAIL` because the passing tests do not execute the new AI IPC runtime gate / sender boundary.
+- Spec conclusion is now `PASS` because the new runtime test executes the AI IPC sender gate, disabled-mode boundary, and enabled delegation path directly.
 
 ## Blockers
 
-- Task 8 spec pass is blocked on focused runtime coverage for the new AI IPC handlers:
-  - prove untrusted senders are rejected for all three `ai:*` handlers,
-  - prove disabled / missing-key mode returns `real_ai_disabled`,
-  - prove the provider adapter is not invoked when real AI is disabled.
+- 无。上轮唯一阻塞的 AI IPC runtime boundary proof 已由 `tests/electron-ai-ipc.test.mjs` 关闭。
 
 ## Handoff Notes
 
-- Do not start Task 8 code-quality review yet.
-- Follow-up implementation should add executable tests for `registerAiIpc(...)` / AI handler behavior rather than only source-text assertions.
-- After the follow-up lands, re-run:
-  - `git status --short --branch`
-  - `git diff --check`
-  - `npm run test:electron-config`
-  - `npm run test:react -- src/services/aiAdapter.test.ts`
-  - `npm run build`
-  - `git diff --name-only 259e5de..HEAD`
-  - `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl`
+- Task 8 may now enter code-quality review.
+- Re-review evidence is anchored in `tests/electron-ai-ipc.test.mjs` for main-process sender validation / disabled-mode proof, `tests/electron-config.test.mjs` for preload no-secret/static config checks, and `src/services/aiAdapter.test.ts` for desktop adapter delegation.
+- Task 9 remains the owner of app runtime selection, authorization copy, and any visible real/mock behavior switch in the UI.
 
 ## Leader Review
 
-- Review status: failed.
-- Review notes: implementation scope and secret boundary are acceptable, but Task 8 checklist item 7 is not met because the reviewed tests do not execute the new AI IPC boundary.
-- Required follow-up: add focused runtime coverage for AI IPC sender validation and disabled-mode gating, then re-run spec review before code-quality review.
+- Review status: passed.
+- Review notes: the previous runtime-coverage blocker is closed; current HEAD satisfies the Task 8 spec checklist and stays within scope.
+- Required follow-up: proceed to Task 8 code-quality review on `5e58cbb`.
 
 ## Commit
 
-- Reviewed commits: `37f5ad9`, `2a7880f`, `4c5efbf`
+- Reviewed commits: `37f5ad9`, `2a7880f`, `4c5efbf`, `5e58cbb`
