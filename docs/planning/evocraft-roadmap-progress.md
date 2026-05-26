@@ -1910,6 +1910,40 @@
 - 提交并推送 Task 8 派发准备日志。
 - 派出 Task 8 implementer，按 TDD 添加 Electron AI IPC、preload API、typed desktop bridge、desktop AI adapter 和 focused tests。
 
+### 2026-05-26：真实 AI 识别 Task 8 实现完成
+
+本轮任务是什么：
+
+- 完成 Task 8 Real AI IPC 的实现，把真实 AI 调用隔离到 Electron main process，并通过 preload/typed bridge 暴露给 renderer。
+
+已完成什么：
+
+- Task 8 implementer 先扩展 `tests/electron-config.test.mjs`，验证缺少 `ai:runtime-status` 等 IPC handlers 时 RED。
+- 先扩展 `src/services/aiAdapter.test.ts`，验证缺少 `src/services/desktopAiAdapter.ts` 时 RED。
+- `electron/main.cjs` 新增 `createAiRuntime()` 和 `registerAiIpc(...)`：读取 `EVOCRAFT_AI_ENABLED`、`EVOCRAFT_AI_PROVIDER`、`DASHSCOPE_API_KEY`，只在 enabled flag 和 key 都存在时进入 real mode；禁用时返回 `real_ai_disabled`，不调用 provider adapter。
+- `electron/preload.cjs` 暴露 `getAiRuntimeStatus`、`detectRegions`、`recognizeQuestion`，同时不暴露 API key。
+- `src/services/aiAdapter.ts` 新增 `AiRuntimeStatus`，`src/services/desktopBridge.ts` 补 typed AI bridge 方法。
+- 新增 `src/services/desktopAiAdapter.ts`，让 renderer 侧只通过 desktop bridge 委托 `detectRegions` 和 `recognizeQuestion`。
+- `src/services/aiAdapter.test.ts` 增加 desktop AI adapter delegation 测试。
+- 重新运行 leader verification：`npm run test:electron-config`、`npm run test:react -- src/services/aiAdapter.test.ts`、`npm run build`、`git diff --check` 均通过。
+
+卡在哪里：
+
+- 无实现卡点；Task 8 仍需 spec review 和 code-quality review 通过后才能进入 Task 9。
+
+执行的是什么命令：
+
+- `npm run test:electron-config`（修复前 RED，修复后通过）
+- `npm run test:react -- src/services/aiAdapter.test.ts`（修复前 RED，修复后通过）
+- `npm run build`
+- `git diff --check`
+- `git status --short --branch`
+
+下一步的计划：
+
+- 提交并推送 Task 8 进度记录。
+- 派发 Task 8 spec reviewer；通过后再派发 code-quality reviewer。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。
