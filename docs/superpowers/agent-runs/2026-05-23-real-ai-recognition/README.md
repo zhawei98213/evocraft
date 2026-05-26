@@ -40,7 +40,7 @@
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | completed | AI contract, mock adapter, domain tests | `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, `npm run build`, `git diff --check` | `ea08fc4` |
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | completed | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config`, runner gate checks, `npm test`, `git diff --check` | `58c827a`, `85028ee` |
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | completed | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build` | `5f9ba4f`, `0c8e488`, `309f8aa`, `338e55b`, `f090b93` |
-| 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | completed | Electron AI IPC, desktop AI adapter | `npm run test:electron-config`, `npm run test:react -- src/services/aiAdapter.test.ts`, `npm run build`, `git diff --check` | `37f5ad9` |
+| 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | changes_requested | Electron AI IPC, desktop AI adapter | `npm run test:electron-config`, `npm run test:react -- src/services/aiAdapter.test.ts`, `npm run build`, `git diff --check` | `37f5ad9` |
 | 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | pending | UI mode, authorization copy, final verification | Full verification suite | 未开始 |
 
 ## Agent Ledger
@@ -72,8 +72,8 @@
 | `agents/task-07-spec-review.md` | spec-reviewer | Task 7 | passed_with_concerns | Spec review 确认核心 Task 7 范围通过；关注点是 leader follow-up 涉及测试/进度文档，已在本次 docs sync 中补齐 reviewed range。 |
 | `agents/task-07-code-quality-review.md` | code-quality-reviewer | Task 7 | passed | 二次 follow-up 复审确认 prompt containment 已收紧，且 earlier adapter/test fixes 仍然成立；Task 7 质量 review 全部通过。 |
 | `agents/task-08-real-ai-ipc.md` | implementer | Task 8 | done | 已按 TDD 先补 `electron-config` 与 adapter delegation tests，随后落地 Electron main AI IPC、preload AI bridge、typed desktop AI methods 与 `desktopAiAdapter`，focused tests、build、`git diff --check` 已通过。 |
-| `agents/task-08-spec-review.md` | spec-reviewer | Task 8 | pending | 已创建日志，等待 Task 8 implementation 完成后核对计划范围。 |
-| `agents/task-08-code-quality-review.md` | code-quality-reviewer | Task 8 | pending | 已创建日志，等待 Task 8 spec review 通过后复审 IPC trust、runtime gate、preload exposure 和 renderer key boundary。 |
+| `agents/task-08-spec-review.md` | spec-reviewer | Task 8 | failed | 已核对实现范围、sender gate、main-only secret boundary 和 docs 同步；阻塞点是现有 tests 只做源码字符串/委托断言，未执行 AI IPC 运行时 gate，Task 8 checklist item 7 未满足。 |
+| `agents/task-08-code-quality-review.md` | code-quality-reviewer | Task 8 | pending | 保持 pending；Task 8 spec review 未通过前，不进入 code-quality review。 |
 
 ## Global Progress
 
@@ -167,6 +167,15 @@
 - Implemented preload AI methods, typed desktop bridge AI methods, and `src/services/desktopAiAdapter.ts` without moving provider calls or API keys into renderer code.
 - `npm run build` exposed an existing App desktop-helper typing mismatch; the fix stayed inside Task 8 scope by making the new AI bridge methods optional on `EvoCraftDesktopApi` and requiring them only for `createDesktopAiAdapter(...)`.
 - Verification passed: `npm run test:electron-config`, `npm run test:react -- src/services/aiAdapter.test.ts`, `npm run build`, and `git diff --check`.
+
+### 2026-05-26 Task 8 Spec Review Failed
+
+- Reviewed commits `37f5ad9`, `2a7880f`, and `4c5efbf` against the Task 8 plan and requested command checklist.
+- Confirmed the implementation stayed inside the Task 8 boundary: no Task 9 runtime-switch / UI / authorization-copy work landed, `DASHSCOPE_API_KEY` remains main-process-only, all three `ai:*` handlers call `assertAllowedSender(event)`, and disabled / missing-key mode returns `real_ai_disabled` before provider adapter calls.
+- Confirmed `src/services/desktopBridge.ts` keeping AI methods optional is a non-blocking compatibility choice because `createDesktopAiAdapter(...)` still requires `detectRegions` and `recognizeQuestion` at the usage boundary.
+- Blocking gap: `tests/electron-config.test.mjs` only asserts source-text presence of handler names / env-variable tokens / preload methods plus the pre-existing `rendererTrust` helper behavior, and `src/services/aiAdapter.test.ts` only checks desktop adapter delegation.
+- The reviewed range does not execute the new AI IPC handlers to prove sender rejection, disabled-mode `real_ai_disabled` gating, or "do not call provider when disabled", so Task 8 checklist item 7 is not met.
+- Task 8 moves to `changes_requested`. Do not start code-quality review until focused runtime coverage lands and spec review passes.
 - Verification passed: `node tests/electron-local-record-store.test.mjs`, `npm run test:electron-store`, `npm run test:electron-config`, and `git diff --check`.
 - Task 2 implementer scope is complete and ready for spec review.
 
