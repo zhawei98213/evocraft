@@ -2009,6 +2009,35 @@
 - 创建/确认 Task 9 App Runtime Switch agent 计划边界。
 - 派发 Task 9 implementer：只做 app runtime switch、授权文案、mock/real adapter selection 和最终验证，不扩大到解题/讲解/相似题。
 
+### 2026-05-26：真实 AI 识别 Task 9 派发准备
+
+本轮任务是什么：
+
+- 在 Task 8 完成后，为 Task 9 App Runtime Switch 准备 subagent-driven 记录和派发边界。
+
+已完成什么：
+
+- 确认 Task 8 已完成：Electron main AI IPC、preload bridge、desktop AI adapter、runtime IPC boundary tests、spec review 和 code-quality review 均已闭环。
+- 新增 Task 9 implementer、spec-reviewer 和 code-quality-reviewer 三份独立 agent log。
+- 更新 run ledger，将 Task 9 标记为 `assigned`。
+- 明确 Task 9 只做 app runtime status loading、mock 默认、真实 AI 测试模式提示、外部 AI 授权确认、adapter selection、reducer state/actions、UI tests 和最终验证。
+
+卡在哪里：
+
+- 无。Task 9 implementer 尚未派发。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `sed -n '1660,1965p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+- `rg --files docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents`
+- `sed -n '1,220p' docs/superpowers/agent-runs/README.md`
+
+下一步的计划：
+
+- 提交并推送 Task 9 派发准备日志。
+- 派发 Task 9 implementer，要求先写失败测试，再实现 runtime switch 和授权拦截。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。
