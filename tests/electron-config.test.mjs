@@ -32,6 +32,11 @@ assert.match(main, /ipcMain\.handle\("dialog:select-image"/);
 assert.match(main, /ipcMain\.handle\("records:load"/);
 assert.match(main, /ipcMain\.handle\("records:save"/);
 assert.match(main, /ipcMain\.handle\("records:clear"/);
+assert.match(main, /ipcMain\.handle\("ai:runtime-status"/);
+assert.match(main, /ipcMain\.handle\("ai:detect-regions"/);
+assert.match(main, /ipcMain\.handle\("ai:recognize-question"/);
+assert.match(main, /EVOCRAFT_AI_ENABLED/);
+assert.match(main, /DASHSCOPE_API_KEY/);
 assert.match(
   main,
   /if \(process\.env\.ELECTRON_OPEN_DEVTOOLS === "1"\) \{\s*window\.webContents\.openDevTools/,
@@ -46,6 +51,9 @@ assert.match(preload, /readImageAsDataUrl/);
 assert.match(preload, /loadRecords/);
 assert.match(preload, /saveRecords/);
 assert.match(preload, /clearRecords/);
+assert.match(preload, /getAiRuntimeStatus/);
+assert.match(preload, /detectRegions/);
+assert.match(preload, /recognizeQuestion/);
 
 const appDirname = join(process.cwd(), "electron");
 const trustedProductionUrl = pathToFileURL(join(process.cwd(), "dist/index.html")).toString();

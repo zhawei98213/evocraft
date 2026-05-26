@@ -18,6 +18,13 @@ export interface AiAdapterFailure {
   retryable?: boolean;
 }
 
+export interface AiRuntimeStatus {
+  enabled: boolean;
+  provider: string;
+  mode: "mock" | "real";
+  message: string;
+}
+
 export interface DetectRegionsInput {
   imageUri: string;
 }

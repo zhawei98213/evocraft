@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { createMockRegionCandidates } from "../domain/wrongQuestion";
+import { createMockRecognition, createMockRegionCandidates } from "../domain/wrongQuestion";
+import { createDesktopAiAdapter } from "./desktopAiAdapter";
 import { mockAiAdapter } from "./mockAiAdapter";
 
 describe("mockAiAdapter", () => {
@@ -67,5 +68,58 @@ describe("mockAiAdapter", () => {
       reason: "image_missing",
       message: "请先选择一张错题照片。",
     });
+  });
+});
+
+describe("createDesktopAiAdapter", () => {
+  it("delegates detectRegions and recognizeQuestion to the desktop bridge", async () => {
+    const mockDraft = createMockRecognition();
+    const regionInput = {
+      imageUri: "data:image/png;base64,source",
+    };
+    const selectedRegion = createMockRegionCandidates()[0];
+    const recognizeInput = {
+      subject: "math" as const,
+      imageUri: "data:image/png;base64,source",
+      selectedRegion,
+      selectedRegionImageUri: "data:image/png;base64,region",
+    };
+    const detectRegions = vi.fn(async () => ({
+      ok: true as const,
+      candidates: createMockRegionCandidates(),
+    }));
+    const recognizeQuestion = vi.fn(async () => ({
+      ok: true as const,
+      draft: mockDraft,
+    }));
+    const desktopAdapter = createDesktopAiAdapter({
+      selectImage: async () => null,
+      readImageAsDataUrl: async () => "data:image/png;base64,file",
+      loadRecords: async () => [],
+      saveRecords: async () => ({ ok: true as const }),
+      clearRecords: async () => ({ ok: true as const }),
+      getAiRuntimeStatus: async () => ({
+        enabled: false,
+        provider: "qwen",
+        mode: "mock",
+        message: "",
+      }),
+      detectRegions,
+      recognizeQuestion,
+    });
+
+    const regionResult = await desktopAdapter.detectRegions(regionInput);
+    const recognizeResult = await desktopAdapter.recognizeQuestion(recognizeInput);
+
+    expect(regionResult).toEqual({
+      ok: true,
+      candidates: createMockRegionCandidates(),
+    });
+    expect(detectRegions).toHaveBeenCalledWith(regionInput);
+    expect(recognizeResult).toEqual({
+      ok: true,
+      draft: mockDraft,
+    });
+    expect(recognizeQuestion).toHaveBeenCalledWith(recognizeInput);
   });
 });

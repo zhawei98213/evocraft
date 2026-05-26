@@ -8,8 +8,8 @@
 - Task title: Add Real AI IPC And Renderer Adapter
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-26
-- Completed at:
-- Status: `assigned`
+- Completed at: 2026-05-26
+- Status: `done`
 
 ## Scope
 
@@ -50,25 +50,93 @@ Forbidden scope:
 ### 2026-05-26 Assignment
 
 - Leader created this task log after Task 7 fully passed code-quality re-review.
-- Implementation has not started yet.
+- Implementation started from the existing Task 8 plan and stayed inside the Electron main/preload + typed bridge boundary.
+
+### 2026-05-26 RED -> GREEN
+
+- Extended `tests/electron-config.test.mjs` first with required assertions for `ai:runtime-status`, `ai:detect-regions`, `ai:recognize-question`, `EVOCRAFT_AI_ENABLED`, `DASHSCOPE_API_KEY`, preload AI methods, and the preload no-secret rule.
+- Extended `src/services/aiAdapter.test.ts` first with a desktop adapter delegation test that imported the yet-missing `src/services/desktopAiAdapter.ts`.
+- Captured the expected RED failures before implementation:
+  - `npm run test:electron-config` failed on the missing `ipcMain.handle("ai:runtime-status"...` assertion.
+  - `npm run test:react -- src/services/aiAdapter.test.ts` failed because `./desktopAiAdapter` did not exist yet.
+- Implemented `electron/main.cjs` real-AI runtime wiring:
+  - imported `createQwenAdapter`,
+  - added `createAiRuntime()` using `EVOCRAFT_AI_ENABLED`, `EVOCRAFT_AI_PROVIDER`, and `DASHSCOPE_API_KEY`,
+  - registered `ai:runtime-status`, `ai:detect-regions`, and `ai:recognize-question`,
+  - enforced `assertAllowedSender(event)` in every AI handler,
+  - returned the required `{ ok: false, reason: "real_ai_disabled", message: "真实 AI 未开启。", retryable: false }` gate before adapter calls when real AI is not enabled.
+- Implemented `electron/preload.cjs` AI bridge methods `getAiRuntimeStatus`, `detectRegions`, and `recognizeQuestion` without exposing `DASHSCOPE_API_KEY`.
+- Added `AiRuntimeStatus` to `src/services/aiAdapter.ts`.
+- Extended `src/services/desktopBridge.ts` with typed AI bridge methods while keeping them optional for existing pre-Task-9 desktop test helpers.
+- Added `src/services/desktopAiAdapter.ts` as the renderer-side delegating adapter.
+- Added delegation assertions in `src/services/aiAdapter.test.ts` so the new desktop adapter proves it forwards the exact region/recognition payloads to the desktop bridge.
+
+### 2026-05-26 Build Follow-Up
+
+- `npm run build` first exposed one compile-time compatibility issue outside Task 8 business logic: an existing `src/app/App.test.tsx` helper still constructs a desktop bridge without AI methods.
+- Resolved that within Task 8 scope by making the new AI methods optional on `EvoCraftDesktopApi` and requiring them only in `createDesktopAiAdapter(...)`.
+- Re-ran the full Task 8 verification set to GREEN after the typing fix.
 
 ## Commands Run
 
 ```bash
-# No commands run yet.
+sed -n '1,220p' /Users/zha/.codex/plugins/cache/openai-curated/superpowers/6188456f/skills/brainstorming/SKILL.md
+sed -n '1,260p' /Users/zha/.codex/plugins/cache/openai-curated/superpowers/6188456f/skills/test-driven-development/SKILL.md
+sed -n '1,220p' docs/planning/evocraft-project-memory.md
+sed -n '1,260p' docs/planning/evocraft-roadmap-progress.md
+sed -n '1,240p' docs/ideas/2026-05-10-evocraft-seed-capsule.md
+git status --short --branch
+sed -n '1,260p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md
+sed -n '1,260p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md
+sed -n '1,260p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-08-real-ai-ipc.md
+sed -n '1,260p' tests/electron-config.test.mjs
+sed -n '1,260p' src/services/aiAdapter.ts
+sed -n '1,260p' src/services/desktopBridge.ts
+sed -n '1,260p' src/services/aiAdapter.test.ts
+sed -n '1,320p' electron/main.cjs
+sed -n '1,260p' electron/preload.cjs
+sed -n '1,320p' electron/ai/qwenAdapter.cjs
+sed -n '1,260p' src/services/mockAiAdapter.ts
+npm run test:electron-config
+npm run test:react -- src/services/aiAdapter.test.ts
+npm run test:electron-config
+npm run test:react -- src/services/aiAdapter.test.ts
+npm run build
+npm run test:electron-config
+npm run test:react -- src/services/aiAdapter.test.ts
+npm run build
+git diff --check
+git status --short --branch
 ```
 
 ## Files Changed
 
-- No files changed yet.
+- `electron/main.cjs`
+- `electron/preload.cjs`
+- `src/services/aiAdapter.ts`
+- `src/services/desktopBridge.ts`
+- `src/services/desktopAiAdapter.ts`
+- `src/services/aiAdapter.test.ts`
+- `tests/electron-config.test.mjs`
+- `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-08-real-ai-ipc.md`
+- `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
 
 ## Verification
 
-- Not run yet.
+- RED: `npm run test:electron-config` -> assertion failure for missing `ipcMain.handle("ai:runtime-status"...`
+- RED: `npm run test:react -- src/services/aiAdapter.test.ts` -> `Failed to resolve import "./desktopAiAdapter"`
+- GREEN: `npm run test:electron-config` -> exit `0`
+- GREEN: `npm run test:react -- src/services/aiAdapter.test.ts` -> `1` file passed, `5` tests passed
+- RED follow-up: `npm run build` -> existing `src/app/App.test.tsx` desktop bridge helper no longer satisfied the stricter AI bridge typing
+- GREEN follow-up: `npm run test:electron-config` -> exit `0`
+- GREEN follow-up: `npm run test:react -- src/services/aiAdapter.test.ts` -> `1` file passed, `5` tests passed
+- GREEN follow-up: `npm run build` -> exit `0`
+- GREEN: `git diff --check` -> exit `0`
+- GREEN: `git status --short --branch` -> only the scoped Task 8 files plus the new `src/services/desktopAiAdapter.ts` were modified
 
 ## Blockers
 
-- 无。
+- 无。唯一阻塞是 build 暴露的现有 desktop bridge helper 类型兼容问题，已在允许范围内修复。
 
 ## Handoff Notes
 
@@ -84,4 +152,4 @@ Forbidden scope:
 
 ## Commit
 
-- Commit hash:
+- Commit hash: 待 scoped Lore commit 完成后回填。

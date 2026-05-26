@@ -40,7 +40,7 @@
 | 5. AI Adapter Contract | `agents/task-05-ai-adapter-contract.md` | completed | AI contract, mock adapter, domain tests | `npm run test:react -- src/services/aiAdapter.test.ts src/domain/wrongQuestion.test.ts`, `npm run build`, `git diff --check` | `ea08fc4` |
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | completed | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config`, runner gate checks, `npm test`, `git diff --check` | `58c827a`, `85028ee` |
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | completed | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build` | `5f9ba4f`, `0c8e488`, `309f8aa`, `338e55b`, `f090b93` |
-| 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | assigned | Electron AI IPC, desktop AI adapter | `npm run test:electron-config`, `npm run test:react -- src/services/aiAdapter.test.ts`, `npm run build`, `git diff --check` | 未开始 |
+| 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | implemented | Electron AI IPC, desktop AI adapter | `npm run test:electron-config`, `npm run test:react -- src/services/aiAdapter.test.ts`, `npm run build`, `git diff --check` | 待 scoped Lore commit 回填 |
 | 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | pending | UI mode, authorization copy, final verification | Full verification suite | 未开始 |
 
 ## Agent Ledger
@@ -71,7 +71,7 @@
 | `agents/task-07-qwen-adapter-spike.md` | implementer | Task 7 | done | 已修复全部 Task 7 code-quality concerns：`auto` 科目不再静默落成数学，`reviewItems.status` 归一到 `可信/需复核`，并补齐 HTTP non-ok、非法 status、auto subject、以及 prompt containment 合约测试。 |
 | `agents/task-07-spec-review.md` | spec-reviewer | Task 7 | passed_with_concerns | Spec review 确认核心 Task 7 范围通过；关注点是 leader follow-up 涉及测试/进度文档，已在本次 docs sync 中补齐 reviewed range。 |
 | `agents/task-07-code-quality-review.md` | code-quality-reviewer | Task 7 | passed | 二次 follow-up 复审确认 prompt containment 已收紧，且 earlier adapter/test fixes 仍然成立；Task 7 质量 review 全部通过。 |
-| `agents/task-08-real-ai-ipc.md` | implementer | Task 8 | assigned | 已创建日志，准备按 TDD 添加 Electron main/preload AI IPC、typed desktop bridge、desktop AI adapter 和 focused config/adapter tests。 |
+| `agents/task-08-real-ai-ipc.md` | implementer | Task 8 | done | 已按 TDD 先补 `electron-config` 与 adapter delegation tests，随后落地 Electron main AI IPC、preload AI bridge、typed desktop AI methods 与 `desktopAiAdapter`，focused tests、build、`git diff --check` 已通过。 |
 | `agents/task-08-spec-review.md` | spec-reviewer | Task 8 | pending | 已创建日志，等待 Task 8 implementation 完成后核对计划范围。 |
 | `agents/task-08-code-quality-review.md` | code-quality-reviewer | Task 8 | pending | 已创建日志，等待 Task 8 spec review 通过后复审 IPC trust、runtime gate、preload exposure 和 renderer key boundary。 |
 
@@ -158,6 +158,15 @@
 - Added `tests/electron-local-record-store.test.mjs` first and captured the expected RED failure before the storage module existed.
 - Implemented `electron/storage/localRecordStore.cjs` with per-record directories, local asset persistence, atomic JSON writes, descending `updatedAt` load order, broken-record tolerance, index rebuilds, and clear support.
 - Added `test:electron-store` to `package.json`.
+
+### 2026-05-26 Task 8 Implementer Complete
+
+- Added the Task 8 AI IPC assertions to `tests/electron-config.test.mjs` first and captured the expected RED failure on the missing `ai:runtime-status` handler.
+- Added a desktop AI adapter delegation test to `src/services/aiAdapter.test.ts` first and captured the expected RED failure because `src/services/desktopAiAdapter.ts` did not exist yet.
+- Implemented `electron/main.cjs` real-AI runtime status creation plus `ai:runtime-status`, `ai:detect-regions`, and `ai:recognize-question` IPC handlers with `assertAllowedSender(event)` on every path and a `real_ai_disabled` gate before adapter calls when real AI is disabled.
+- Implemented preload AI methods, typed desktop bridge AI methods, and `src/services/desktopAiAdapter.ts` without moving provider calls or API keys into renderer code.
+- `npm run build` exposed an existing App desktop-helper typing mismatch; the fix stayed inside Task 8 scope by making the new AI bridge methods optional on `EvoCraftDesktopApi` and requiring them only for `createDesktopAiAdapter(...)`.
+- Verification passed: `npm run test:electron-config`, `npm run test:react -- src/services/aiAdapter.test.ts`, `npm run build`, and `git diff --check`.
 - Verification passed: `node tests/electron-local-record-store.test.mjs`, `npm run test:electron-store`, `npm run test:electron-config`, and `git diff --check`.
 - Task 2 implementer scope is complete and ready for spec review.
 

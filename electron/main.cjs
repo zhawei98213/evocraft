@@ -1,6 +1,7 @@
 const { app, BrowserWindow, dialog, ipcMain, session } = require("electron");
 const { readFile } = require("node:fs/promises");
 const { extname, join } = require("node:path");
+const { createQwenAdapter } = require("./ai/qwenAdapter.cjs");
 const { isTrustedRendererUrl } = require("./security/rendererTrust.cjs");
 const { createLocalRecordStore, isValidWrongQuestionRecordArray } = require("./storage/localRecordStore.cjs");
 
@@ -58,6 +59,7 @@ app.whenReady().then(() => {
 
   const recordStore = createLocalRecordStore(app.getPath("userData"));
   registerRecordIpc(recordStore);
+  registerAiIpc(createAiRuntime());
   createWindow();
 });
 
@@ -120,6 +122,60 @@ function registerRecordIpc(recordStore) {
   ipcMain.handle("records:clear", async (event) => {
     assertAllowedSender(event);
     return recordStore.clear();
+  });
+}
+
+function createAiRuntime() {
+  const enabledFlag = process.env.EVOCRAFT_AI_ENABLED === "1";
+  const provider = process.env.EVOCRAFT_AI_PROVIDER ?? "qwen";
+  const apiKey = process.env.DASHSCOPE_API_KEY ?? "";
+  const enabled = enabledFlag && Boolean(apiKey);
+
+  return {
+    status: {
+      enabled,
+      provider,
+      mode: enabled ? "real" : "mock",
+      message: enabledFlag && !apiKey ? "真实 AI 已开启但缺少 API Key。" : "",
+    },
+    adapter: createQwenAdapter({ apiKey }),
+  };
+}
+
+function registerAiIpc(runtime) {
+  ipcMain.handle("ai:runtime-status", (event) => {
+    assertAllowedSender(event);
+    return runtime.status;
+  });
+
+  ipcMain.handle("ai:detect-regions", async (event, input) => {
+    assertAllowedSender(event);
+
+    if (!runtime.status.enabled) {
+      return {
+        ok: false,
+        reason: "real_ai_disabled",
+        message: "真实 AI 未开启。",
+        retryable: false,
+      };
+    }
+
+    return runtime.adapter.detectRegions(input);
+  });
+
+  ipcMain.handle("ai:recognize-question", async (event, input) => {
+    assertAllowedSender(event);
+
+    if (!runtime.status.enabled) {
+      return {
+        ok: false,
+        reason: "real_ai_disabled",
+        message: "真实 AI 未开启。",
+        retryable: false,
+      };
+    }
+
+    return runtime.adapter.recognizeQuestion(input);
   });
 }
 
