@@ -23,7 +23,9 @@ import {
   wrongQuestionReducer,
   type Screen,
 } from "../features/wrongQuestion/wrongQuestionReducer";
-import { getDesktopBridge } from "../services/desktopBridge";
+import type { AiAdapter, AiRuntimeStatus } from "../services/aiAdapter";
+import { createDesktopAiAdapter } from "../services/desktopAiAdapter";
+import { getDesktopBridge, type EvoCraftDesktopApi } from "../services/desktopBridge";
 import { createDesktopRecordStore } from "../services/desktopRecordStore";
 import { mockAiAdapter } from "../services/mockAiAdapter";
 import { createLocalStorageRecordStore, type RecordStore } from "../services/storage";
@@ -60,8 +62,20 @@ interface AppProps {
   recordStore?: RecordStore;
 }
 
+function hasDesktopAiBridge(
+  bridge: EvoCraftDesktopApi | null,
+): bridge is EvoCraftDesktopApi &
+  Required<Pick<EvoCraftDesktopApi, "detectRegions" | "recognizeQuestion">> {
+  return Boolean(bridge?.detectRegions && bridge?.recognizeQuestion);
+}
+
 export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
   const desktopBridge = getDesktopBridge();
+  const [state, dispatch] = useReducer(
+    wrongQuestionReducer,
+    undefined,
+    () => createInitialWrongQuestionState([]),
+  );
   const recordStore = useMemo(
     () =>
       injectedRecordStore ??
@@ -70,10 +84,12 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
         : createLocalStorageRecordStore(getBrowserStorage())),
     [desktopBridge, injectedRecordStore],
   );
-  const [state, dispatch] = useReducer(
-    wrongQuestionReducer,
-    undefined,
-    () => createInitialWrongQuestionState([]),
+  const aiAdapter: AiAdapter = useMemo(
+    () =>
+      hasDesktopAiBridge(desktopBridge) && state.aiRuntimeMode === "real"
+        ? createDesktopAiAdapter(desktopBridge)
+        : mockAiAdapter,
+    [desktopBridge, state.aiRuntimeMode],
   );
   const [isRecordStoreHydrated, setIsRecordStoreHydrated] = useState(false);
   const [reviewForm, setReviewForm] = useState<ReviewForm>(emptyReviewForm);
@@ -103,6 +119,28 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
       active = false;
     };
   }, [recordStore]);
+
+  useEffect(() => {
+    if (!desktopBridge?.getAiRuntimeStatus) return;
+
+    let active = true;
+
+    desktopBridge
+      .getAiRuntimeStatus()
+      .then((status: AiRuntimeStatus) => {
+        if (!active) return;
+        dispatch({
+          type: "AI_RUNTIME_READY",
+          mode: status.enabled ? "real" : "mock",
+          message: status.message,
+        });
+      })
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+    };
+  }, [desktopBridge]);
 
   useEffect(() => {
     if (!regionDrag) return undefined;
@@ -179,7 +217,12 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
       return;
     }
 
-    const result = await mockAiAdapter.detectRegions({ imageUri: state.uploadedImageUri });
+    if (state.aiRuntimeMode === "real" && !state.externalAiAcknowledged) {
+      dispatch({ type: "UPLOAD_BLOCKED", message: "请先确认外部 AI 识别授权。" });
+      return;
+    }
+
+    const result = await aiAdapter.detectRegions({ imageUri: state.uploadedImageUri });
     if (!result.ok) {
       dispatch({ type: "REGION_SELECTION_FAILED", message: result.message });
       return;
@@ -194,7 +237,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
       return;
     }
 
-    const result = await mockAiAdapter.detectRegions({ imageUri: state.uploadedImageUri });
+    const result = await aiAdapter.detectRegions({ imageUri: state.uploadedImageUri });
     if (!result.ok) {
       dispatch({ type: "REGION_SELECTION_FAILED", message: result.message });
       return;
@@ -255,7 +298,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
       selectedRegion,
     );
 
-    const result = await mockAiAdapter.recognizeQuestion({
+    const result = await aiAdapter.recognizeQuestion({
       subject: state.selectedSubject,
       imageUri: state.uploadedImageUri,
       selectedRegion,
@@ -469,6 +512,31 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                     <small>当前照片和错题记录只保存在此浏览器；未来外部 AI 识别会单独授权。</small>
                   </span>
                 </label>
+
+                {state.aiRuntimeMode === "real" ? (
+                  <label className="privacy-consent ai-consent">
+                    <input
+                      checked={state.externalAiAcknowledged}
+                      onChange={(event) =>
+                        dispatch({
+                          type: "EXTERNAL_AI_ACKNOWLEDGED",
+                          acknowledged: event.target.checked,
+                        })
+                      }
+                      type="checkbox"
+                    />
+                    <span>
+                      <strong>真实 AI 测试模式</strong>
+                      <small>开启后会把确认的题目区域发送到外部 AI 服务进行识别。</small>
+                      {state.aiRuntimeMessage ? <small>{state.aiRuntimeMessage}</small> : null}
+                    </span>
+                  </label>
+                ) : (
+                  <div className="ai-mode-note">
+                    <strong>本地 mock 识别</strong>
+                    {state.aiRuntimeMessage ? <small>{state.aiRuntimeMessage}</small> : null}
+                  </div>
+                )}
 
                 <button
                   className="button-primary start-button"

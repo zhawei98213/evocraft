@@ -2038,6 +2038,43 @@
 - 提交并推送 Task 9 派发准备日志。
 - 派发 Task 9 implementer，要求先写失败测试，再实现 runtime switch 和授权拦截。
 
+### 2026-05-26：真实 AI 识别 Task 9 实现完成
+
+本轮任务是什么：
+
+- 实现应用层真实 AI runtime switch、外部 AI 授权提示和 mock/real adapter selection。
+
+已完成什么：
+
+- 在 `src/app/App.test.tsx` 增加桌面 real AI disabled 默认 mock、real AI enabled 授权提示、未授权阻止真实识别、授权后调用 desktop AI adapter 的回归测试。
+- 在 `wrongQuestionReducer` 增加 `aiRuntimeMode`、`aiRuntimeMessage`、`externalAiAcknowledged`，并增加 `AI_RUNTIME_READY`、`EXTERNAL_AI_ACKNOWLEDGED`、`UPLOAD_BLOCKED` 状态迁移。
+- `App.tsx` 现在通过 `desktopBridge.getAiRuntimeStatus()` 加载运行时状态，默认使用 `mockAiAdapter`，仅在 desktop bridge AI methods 存在且 runtime 为 real 时使用 `createDesktopAiAdapter(...)`。
+- 上传页显示“本地 mock 识别”或“真实 AI 测试模式”授权提示；real mode 未勾选外部 AI 授权时阻止识别，并保留已选图片和文件名。
+- 添加 `.ai-mode-note` 和 `.ai-consent` 最小样式，没有扩大视觉改版范围。
+- 更新项目记忆、想法胶囊、Task 9 implementer log 和 run ledger；Task 9 进入 `review`，等待 spec review。
+
+卡在哪里：
+
+- 无。Task 9 尚需 spec review 和 code-quality review。
+
+执行的是什么命令：
+
+- `npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts`（新增授权保留图片断言修复前 RED，修复后 25 tests 通过）
+- `npm test`（5 files / 38 tests 通过）
+- `npm run test:electron-config`
+- `npm run test:electron-store`
+- `npm run test:ai-eval-config`
+- `npm run test:qwen-adapter`
+- `npm run build`
+- `npm run desktop:build`
+- `git diff --check`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl release dist`
+
+下一步的计划：
+
+- 提交并推送 Task 9 implementation。
+- 派发 Task 9 spec reviewer；通过后再派发 code-quality reviewer。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。

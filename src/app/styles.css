@@ -704,6 +704,28 @@ body[data-screen="detail"] .ai-review-panel {
   line-height: 1.45;
 }
 
+.ai-mode-note {
+  margin-top: 12px;
+  color: var(--slate);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.ai-mode-note strong,
+.ai-mode-note small {
+  display: block;
+}
+
+.ai-mode-note small {
+  margin-top: 4px;
+}
+
+.ai-consent {
+  margin-top: 12px;
+  border-color: rgba(14, 165, 233, 0.28);
+  background: rgba(240, 249, 255, 0.9);
+}
+
 .subject-block {
   margin-top: 22px;
 }

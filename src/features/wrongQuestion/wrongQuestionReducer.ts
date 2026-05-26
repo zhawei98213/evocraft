@@ -12,6 +12,9 @@ export interface WrongQuestionState {
   screen: Screen;
   selectedSubject: "auto" | Subject;
   privacyAcknowledged: boolean;
+  aiRuntimeMode: "mock" | "real";
+  aiRuntimeMessage: string;
+  externalAiAcknowledged: boolean;
   uploadedImageUri: string;
   uploadedFileName: string;
   uploadedFileMeta: string;
@@ -33,7 +36,10 @@ export type WrongQuestionAction =
   | { type: "RECORDS_LOADED"; records: WrongQuestionRecord[] }
   | { type: "IMAGE_SELECTED"; imageUri: string; fileName: string; fileMeta: string }
   | { type: "UPLOAD_FAILED"; message: string }
+  | { type: "UPLOAD_BLOCKED"; message: string }
   | { type: "PRIVACY_ACKNOWLEDGED"; acknowledged: boolean }
+  | { type: "AI_RUNTIME_READY"; mode: "mock" | "real"; message: string }
+  | { type: "EXTERNAL_AI_ACKNOWLEDGED"; acknowledged: boolean }
   | { type: "START_REGION_SELECTION" }
   | { type: "REGION_CANDIDATES_READY"; candidates: RegionCandidate[] }
   | { type: "REGION_SELECTION_FAILED"; message: string }
@@ -51,6 +57,9 @@ export function createInitialWrongQuestionState(records: WrongQuestionRecord[]):
     screen: "hub",
     selectedSubject: "auto",
     privacyAcknowledged: false,
+    aiRuntimeMode: "mock",
+    aiRuntimeMessage: "",
+    externalAiAcknowledged: false,
     uploadedImageUri: "",
     uploadedFileName: "",
     uploadedFileMeta: "",
@@ -111,10 +120,31 @@ export function wrongQuestionReducer(
         draft: null,
       };
 
+    case "UPLOAD_BLOCKED":
+      return {
+        ...state,
+        uploadError: action.message,
+      };
+
     case "PRIVACY_ACKNOWLEDGED":
       return {
         ...state,
         privacyAcknowledged: action.acknowledged,
+        uploadError: action.acknowledged ? "" : state.uploadError,
+      };
+
+    case "AI_RUNTIME_READY":
+      return {
+        ...state,
+        aiRuntimeMode: action.mode,
+        aiRuntimeMessage: action.message,
+        externalAiAcknowledged: action.mode === "mock" ? false : state.externalAiAcknowledged,
+      };
+
+    case "EXTERNAL_AI_ACKNOWLEDGED":
+      return {
+        ...state,
+        externalAiAcknowledged: action.acknowledged,
         uploadError: action.acknowledged ? "" : state.uploadError,
       };
 

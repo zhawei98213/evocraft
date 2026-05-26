@@ -149,4 +149,61 @@ describe("wrongQuestionReducer", () => {
     expect(loaded.records.map((record) => record.id)).toEqual(["wq-loaded-1", "wq-loaded-2"]);
     expect(loaded.selectedRecordId).toBe("wq-loaded-1");
   });
+
+  it("tracks AI runtime mode transitions between real and mock", () => {
+    const initial = createInitialWrongQuestionState([]);
+
+    const realReady = wrongQuestionReducer(initial, {
+      type: "AI_RUNTIME_READY",
+      mode: "real",
+      message: "真实 AI 已连接",
+    });
+
+    expect(realReady.aiRuntimeMode).toBe("real");
+    expect(realReady.aiRuntimeMessage).toBe("真实 AI 已连接");
+
+    const mockReady = wrongQuestionReducer(realReady, {
+      type: "AI_RUNTIME_READY",
+      mode: "mock",
+      message: "回退到本地 mock",
+    });
+
+    expect(mockReady.aiRuntimeMode).toBe("mock");
+    expect(mockReady.aiRuntimeMessage).toBe("回退到本地 mock");
+    expect(mockReady.externalAiAcknowledged).toBe(false);
+  });
+
+  it("clears uploadError when external AI acknowledgement is checked", () => {
+    const state = {
+      ...createInitialWrongQuestionState([]),
+      aiRuntimeMode: "real" as const,
+      uploadError: "请先确认外部 AI 识别授权。",
+    };
+
+    const acknowledged = wrongQuestionReducer(state, {
+      type: "EXTERNAL_AI_ACKNOWLEDGED",
+      acknowledged: true,
+    });
+
+    expect(acknowledged.externalAiAcknowledged).toBe(true);
+    expect(acknowledged.uploadError).toBe("");
+  });
+
+  it("keeps the selected image when upload is blocked by missing external AI consent", () => {
+    const state = wrongQuestionReducer(createInitialWrongQuestionState([]), {
+      type: "IMAGE_SELECTED",
+      imageUri: "data:image/png;base64,original",
+      fileName: "question.png",
+      fileMeta: "桌面图片",
+    });
+
+    const blocked = wrongQuestionReducer(state, {
+      type: "UPLOAD_BLOCKED",
+      message: "请先确认外部 AI 识别授权。",
+    });
+
+    expect(blocked.uploadError).toBe("请先确认外部 AI 识别授权。");
+    expect(blocked.uploadedImageUri).toBe("data:image/png;base64,original");
+    expect(blocked.uploadedFileName).toBe("question.png");
+  });
 });

@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   STORAGE_KEY,
+  createMockRegionCandidates,
   createMockRecognition,
   createRecordFromDraft,
   type WrongQuestionRecord,
@@ -300,6 +301,119 @@ describe("App", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("桌面图片读取失败，请重新选择图片。");
     expect(screen.getByRole("button", { name: "下一步：选择题目区域" })).toBeDisabled();
   });
+
+  it("keeps mock AI as the default when desktop real AI is disabled", async () => {
+    const desktopApi = installDesktopBridge({
+      getAiRuntimeStatus: vi.fn().mockResolvedValue({
+        enabled: false,
+        provider: "qwen",
+        mode: "mock",
+        message: "",
+      }),
+      detectRegions: vi.fn(),
+      recognizeQuestion: vi.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+
+    expect(await screen.findByText("本地 mock 识别")).toBeInTheDocument();
+    expect(desktopApi.detectRegions).not.toHaveBeenCalled();
+  });
+
+  it("shows external AI authorization copy when desktop real AI is enabled", async () => {
+    installDesktopBridge({
+      getAiRuntimeStatus: vi.fn().mockResolvedValue({
+        enabled: true,
+        provider: "qwen",
+        mode: "real",
+        message: "",
+      }),
+      detectRegions: vi.fn(),
+      recognizeQuestion: vi.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+
+    expect(await screen.findByText("真实 AI 测试模式")).toBeInTheDocument();
+    expect(
+      screen.getByText("开启后会把确认的题目区域发送到外部 AI 服务进行识别。"),
+    ).toBeInTheDocument();
+  });
+
+  it("blocks desktop real AI region detection until external authorization is acknowledged", async () => {
+    const desktopApi = installDesktopBridge({
+      selectImage: vi.fn().mockResolvedValue("/Users/zha/Desktop/question.png"),
+      readImageAsDataUrl: vi.fn().mockResolvedValue("data:image/png;base64,desktop-image"),
+      getAiRuntimeStatus: vi.fn().mockResolvedValue({
+        enabled: true,
+        provider: "qwen",
+        mode: "real",
+        message: "",
+      }),
+      detectRegions: vi.fn(),
+      recognizeQuestion: vi.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+    await screen.findByText("真实 AI 测试模式");
+    await user.click(screen.getByRole("button", { name: "从电脑选择图片" }));
+    await waitFor(() => {
+      expect(screen.getByText("question.png")).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("checkbox", { name: /本地隐私确认/ }));
+    await user.click(screen.getByRole("button", { name: "下一步：选择题目区域" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("请先确认外部 AI 识别授权。");
+    expect(screen.getByText("question.png")).toBeInTheDocument();
+    expect(desktopApi.detectRegions).not.toHaveBeenCalled();
+  });
+
+  it("uses the desktop AI adapter after external authorization is acknowledged", async () => {
+    const desktopApi = installDesktopBridge({
+      selectImage: vi.fn().mockResolvedValue("/Users/zha/Desktop/question.png"),
+      readImageAsDataUrl: vi.fn().mockResolvedValue("data:image/png;base64,desktop-image"),
+      getAiRuntimeStatus: vi.fn().mockResolvedValue({
+        enabled: true,
+        provider: "qwen",
+        mode: "real",
+        message: "",
+      }),
+      detectRegions: vi.fn().mockResolvedValue({
+        ok: true,
+        candidates: createMockRegionCandidates(),
+      }),
+      recognizeQuestion: vi.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+    await screen.findByText("真实 AI 测试模式");
+    await user.click(screen.getByRole("button", { name: "从电脑选择图片" }));
+    await waitFor(() => {
+      expect(screen.getByText("question.png")).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("checkbox", { name: /本地隐私确认/ }));
+    await user.click(screen.getByRole("checkbox", { name: /真实 AI 测试模式/ }));
+    await user.click(screen.getByRole("button", { name: "下一步：选择题目区域" }));
+
+    await waitFor(() => {
+      expect(desktopApi.detectRegions).toHaveBeenCalledWith({
+        imageUri: "data:image/png;base64,desktop-image",
+      });
+    });
+    expect(screen.getByRole("heading", { name: "选择题目区域" })).toBeInTheDocument();
+  });
 });
 
 function installDesktopBridge(overrides: Partial<EvoCraftDesktopApi>) {
@@ -309,6 +423,12 @@ function installDesktopBridge(overrides: Partial<EvoCraftDesktopApi>) {
     loadRecords: vi.fn().mockResolvedValue([]),
     saveRecords: vi.fn().mockResolvedValue({ ok: true }),
     clearRecords: vi.fn().mockResolvedValue({ ok: true }),
+    getAiRuntimeStatus: vi.fn().mockResolvedValue({
+      enabled: false,
+      provider: "mock",
+      mode: "mock",
+      message: "",
+    }),
     ...overrides,
   } satisfies EvoCraftDesktopApi;
 

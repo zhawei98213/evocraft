@@ -41,7 +41,7 @@
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | completed | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config`, runner gate checks, `npm test`, `git diff --check` | `58c827a`, `85028ee` |
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | completed | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build` | `5f9ba4f`, `0c8e488`, `309f8aa`, `338e55b`, `f090b93` |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | completed | Electron AI IPC, desktop AI adapter | `npm run test:electron-config`, `npm run test:react -- src/services/aiAdapter.test.ts`, `npm run build`, `git diff --check`, `npm test` | `37f5ad9`, `5e58cbb`, `3240f03` |
-| 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | assigned | UI mode, authorization copy, final verification | Full verification suite | 未开始 |
+| 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | review | UI mode, authorization copy, final verification | Full verification suite | 待提交 |
 
 ## Agent Ledger
 
@@ -74,7 +74,7 @@
 | `agents/task-08-real-ai-ipc.md` | implementer | Task 8 | changes_requested_fixed | 已补上 Task 8 spec review 要求的可执行 IPC handler 边界测试，覆盖 sender validation、disabled-mode gate、provider not-called 和 enabled delegation；等待 spec re-review。 |
 | `agents/task-08-spec-review.md` | spec-reviewer | Task 8 | passed | 复审确认 `tests/electron-ai-ipc.test.mjs` 已关闭上一轮 runtime coverage 阻塞点；Task 8 现满足 spec，可进入 code-quality review。 |
 | `agents/task-08-code-quality-review.md` | code-quality-reviewer | Task 8 | passed_with_concerns_fixed | 质量审查未发现 HIGH/MEDIUM 问题；LOW 测试 payload 形状问题已在 `3240f03` 修复，Task 8 可进入 Task 9。 |
-| `agents/task-09-app-runtime-switch.md` | implementer | Task 9 | assigned | Task 8 已通过 spec/code-quality gates；Task 9 准备实现 app runtime switch、外部 AI 授权文案和 mock/real adapter selection。 |
+| `agents/task-09-app-runtime-switch.md` | implementer | Task 9 | review | 已实现 app runtime switch、默认 mock、真实 AI 测试模式提示、外部 AI 授权拦截、desktop AI adapter selection 和 focused/full verification；等待 spec review。 |
 | `agents/task-09-spec-review.md` | spec-reviewer | Task 9 | pending | 等待 Task 9 implementation 完成后核对范围、默认 mock、授权拦截和测试覆盖。 |
 | `agents/task-09-code-quality-review.md` | code-quality-reviewer | Task 9 | pending | 等待 Task 9 spec review 通过后审查 reducer/effect/adapter selection/UI/tests 质量。 |
 
