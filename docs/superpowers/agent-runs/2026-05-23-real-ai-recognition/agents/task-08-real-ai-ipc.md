@@ -152,4 +152,4 @@ git status --short --branch
 
 ## Commit
 
-- Commit hash: 待 scoped Lore commit 完成后回填。
+- Commit hash: `37f5ad9`
