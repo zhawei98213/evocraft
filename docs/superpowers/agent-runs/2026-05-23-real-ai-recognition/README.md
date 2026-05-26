@@ -41,7 +41,7 @@
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | completed | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config`, runner gate checks, `npm test`, `git diff --check` | `58c827a`, `85028ee` |
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | completed | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build` | `5f9ba4f`, `0c8e488`, `309f8aa`, `338e55b`, `f090b93` |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | completed | Electron AI IPC, desktop AI adapter | `npm run test:electron-config`, `npm run test:react -- src/services/aiAdapter.test.ts`, `npm run build`, `git diff --check`, `npm test` | `37f5ad9`, `5e58cbb`, `3240f03` |
-| 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | review | UI mode, authorization copy, final verification | Full verification suite | `c3d2f21` |
+| 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | changes_requested | UI mode, authorization copy, final verification | Full verification suite | `c3d2f21` |
 
 ## Agent Ledger
 
@@ -74,9 +74,9 @@
 | `agents/task-08-real-ai-ipc.md` | implementer | Task 8 | changes_requested_fixed | 已补上 Task 8 spec review 要求的可执行 IPC handler 边界测试，覆盖 sender validation、disabled-mode gate、provider not-called 和 enabled delegation；等待 spec re-review。 |
 | `agents/task-08-spec-review.md` | spec-reviewer | Task 8 | passed | 复审确认 `tests/electron-ai-ipc.test.mjs` 已关闭上一轮 runtime coverage 阻塞点；Task 8 现满足 spec，可进入 code-quality review。 |
 | `agents/task-08-code-quality-review.md` | code-quality-reviewer | Task 8 | passed_with_concerns_fixed | 质量审查未发现 HIGH/MEDIUM 问题；LOW 测试 payload 形状问题已在 `3240f03` 修复，Task 8 可进入 Task 9。 |
-| `agents/task-09-app-runtime-switch.md` | implementer | Task 9 | review | 已实现 app runtime switch、默认 mock、真实 AI 测试模式提示、外部 AI 授权拦截、desktop AI adapter selection 和 focused/full verification；等待 spec review。 |
+| `agents/task-09-app-runtime-switch.md` | implementer | Task 9 | changes_requested | 已实现 app runtime switch、默认 mock、真实 AI 测试模式提示、外部 AI 授权拦截、desktop AI adapter selection 和 focused/full verification；code-quality review 发现 late runtime flip 可绕过显式外部 AI 授权，需修复后复审。 |
 | `agents/task-09-spec-review.md` | spec-reviewer | Task 9 | passed | 已确认 Task 9 满足 runtime switch、默认 mock、授权拦截、测试覆盖和文档同步要求，可进入 code-quality review；Task 9 总状态保持 `review`。 |
-| `agents/task-09-code-quality-review.md` | code-quality-reviewer | Task 9 | pending | 等待 Task 9 spec review 通过后审查 reducer/effect/adapter selection/UI/tests 质量。 |
+| `agents/task-09-code-quality-review.md` | code-quality-reviewer | Task 9 | changes_requested | 发现一个 HIGH 授权绕过竞态问题和一个 MEDIUM 缺失方法回退一致性问题；Task 9 不能标记完成，需回 implementer 修复并补回归测试。 |
 
 ## Global Progress
 
@@ -511,9 +511,18 @@
 - Confirmed the required verification suite passed on current HEAD, including focused React tests, full `npm test`, `test:electron-config`, `test:electron-store`, `test:ai-eval-config`, `test:qwen-adapter`, `build`, `desktop:build`, `git diff --check`, reviewed-range file checks, and tracked-secret/generated-file checks.
 - Task 9 spec review is `passed`; Task 9 overall remains in `review` until code-quality review completes.
 
+### 2026-05-26 Task 9 Code Quality Review Failed
+
+- Reviewed current HEAD `80767a7` on branch `codex/real-ai-recognition-implementation`; this matches the expected spec-review-pass baseline.
+- Re-ran the required verification suite successfully: `git status --short --branch`, `git diff --check`, focused React tests, full `npm test`, `test:electron-config`, `test:electron-store`, `test:ai-eval-config`, `test:qwen-adapter`, `build`, `desktop:build`, reviewed-range file checks, tracked-secret/generated-file checks, and `lsp_diagnostics` on all modified Task 9 files.
+- Found one blocking code-quality issue in `src/app/App.tsx`: `aiRuntimeMode` starts as `mock` and flips asynchronously after `getAiRuntimeStatus()` resolves, so a user can enter `select-region` under mock and then hit `rerunRegionDetection()` or `confirmSelectedRegion()` after the mode flips to `real`; those paths call `aiAdapter` without re-checking `externalAiAcknowledged`, which breaks the “real AI is explicit opt-in” privacy boundary.
+- Found one medium consistency issue in `src/app/App.tsx`: `AI_RUNTIME_READY` trusts `status.enabled`, while `aiAdapter` separately falls back to `mockAiAdapter` when optional bridge methods are missing, so the UI can show “真实 AI 测试模式” even though behavior silently stays mock.
+- Current Task 9 tests cover steady-state enabled/disabled startup and the first authorization gate, but they do not cover the delayed runtime flip or missing-method fallback cases that expose these paths.
+- Task 9 moves to `changes_requested`; do not mark it completed until the shared authorization gate and the missing-method fallback behavior are fixed and re-reviewed.
+
 ## Global Blockers
 
-- 无。
+- Task 9 is blocked on a real-AI opt-in enforcement bug in `src/app/App.tsx`: delayed runtime-mode flips can route select-region actions to the real desktop adapter without explicit external-AI authorization.
 
 ## Review Rules
 
