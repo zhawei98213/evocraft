@@ -41,7 +41,7 @@
 | 6. AI Evaluation Harness | `agents/task-06-ai-eval-harness.md` | completed | `ai-eval`, runner, ignore rules | `npm run test:ai-eval-config`, runner gate checks, `npm test`, `git diff --check` | `58c827a`, `85028ee` |
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | completed | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build` | `5f9ba4f`, `0c8e488`, `309f8aa`, `338e55b`, `f090b93` |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | completed | Electron AI IPC, desktop AI adapter | `npm run test:electron-config`, `npm run test:react -- src/services/aiAdapter.test.ts`, `npm run build`, `git diff --check`, `npm test` | `37f5ad9`, `5e58cbb`, `3240f03` |
-| 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | review | UI mode, authorization copy, final verification | Full verification suite | 待提交 |
+| 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | review | UI mode, authorization copy, final verification | Full verification suite | `c3d2f21` |
 
 ## Agent Ledger
 
