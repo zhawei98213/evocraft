@@ -2149,6 +2149,44 @@
 - 运行最终验证命令组：`npm test`、`npm run test:electron-config`、`npm run test:electron-store`、`npm run test:ai-eval-config`、`npm run test:qwen-adapter`、`npm run build`、`npm run desktop:build`、`git diff --check`、`git status --short --branch`。
 - 按 subagent-driven 流程派发最终 code review，确认真实 AI 识别桌面迁移整体可收口。
 
+### 2026-05-30：真实 AI 识别最终验证通过
+
+本轮任务是什么：
+
+- 在 Task 0-9 全部完成后，运行真实 AI 识别桌面迁移阶段的最终验证命令组，并把结果写回 run ledger。
+
+已完成什么：
+
+- 最终验证命令组全部通过。
+- `npm test` 通过：5 files / 41 tests。
+- Electron config/AI IPC、Electron local store、AI eval config、Qwen adapter 合约、Web build、desktop build 全部通过。
+- `desktop:build` 生成 unpacked `release/mac`，按当前配置跳过 macOS signing（`identity: null`）。
+- `git diff --check` 通过；`.env`、私有样本/结果、`dist`、`release` 均没有被 git 追踪。
+- Run ledger 的 Final Verification 已更新为 passed，下一步进入整体 final code review。
+
+卡在哪里：
+
+- 无。尚需派发最终整体 code review；通过后再做分支收尾。
+
+执行的是什么命令：
+
+- `npm test`
+- `npm run test:electron-config`
+- `npm run test:electron-store`
+- `npm run test:ai-eval-config`
+- `npm run test:qwen-adapter`
+- `npm run build`
+- `npm run desktop:build`
+- `git diff --check`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl release dist`
+- `git status --short --branch`
+
+下一步的计划：
+
+- 提交并推送最终验证记录。
+- 派发最终整体 code review，确认真实 AI 识别桌面本地优先阶段是否可以关闭。
+- 如果 final code review 通过，更新最终 review 记录并进入分支收尾；如果失败，按 findings 回修。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。

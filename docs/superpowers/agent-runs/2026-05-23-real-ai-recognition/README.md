@@ -564,7 +564,7 @@ For each implementation task:
 
 ## Final Verification
 
-Final verification is not started. When all tasks complete, run:
+Final verification passed on 2026-05-30 after Tasks 0-9 completed.
 
 ```bash
 npm test
@@ -577,3 +577,20 @@ npm run desktop:build
 git diff --check
 git status --short --branch
 ```
+
+Results:
+
+- `npm test` -> exit `0`; `5` files / `41` tests passed.
+- `npm run test:electron-config` -> exit `0`.
+- `npm run test:electron-store` -> exit `0`.
+- `npm run test:ai-eval-config` -> exit `0`.
+- `npm run test:qwen-adapter` -> exit `0`.
+- `npm run build` -> exit `0`.
+- `npm run desktop:build` -> exit `0`; produced unpacked `release/mac` build and skipped macOS signing because `identity` is explicitly `null`.
+- `git diff --check` -> exit `0`.
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl release dist` -> exit `0` with empty output.
+- `git status --short --branch` -> branch synchronized with `origin/codex/real-ai-recognition-implementation`.
+
+Next gate:
+
+- Dispatch final whole-slice code review for the real AI recognition desktop migration before branch completion.
