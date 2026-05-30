@@ -2,7 +2,7 @@
 
 日期：2026-05-23
 
-状态：`in_progress`
+状态：`completed`
 
 执行模式：`subagent-driven`，但必须在本 ledger 和 task logs 准备完成后才能派发。
 
@@ -42,7 +42,7 @@
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | completed | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build` | `5f9ba4f`, `0c8e488`, `309f8aa`, `338e55b`, `f090b93` |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | completed | Electron AI IPC, desktop AI adapter | `npm run test:electron-config`, `npm run test:react -- src/services/aiAdapter.test.ts`, `npm run build`, `git diff --check`, `npm test` | `37f5ad9`, `5e58cbb`, `3240f03` |
 | 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | completed | UI mode, authorization copy, final verification | Full verification suite | `c3d2f21`, `8f27ccf`, `c108a67` |
-| Final. Whole-Slice Code Review | `agents/final-code-review.md` | changes_requested_fixed | Full real-AI-recognition desktop migration review | Final verification suite | pending |
+| Final. Whole-Slice Code Review | `agents/final-code-review.md` | passed | Full real-AI-recognition desktop migration review | Final verification suite | `54d25e0` |
 
 ## Agent Ledger
 
@@ -78,7 +78,7 @@
 | `agents/task-09-app-runtime-switch.md` | implementer | Task 9 | changes_requested_fixed | 已补 delayed runtime flip 和缺失 AI bridge methods 回归；真实 AI 有效模式必须同时满足 runtime enabled + bridge methods，所有真实 AI 调用入口共用外部授权 gate；实现范围已通过 full verification，等待/配合 review ledger 收口。 |
 | `agents/task-09-spec-review.md` | spec-reviewer | Task 9 | passed | 已确认 Task 9 满足 runtime switch、默认 mock、授权拦截、测试覆盖和文档同步要求，可进入 code-quality review；Task 9 总状态保持 `review`。 |
 | `agents/task-09-code-quality-review.md` | code-quality-reviewer | Task 9 | passed | 复审确认 delayed runtime flip 授权绕过和缺失 bridge methods 回退不一致这两个问题均已关闭；全量验证、LSP 诊断和隐私/产物检查均通过。 |
-| `agents/final-code-review.md` | code-reviewer | Final | changes_requested_fixed | Final review 首轮 `FAIL`；已按 review findings 修复 main-process 外部 AI 授权、eval data URL 输入和桌面图片读取 allowlist，等待完整验证与最终 re-review。 |
+| `agents/final-code-review.md` | code-reviewer | Final | passed | Final re-review 确认 `54d25e0` 已关闭三项首轮 findings：main-process 外部 AI 授权 gate、eval data URL 输入、以及一次性桌面图片读取 allowlist；未发现新的 HIGH/MEDIUM 问题。 |
 
 ## Global Progress
 
@@ -544,7 +544,7 @@
 
 ## Global Blockers
 
-- 无当前实现 blocker。Final review 首轮 findings 已完成 follow-up 且完整验证已通过，尚需最终 re-review 后才能关闭分支。
+- 无当前实现 blocker。Final re-review 已通过，real-ai-recognition whole slice review 已闭环。
 
 ## Review Rules
 
@@ -597,7 +597,7 @@ Results:
 
 Next gate:
 
-- Commit/push the final review follow-up, then dispatch final re-review before branch completion.
+- Docs-only review closure commit/push, then hand off to downstream branch-management / merge workflow.
 
 ### 2026-05-30 Final Code Review Prepared
 
@@ -623,3 +623,12 @@ Next gate:
 - Focused RED/GREEN commands passed after fixes: `npm run test:electron-config`, `npm run test:ai-eval-config`, `npm run test:qwen-adapter`, `npm run test:react -- src/app/App.test.tsx`, and `npm run build`.
 - Complete verification matrix passed after the follow-up: focused React suite, `npm test`, Electron config/store, AI eval config, Qwen adapter, web build, desktop build, diff check, and tracked-secret/generated-artifact check all exited `0` or returned expected empty output.
 - Next gate: commit/push the follow-up, then dispatch final re-review.
+
+### 2026-05-30 Final Code Re-review Passed
+
+- Final re-review checked only the three whole-slice first-pass `FAIL` findings against implementation commit `54d25e0`.
+- PASS checkpoint 1: `electron/main.cjs` now enforces a privileged `externalAiAuthorized` gate in `registerAiIpc(...)`, rejects untrusted renderers, and returns `external_ai_not_authorized` before provider adapter calls when consent is missing.
+- PASS checkpoint 2: `scripts/evaluate-ai-samples.mjs` now converts local sample files to `data:image/...;base64,...`, and `electron/ai/qwenAdapter.cjs` rejects `file://` selected-region URLs before fetch.
+- PASS checkpoint 3: `registerFileIpc(...)` now restricts `file:read-image-data-url` to one-time paths previously returned by `dialog:select-image`, rejecting both unselected paths and second reads.
+- Required verification on current HEAD passed: `git status --short --branch`, `git show --stat --oneline 54d25e0`, `npm run test:electron-config`, `npm run test:ai-eval-config`, `npm run test:qwen-adapter`, `npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts`, and `git diff --check`.
+- No new `HIGH` or `MEDIUM` findings were found. Final verdict: `PASS`.

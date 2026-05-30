@@ -8,8 +8,8 @@
 - Task title: Real AI Recognition Desktop Migration Final Review
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
 - Assigned at: 2026-05-30
-- Completed at:
-- Status: `changes_requested_fixed`
+- Completed at: 2026-05-30
+- Status: `passed`
 
 ## Scope
 
@@ -76,9 +76,27 @@ Forbidden scope:
 - Tracked-secret / generated-artifact check returned empty output for `.env*`, private eval samples/results, `dist`, and `release`.
 - Final re-review is now the remaining gate before branch completion.
 
+### 2026-05-30 Final Re-review Passed
+
+- Re-reviewed only the three first-pass `FAIL` findings against implementation commit `54d25e0` and confirmed all three are closed.
+- Checkpoint 1 passed: privileged Electron AI IPC now keeps an independent main-process `externalAiAuthorized` gate, rejects untrusted renderers, returns `external_ai_not_authorized` before provider adapter calls when consent is missing, and no longer relies on renderer state as the only boundary.
+- Checkpoint 2 passed: `scripts/evaluate-ai-samples.mjs` now converts local files to `data:image/...;base64,...` before adapter calls, and the shared Qwen adapter rejects `selectedRegionImageUri` values such as `file://...` before any provider fetch.
+- Checkpoint 3 passed: desktop `file:read-image-data-url` now accepts only a one-time path previously returned by `dialog:select-image`, rejects unselected paths, and rejects a second read after the first consumption.
+- Required verification passed on current HEAD: `git status --short --branch`, `git show --stat --oneline 54d25e0`, `npm run test:electron-config`, `npm run test:ai-eval-config`, `npm run test:qwen-adapter`, `npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts`, and `git diff --check`.
+- No new `HIGH` or `MEDIUM` findings were identified in the reviewed slice. Final re-review verdict: `PASS`.
+
+## Re-review Verdict
+
+- Conclusion: `PASS`
+- Reviewed commit: `54d25e0`
+- Re-reviewed scope: only the three whole-slice first-pass findings
+- New findings: none at `HIGH`/`MEDIUM`
+
 ## Commands Run
 
 ```bash
+git status --short --branch
+git show --stat --oneline 54d25e0
 npm run test:electron-config
 npm run test:ai-eval-config
 npm run test:qwen-adapter
@@ -120,6 +138,14 @@ git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eva
 - GREEN: `npm run test:qwen-adapter` exited `0` after the follow-up.
 - GREEN: `npm run test:react -- src/app/App.test.tsx` exited `0` with 18 tests passing after the follow-up.
 - GREEN: `npm run build` exited `0` after the follow-up.
+- Re-review verification on commit `54d25e0` closure:
+  - `git status --short --branch` -> exit `0`; branch was `codex/real-ai-recognition-implementation` and synchronized with `origin/codex/real-ai-recognition-implementation` before docs-only logging.
+  - `git show --stat --oneline 54d25e0` -> exit `0`; reviewed commit title `Enforce desktop real AI consent in privileged boundaries` with `19` files changed, `451` insertions, and `55` deletions.
+  - `npm run test:electron-config` -> exit `0`; covers `tests/electron-config.test.mjs`, `tests/electron-ai-ipc.test.mjs`, and `tests/electron-file-ipc.test.mjs`.
+  - `npm run test:ai-eval-config` -> exit `0`.
+  - `npm run test:qwen-adapter` -> exit `0`.
+  - `npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts` -> exit `0`; `28` tests passed.
+  - `git diff --check` -> exit `0`.
 - Full verification after follow-up:
   - `npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts` -> exit `0`; 28 tests passed.
   - `npm test` -> exit `0`; 5 files / 41 tests passed.
@@ -134,14 +160,13 @@ git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eva
 
 ## Blockers
 
-- 无当前实现 blocker。
-- 尚需提交推送，并派发最终 re-review 确认 final code review findings 已关闭。
+- 无。三项首轮阻塞 findings 已在 `54d25e0` 关闭，最终 re-review 已通过。
 
 ## Handoff Notes
 
-- Final review did not pass on the first pass; the follow-up fixes are implemented and focused tests are green.
-- Next handoff is commit/push, then final re-review.
+- Final review first-pass blockers are closed by `54d25e0`, and the required re-review evidence is now recorded here.
+- Remaining work is downstream branch management only; this review lane is complete.
 
 ## Commit
 
-- pending reviewer
+- `54d25e0` reviewed implementation commit

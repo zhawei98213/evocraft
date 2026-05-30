@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-05-26
+最后更新：2026-05-30
 
 ## 路线图
 
@@ -83,6 +83,40 @@
 如果没有卡点，写 `无`。命令不需要粘贴完整输出，但要保留足够复现的命令名称或关键命令。
 
 ## 当前进度
+
+### 2026-05-30：54d25e0 Final Re-review PASS
+
+本轮任务是什么：
+
+- 只复审最终 whole-slice code review 首轮 `FAIL` 的三项 findings 是否已被 `54d25e0` 关闭，并把结论、检查点、命令和验证结果写入项目文档。
+
+已完成什么：
+
+- 复核 `54d25e0 Enforce desktop real AI consent in privileged boundaries`，确认这次 re-review 只覆盖三项首轮阻塞点，没有重新实现功能。
+- 确认 privileged Electron AI IPC 已在 `electron/main.cjs` 中独立维护 `externalAiAuthorized` 边界：`ai:detect-regions` / `ai:recognize-question` 在 provider 调用前会对未授权返回 `external_ai_not_authorized`，不再只依赖 renderer state，untrusted renderer 仍被拒绝。
+- 确认 `scripts/evaluate-ai-samples.mjs` 已把本地样本转成 `data:image/...;base64,...`，且共享 Qwen adapter 会在 fetch 前拒绝 `selectedRegionImageUri` 为 `file://...` 的输入。
+- 确认桌面 `file:read-image-data-url` 已收紧为系统 `dialog:select-image` 返回且尚未消费的一次性路径；未选路径和第二次读取都会被拒绝。
+- 跑完本轮要求的验证命令并全部通过：`git status --short --branch`、`git show --stat --oneline 54d25e0`、`npm run test:electron-config`、`npm run test:ai-eval-config`、`npm run test:qwen-adapter`、`npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts`、`git diff --check`。
+- 更新 final review agent log、real-ai-recognition run ledger 和 roadmap progress，记录最终 re-review 结论 `PASS`，且未发现新的 `HIGH/MEDIUM` 问题。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git show --stat --oneline 54d25e0`
+- `sed -n ...` / `nl -ba ...` / `rg -n ...` 审读 `electron/main.cjs`、`electron/ai/qwenAdapter.cjs`、`scripts/evaluate-ai-samples.mjs`、`tests/electron-ai-ipc.test.mjs`、`tests/electron-file-ipc.test.mjs`、`tests/qwen-adapter-contract.test.mjs`、`src/app/App.tsx`、run ledger 和 final review log
+- `npm run test:electron-config`
+- `npm run test:ai-eval-config`
+- `npm run test:qwen-adapter`
+- `npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts`
+- `git diff --check`
+
+下一步的计划：
+
+- 本轮 final re-review 已完成；后续只剩 docs-only 提交/推送与分支级收尾动作。
 
 ### 2026-05-10：产品文档基础与 PRD v1.0
 
