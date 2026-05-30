@@ -597,7 +597,7 @@ Results:
 
 Next gate:
 
-- Docs-only review closure commit/push, then hand off to downstream branch-management / merge workflow.
+- Review lane is closed; hand off to downstream branch-management / merge workflow.
 
 ### 2026-05-30 Final Code Review Prepared
 

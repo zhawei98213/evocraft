@@ -116,7 +116,7 @@
 
 下一步的计划：
 
-- 本轮 final re-review 已完成；后续只剩 docs-only 提交/推送与分支级收尾动作。
+- 本轮 final re-review、docs-only 提交和推送都已完成；后续转入分支级收尾动作。
 
 ### 2026-05-10：产品文档基础与 PRD v1.0
 
