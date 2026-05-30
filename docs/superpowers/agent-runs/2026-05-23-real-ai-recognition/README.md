@@ -42,6 +42,7 @@
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | completed | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build` | `5f9ba4f`, `0c8e488`, `309f8aa`, `338e55b`, `f090b93` |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | completed | Electron AI IPC, desktop AI adapter | `npm run test:electron-config`, `npm run test:react -- src/services/aiAdapter.test.ts`, `npm run build`, `git diff --check`, `npm test` | `37f5ad9`, `5e58cbb`, `3240f03` |
 | 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | completed | UI mode, authorization copy, final verification | Full verification suite | `c3d2f21`, `8f27ccf`, `c108a67` |
+| Final. Whole-Slice Code Review | `agents/final-code-review.md` | assigned | Full real-AI-recognition desktop migration review | Final verification suite | pending |
 
 ## Agent Ledger
 
@@ -77,6 +78,7 @@
 | `agents/task-09-app-runtime-switch.md` | implementer | Task 9 | changes_requested_fixed | 已补 delayed runtime flip 和缺失 AI bridge methods 回归；真实 AI 有效模式必须同时满足 runtime enabled + bridge methods，所有真实 AI 调用入口共用外部授权 gate；实现范围已通过 full verification，等待/配合 review ledger 收口。 |
 | `agents/task-09-spec-review.md` | spec-reviewer | Task 9 | passed | 已确认 Task 9 满足 runtime switch、默认 mock、授权拦截、测试覆盖和文档同步要求，可进入 code-quality review；Task 9 总状态保持 `review`。 |
 | `agents/task-09-code-quality-review.md` | code-quality-reviewer | Task 9 | passed | 复审确认 delayed runtime flip 授权绕过和缺失 bridge methods 回退不一致这两个问题均已关闭；全量验证、LSP 诊断和隐私/产物检查均通过。 |
+| `agents/final-code-review.md` | code-reviewer | Final | assigned | 最终整体验证已通过；等待 reviewer 复查 Tasks 0-9 是否可整体收口。 |
 
 ## Global Progress
 
@@ -594,3 +596,9 @@ Results:
 Next gate:
 
 - Dispatch final whole-slice code review for the real AI recognition desktop migration before branch completion.
+
+### 2026-05-30 Final Code Review Prepared
+
+- Created `agents/final-code-review.md` before dispatch so the final reviewer has an independent plan/progress log.
+- Added the final review row to the task and agent ledgers.
+- Final code review is assigned but not yet complete.

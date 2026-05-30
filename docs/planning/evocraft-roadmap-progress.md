@@ -2187,6 +2187,33 @@
 - 派发最终整体 code review，确认真实 AI 识别桌面本地优先阶段是否可以关闭。
 - 如果 final code review 通过，更新最终 review 记录并进入分支收尾；如果失败，按 findings 回修。
 
+### 2026-05-30：真实 AI 识别最终 code review 准备
+
+本轮任务是什么：
+
+- 在最终验证通过后，为真实 AI 识别桌面迁移整体 code review 创建独立 agent 记录和 run ledger 条目。
+
+已完成什么：
+
+- 新增 `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/final-code-review.md`。
+- Run ledger 已新增 Final Whole-Slice Code Review 行，并将 final reviewer 标记为 `assigned`。
+- 明确 final reviewer 只能改 review log、run ledger 和 roadmap progress，不能修改实现代码。
+
+卡在哪里：
+
+- 无。尚需提交推送准备记录并派发 final code reviewer。
+
+执行的是什么命令：
+
+- `tail -n 70 docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
+- `tail -n 120 docs/planning/evocraft-roadmap-progress.md`
+
+下一步的计划：
+
+- 提交并推送 final code review 准备记录。
+- 派发最终整体 code review。
+- 根据 final review 结果决定进入分支收尾或回修。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。
