@@ -2214,6 +2214,49 @@
 - 派发最终整体 code review。
 - 根据 final review 结果决定进入分支收尾或回修。
 
+### 2026-05-30：真实 AI 识别最终 code review 回修
+
+本轮任务是什么：
+
+- 根据最终整体 code review 的 `FAIL` 结果，修复桌面真实 AI 接入的特权边界、云端图片输入格式和本地文件读取范围。
+
+已完成什么：
+
+- 确认并记录 final reviewer 的三项 findings：Electron `ai:*` IPC 缺少 main-process 外部 AI 授权 gate；AI eval runner 把本地样本作为 `file://` 传给 Qwen；桌面图片读取桥接接受 arbitrary renderer path。
+- 新增 `ai:set-external-authorization`，并让 `ai:detect-regions` / `ai:recognize-question` 在 provider 调用前检查 main-process 授权状态。
+- React 真实 AI 调用入口现在会同步外部 AI 授权到桌面 bridge，并在上传、重新自动找题、确认识别前做即时授权同步。
+- AI eval runner 现在把本地样本转换成 `data:image/...;base64,...`，Qwen adapter 会在 provider fetch 前拒绝 `file://` 等不支持的题目区域图片 URL。
+- Electron 图片读取改成只允许读取系统文件选择对话框返回的一次性路径；未通过选择的本地图片路径会在读盘前被拒绝。
+- 已更新 final agent log、run ledger、项目记忆和想法胶囊。
+- Focused verification 已通过：`npm run test:electron-config`、`npm run test:ai-eval-config`、`npm run test:qwen-adapter`、`npm run test:react -- src/app/App.test.tsx`、`npm run build`。
+- 完整验证矩阵已通过：focused React suite 28 tests、`npm test` 5 files / 41 tests、Electron config/store、AI eval config、Qwen adapter、web build、desktop build、diff check 和隐私/产物追踪检查均退出 0 或返回预期空输出。
+
+卡在哪里：
+
+- 无当前实现 blocker。尚需提交推送和最终 re-review。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git diff --stat`
+- `npm run test:electron-config`（回修前 RED，回修后退出 0）
+- `npm run test:ai-eval-config`（回修前 RED，回修后退出 0）
+- `npm run test:qwen-adapter`（回修前 RED，回修后退出 0）
+- `npm run test:react -- src/app/App.test.tsx`（回修前 RED，回修后 18 tests 通过）
+- `npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts`
+- `npm test`
+- `npm run test:electron-store`
+- `npm run build`
+- `npm run desktop:build`
+- `git diff --check`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl release dist`
+- `sed -n ...` / `tail -n ...` / `rg -n ...` 读取 final agent log、run ledger、项目记忆、想法胶囊和 roadmap progress
+
+下一步的计划：
+
+- 提交并推送 final review follow-up。
+- 派发最终 re-review，确认三项 findings 已关闭后再进入分支收尾。
+
 ## 下一步
 
 1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。

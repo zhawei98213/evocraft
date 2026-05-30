@@ -378,6 +378,7 @@ describe("App", () => {
   });
 
   it("uses the desktop AI adapter after external authorization is acknowledged", async () => {
+    let mainProcessAuthorized = false;
     const desktopApi = installDesktopBridge({
       selectImage: vi.fn().mockResolvedValue("/Users/zha/Desktop/question.png"),
       readImageAsDataUrl: vi.fn().mockResolvedValue("data:image/png;base64,desktop-image"),
@@ -387,9 +388,23 @@ describe("App", () => {
         mode: "real",
         message: "",
       }),
-      detectRegions: vi.fn().mockResolvedValue({
-        ok: true,
-        candidates: createMockRegionCandidates(),
+      setExternalAiAuthorization: vi.fn().mockImplementation(async (acknowledged: boolean) => {
+        mainProcessAuthorized = acknowledged;
+        return { ok: true };
+      }),
+      detectRegions: vi.fn().mockImplementation(async () => {
+        if (!mainProcessAuthorized) {
+          return {
+            ok: false,
+            reason: "external_ai_not_authorized",
+            message: "请先确认外部 AI 识别授权。",
+            retryable: false,
+          };
+        }
+        return {
+          ok: true,
+          candidates: createMockRegionCandidates(),
+        };
       }),
       recognizeQuestion: vi.fn(),
     });
@@ -408,6 +423,7 @@ describe("App", () => {
     await user.click(screen.getByRole("button", { name: "下一步：选择题目区域" }));
 
     await waitFor(() => {
+      expect(desktopApi.setExternalAiAuthorization).toHaveBeenCalledWith(true);
       expect(desktopApi.detectRegions).toHaveBeenCalledWith({
         imageUri: "data:image/png;base64,desktop-image",
       });
@@ -535,6 +551,7 @@ function installDesktopBridge(overrides: Partial<EvoCraftDesktopApi>) {
       mode: "mock",
       message: "",
     }),
+    setExternalAiAuthorization: vi.fn().mockResolvedValue({ ok: true }),
     ...overrides,
   } satisfies EvoCraftDesktopApi;
 

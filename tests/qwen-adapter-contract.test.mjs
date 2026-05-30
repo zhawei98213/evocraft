@@ -89,6 +89,27 @@ assert.deepEqual(
   },
 );
 
+let fileUrlFetchCalls = 0;
+const fileUrlResult = await createQwenAdapter({
+  apiKey: "test-key",
+  fetchImpl: async () => {
+    fileUrlFetchCalls += 1;
+    return { ok: true };
+  },
+}).recognizeQuestion({
+  subject: "chinese",
+  imageUri: "file:///tmp/original.png",
+  selectedRegion: placeholderRegion,
+  selectedRegionImageUri: "file:///tmp/region.png",
+});
+assert.deepEqual(fileUrlResult, {
+  ok: false,
+  reason: "region_image_unsupported",
+  message: "题目区域图片必须是可发送给 AI 服务的数据 URL。",
+  retryable: false,
+});
+assert.equal(fileUrlFetchCalls, 0);
+
 assert.deepEqual(
   await createQwenAdapter({ fetchImpl: async () => ({ ok: true }) }).recognizeQuestion({
     subject: "chinese",

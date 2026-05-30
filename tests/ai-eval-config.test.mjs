@@ -15,6 +15,8 @@ assert.match(script, /manifestPath/, "runner should read a manifest path");
 assert.match(script, /outputPath/, "runner should support a result output path");
 assert.match(script, /createQwenAdapter/, "runner should use the shared Qwen adapter after Task 7");
 assert.match(script, /adapter\.recognizeQuestion/, "runner should evaluate samples through recognizeQuestion");
+assert.match(script, /toDataUrl/, "runner should convert local sample files before provider calls");
+assert.doesNotMatch(script, /pathToFileURL/, "runner must not send local file URLs to cloud providers");
 assert.doesNotMatch(script, /status:\s*"not-run"/, "Task 7 runner should not keep Task 6 placeholder rows");
 assert.doesNotMatch(
   script,

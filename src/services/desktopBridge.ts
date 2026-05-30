@@ -16,6 +16,7 @@ export interface EvoCraftDesktopApi {
   saveRecords(records: WrongQuestionRecord[]): Promise<StorageResult | StorageFailure>;
   clearRecords(): Promise<StorageResult | StorageFailure>;
   getAiRuntimeStatus?(): Promise<AiRuntimeStatus>;
+  setExternalAiAuthorization?(acknowledged: boolean): Promise<{ ok: true }>;
   detectRegions?(input: DetectRegionsInput): Promise<DetectRegionsSuccess | AiAdapterFailure>;
   recognizeQuestion?(
     input: RecognizeQuestionInput,

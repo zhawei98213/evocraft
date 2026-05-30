@@ -68,8 +68,10 @@ interface AppProps {
 function hasDesktopAiBridge(
   bridge: EvoCraftDesktopApi | null,
 ): bridge is EvoCraftDesktopApi &
-  Required<Pick<EvoCraftDesktopApi, "detectRegions" | "recognizeQuestion">> {
-  return Boolean(bridge?.detectRegions && bridge?.recognizeQuestion);
+  Required<Pick<EvoCraftDesktopApi, "detectRegions" | "recognizeQuestion" | "setExternalAiAuthorization">> {
+  return Boolean(
+    bridge?.detectRegions && bridge?.recognizeQuestion && bridge?.setExternalAiAuthorization,
+  );
 }
 
 export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
@@ -147,6 +149,14 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
   }, [desktopBridge]);
 
   useEffect(() => {
+    void desktopBridge
+      ?.setExternalAiAuthorization?.(
+        state.aiRuntimeMode === "real" && state.externalAiAcknowledged,
+      )
+      .catch(() => undefined);
+  }, [desktopBridge, state.aiRuntimeMode, state.externalAiAcknowledged]);
+
+  useEffect(() => {
     if (!regionDrag) return undefined;
     const activeDrag = regionDrag;
 
@@ -176,16 +186,30 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
     dispatch({ type: "GO_TO_SCREEN", screen });
   }
 
-  function blockMissingExternalAiAuthorization(surface: "upload" | "region") {
-    if (state.aiRuntimeMode !== "real" || state.externalAiAcknowledged) return false;
+  async function ensureExternalAiAuthorization(surface: "upload" | "region") {
+    if (state.aiRuntimeMode !== "real") return true;
 
-    if (surface === "upload") {
-      dispatch({ type: "UPLOAD_BLOCKED", message: externalAiAuthorizationMessage });
-    } else {
-      dispatch({ type: "REGION_SELECTION_FAILED", message: externalAiAuthorizationMessage });
+    if (!state.externalAiAcknowledged) {
+      if (surface === "upload") {
+        dispatch({ type: "UPLOAD_BLOCKED", message: externalAiAuthorizationMessage });
+      } else {
+        dispatch({ type: "REGION_SELECTION_FAILED", message: externalAiAuthorizationMessage });
+      }
+      return false;
     }
 
-    return true;
+    try {
+      await desktopBridge?.setExternalAiAuthorization?.(true);
+      return true;
+    } catch {
+      const message = "外部 AI 授权同步失败，请重试。";
+      if (surface === "upload") {
+        dispatch({ type: "UPLOAD_BLOCKED", message });
+      } else {
+        dispatch({ type: "REGION_SELECTION_FAILED", message });
+      }
+      return false;
+    }
   }
 
   async function handleFileSelected(event: ChangeEvent<HTMLInputElement>) {
@@ -233,7 +257,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
       return;
     }
 
-    if (blockMissingExternalAiAuthorization("upload")) return;
+    if (!(await ensureExternalAiAuthorization("upload"))) return;
 
     const result = await aiAdapter.detectRegions({ imageUri: state.uploadedImageUri });
     if (!result.ok) {
@@ -250,7 +274,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
       return;
     }
 
-    if (blockMissingExternalAiAuthorization("region")) return;
+    if (!(await ensureExternalAiAuthorization("region"))) return;
 
     const result = await aiAdapter.detectRegions({ imageUri: state.uploadedImageUri });
     if (!result.ok) {
@@ -308,7 +332,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
       return;
     }
 
-    if (blockMissingExternalAiAuthorization("region")) return;
+    if (!(await ensureExternalAiAuthorization("region"))) return;
 
     const selectedRegionImageUri = await createSelectedRegionImage(
       state.uploadedImageUri,

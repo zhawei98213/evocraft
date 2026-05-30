@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
+import { dirname, extname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { createQwenAdapter } from "../electron/ai/qwenAdapter.cjs";
 
@@ -25,7 +25,7 @@ const adapter = createQwenAdapter({ apiKey: process.env.DASHSCOPE_API_KEY });
 const rows = [];
 for (const sample of manifest.samples) {
   const imagePath = resolve(dirname(manifestPath), sample.imagePath);
-  const imageUri = pathToFileURL(imagePath).toString();
+  const imageUri = await toDataUrl(imagePath);
   const startedAt = Date.now();
   const result = await adapter.recognizeQuestion({
     subject: sample.subject ?? "auto",
@@ -55,3 +55,18 @@ for (const sample of manifest.samples) {
 
 await writeFile(outputPath, `${rows.map((row) => JSON.stringify(row)).join("\n")}\n`, "utf8");
 console.log(`Wrote ${rows.length} evaluation rows to ${outputPath}`);
+
+async function toDataUrl(imagePath) {
+  const extension = extname(imagePath).toLowerCase();
+  const mime = getImageMimeType(extension);
+  const bytes = await readFile(imagePath);
+  return `data:${mime};base64,${bytes.toString("base64")}`;
+}
+
+function getImageMimeType(extension) {
+  if (extension === ".jpg" || extension === ".jpeg") return "image/jpeg";
+  if (extension === ".webp") return "image/webp";
+  if (extension === ".bmp") return "image/bmp";
+  if (extension === ".heic") return "image/heic";
+  return "image/png";
+}

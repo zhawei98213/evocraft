@@ -42,7 +42,7 @@
 | 7. Qwen Adapter Spike | `agents/task-07-qwen-adapter-spike.md` | completed | Qwen adapter, fake fetch tests | `npm run test:qwen-adapter`, `npm run test:ai-eval-config`, `git diff --check`, `npm test`, `npm run build` | `5f9ba4f`, `0c8e488`, `309f8aa`, `338e55b`, `f090b93` |
 | 8. Real AI IPC | `agents/task-08-real-ai-ipc.md` | completed | Electron AI IPC, desktop AI adapter | `npm run test:electron-config`, `npm run test:react -- src/services/aiAdapter.test.ts`, `npm run build`, `git diff --check`, `npm test` | `37f5ad9`, `5e58cbb`, `3240f03` |
 | 9. App Runtime Switch | `agents/task-09-app-runtime-switch.md` | completed | UI mode, authorization copy, final verification | Full verification suite | `c3d2f21`, `8f27ccf`, `c108a67` |
-| Final. Whole-Slice Code Review | `agents/final-code-review.md` | assigned | Full real-AI-recognition desktop migration review | Final verification suite | pending |
+| Final. Whole-Slice Code Review | `agents/final-code-review.md` | changes_requested_fixed | Full real-AI-recognition desktop migration review | Final verification suite | pending |
 
 ## Agent Ledger
 
@@ -78,7 +78,7 @@
 | `agents/task-09-app-runtime-switch.md` | implementer | Task 9 | changes_requested_fixed | 已补 delayed runtime flip 和缺失 AI bridge methods 回归；真实 AI 有效模式必须同时满足 runtime enabled + bridge methods，所有真实 AI 调用入口共用外部授权 gate；实现范围已通过 full verification，等待/配合 review ledger 收口。 |
 | `agents/task-09-spec-review.md` | spec-reviewer | Task 9 | passed | 已确认 Task 9 满足 runtime switch、默认 mock、授权拦截、测试覆盖和文档同步要求，可进入 code-quality review；Task 9 总状态保持 `review`。 |
 | `agents/task-09-code-quality-review.md` | code-quality-reviewer | Task 9 | passed | 复审确认 delayed runtime flip 授权绕过和缺失 bridge methods 回退不一致这两个问题均已关闭；全量验证、LSP 诊断和隐私/产物检查均通过。 |
-| `agents/final-code-review.md` | code-reviewer | Final | assigned | 最终整体验证已通过；等待 reviewer 复查 Tasks 0-9 是否可整体收口。 |
+| `agents/final-code-review.md` | code-reviewer | Final | changes_requested_fixed | Final review 首轮 `FAIL`；已按 review findings 修复 main-process 外部 AI 授权、eval data URL 输入和桌面图片读取 allowlist，等待完整验证与最终 re-review。 |
 
 ## Global Progress
 
@@ -544,7 +544,7 @@
 
 ## Global Blockers
 
-- 无当前实现 blocker。Task 9 已通过 code-quality re-review 并完成。
+- 无当前实现 blocker。Final review 首轮 findings 已完成 follow-up 且完整验证已通过，尚需最终 re-review 后才能关闭分支。
 
 ## Review Rules
 
@@ -566,9 +566,10 @@ For each implementation task:
 
 ## Final Verification
 
-Final verification passed on 2026-05-30 after Tasks 0-9 completed.
+Final verification passed on 2026-05-30 after Tasks 0-9 completed, and passed again after the final review follow-up fixes.
 
 ```bash
+npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts
 npm test
 npm run test:electron-config
 npm run test:electron-store
@@ -582,6 +583,7 @@ git status --short --branch
 
 Results:
 
+- `npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts` -> exit `0`; `28` tests passed after the follow-up.
 - `npm test` -> exit `0`; `5` files / `41` tests passed.
 - `npm run test:electron-config` -> exit `0`.
 - `npm run test:electron-store` -> exit `0`.
@@ -595,10 +597,29 @@ Results:
 
 Next gate:
 
-- Dispatch final whole-slice code review for the real AI recognition desktop migration before branch completion.
+- Commit/push the final review follow-up, then dispatch final re-review before branch completion.
 
 ### 2026-05-30 Final Code Review Prepared
 
 - Created `agents/final-code-review.md` before dispatch so the final reviewer has an independent plan/progress log.
 - Added the final review row to the task and agent ledgers.
 - Final code review is assigned but not yet complete.
+
+### 2026-05-30 Final Code Review Failed
+
+- Final reviewer reported `FAIL` on the whole Tasks 0-9 desktop real-AI migration.
+- HIGH: privileged Electron AI IPC did not independently enforce external-AI authorization, so renderer-only consent was not enough for a child-study-image privacy boundary.
+- HIGH: local AI eval samples were passed to Qwen as `file://` image URLs instead of provider-sendable image payloads.
+- MEDIUM: desktop image data-url reads accepted arbitrary renderer-supplied local image paths by extension instead of limiting reads to user-selected files.
+- The branch stays in final review follow-up; do not mark the migration complete until these findings are fixed, fully verified, and re-reviewed.
+
+### 2026-05-30 Final Code Review Follow-Up Prepared
+
+- Added `ai:set-external-authorization` and main-process authorization checks before real AI provider calls.
+- Added React authorization sync through the desktop bridge and immediate pre-call sync for upload, rerun detection, and confirm-recognition paths.
+- Converted local eval sample files to `data:image/...;base64,...` URLs before shared Qwen adapter calls.
+- Rejected unsupported selected-region image URLs, including local `file://`, before Qwen provider fetch.
+- Collapsed desktop image reads to a one-time system-dialog-selected path allowlist.
+- Focused RED/GREEN commands passed after fixes: `npm run test:electron-config`, `npm run test:ai-eval-config`, `npm run test:qwen-adapter`, `npm run test:react -- src/app/App.test.tsx`, and `npm run build`.
+- Complete verification matrix passed after the follow-up: focused React suite, `npm test`, Electron config/store, AI eval config, Qwen adapter, web build, desktop build, diff check, and tracked-secret/generated-artifact check all exited `0` or returned expected empty output.
+- Next gate: commit/push the follow-up, then dispatch final re-review.

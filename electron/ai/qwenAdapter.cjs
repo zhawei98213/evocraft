@@ -68,6 +68,15 @@ function createQwenAdapter({
         };
       }
 
+      if (!isProviderImageUri(input.selectedRegionImageUri)) {
+        return {
+          ok: false,
+          reason: "region_image_unsupported",
+          message: "题目区域图片必须是可发送给 AI 服务的数据 URL。",
+          retryable: false,
+        };
+      }
+
       if (!apiKey) {
         return {
           ok: false,
@@ -208,6 +217,10 @@ function createQwenAdapter({
       };
     },
   };
+}
+
+function isProviderImageUri(imageUri) {
+  return /^data:image\/[a-z0-9.+-]+;base64,/i.test(imageUri);
 }
 
 function parseQwenJsonContent(content) {

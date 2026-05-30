@@ -7,6 +7,8 @@ const api = {
   saveRecords: (records) => ipcRenderer.invoke("records:save", records),
   clearRecords: () => ipcRenderer.invoke("records:clear"),
   getAiRuntimeStatus: () => ipcRenderer.invoke("ai:runtime-status"),
+  setExternalAiAuthorization: (acknowledged) =>
+    ipcRenderer.invoke("ai:set-external-authorization", acknowledged),
   detectRegions: (input) => ipcRenderer.invoke("ai:detect-regions", input),
   recognizeQuestion: (input) => ipcRenderer.invoke("ai:recognize-question", input),
 };

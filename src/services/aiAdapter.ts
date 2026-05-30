@@ -7,6 +7,8 @@ export type AiAdapterFailureReason =
   | "region_detection_failed"
   | "recognition_failed"
   | "real_ai_disabled"
+  | "external_ai_not_authorized"
+  | "region_image_unsupported"
   | "provider_not_configured"
   | "provider_request_failed"
   | "provider_response_invalid";

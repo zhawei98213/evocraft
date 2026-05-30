@@ -1,6 +1,6 @@
 const { app, BrowserWindow, dialog, ipcMain, session } = require("electron");
 const { readFile } = require("node:fs/promises");
-const { extname, join } = require("node:path");
+const { extname, join, resolve } = require("node:path");
 const { createQwenAdapter } = require("./ai/qwenAdapter.cjs");
 const { isTrustedRendererUrl } = require("./security/rendererTrust.cjs");
 const { createLocalRecordStore, isValidWrongQuestionRecordArray } = require("./storage/localRecordStore.cjs");
@@ -59,6 +59,7 @@ if (app?.whenReady) {
     });
 
     const recordStore = createLocalRecordStore(app.getPath("userData"));
+    registerFileIpc();
     registerRecordIpc(recordStore);
     registerAiIpc(createAiRuntime());
     createWindow();
@@ -71,11 +72,19 @@ if (app?.whenReady) {
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow();
   });
+}
 
-  ipcMain.handle("dialog:select-image", async (event) => {
-    assertAllowedSender(event);
+function registerFileIpc(options = {}) {
+  const targetIpcMain = options.ipcMain ?? ipcMain;
+  const targetDialog = options.dialog ?? dialog;
+  const readFileImpl = options.readFileImpl ?? readFile;
+  const selectedImagePaths = options.selectedImagePaths ?? new Set();
+  const isRendererUrlAllowed = options.isAllowedRendererUrl ?? isAllowedRendererUrl;
 
-    const result = await dialog.showOpenDialog({
+  targetIpcMain.handle("dialog:select-image", async (event) => {
+    assertAllowedSender(event, isRendererUrlAllowed);
+
+    const result = await targetDialog.showOpenDialog({
       title: "选择错题照片",
       properties: ["openFile"],
       filters: [
@@ -84,15 +93,25 @@ if (app?.whenReady) {
     });
 
     if (result.canceled || result.filePaths.length === 0) return null;
-    return result.filePaths[0];
+
+    const filePath = result.filePaths[0];
+    selectedImagePaths.add(resolve(filePath));
+    return filePath;
   });
 
-  ipcMain.handle("file:read-image-data-url", async (event, filePath) => {
-    assertAllowedSender(event);
+  targetIpcMain.handle("file:read-image-data-url", async (event, filePath) => {
+    assertAllowedSender(event, isRendererUrlAllowed);
 
     if (typeof filePath !== "string" || filePath.length === 0) {
       throw new Error("Invalid file path");
     }
+
+    const resolvedFilePath = resolve(filePath);
+    if (!selectedImagePaths.has(resolvedFilePath)) {
+      throw new Error("Image path was not selected by the user");
+    }
+
+    selectedImagePaths.delete(resolvedFilePath);
 
     const extension = extname(filePath).toLowerCase();
     if (!allowedImageExtensions.has(extension)) {
@@ -100,7 +119,7 @@ if (app?.whenReady) {
     }
 
     const mime = getImageMimeType(extension);
-    const bytes = await readFile(filePath);
+    const bytes = await readFileImpl(filePath);
     return `data:${mime};base64,${bytes.toString("base64")}`;
   });
 }
@@ -147,22 +166,33 @@ function createAiRuntime() {
 function registerAiIpc(runtime, options = {}) {
   const targetIpcMain = options.ipcMain ?? ipcMain;
   const isRendererUrlAllowed = options.isAllowedRendererUrl ?? isAllowedRendererUrl;
+  let externalAiAuthorized = Boolean(options.externalAiAuthorized);
 
   targetIpcMain.handle("ai:runtime-status", (event) => {
     assertAllowedSender(event, isRendererUrlAllowed);
     return runtime.status;
   });
 
+  targetIpcMain.handle("ai:set-external-authorization", (event, acknowledged) => {
+    assertAllowedSender(event, isRendererUrlAllowed);
+
+    if (typeof acknowledged !== "boolean") {
+      throw new Error("Invalid external AI authorization payload");
+    }
+
+    externalAiAuthorized = acknowledged;
+    return { ok: true };
+  });
+
   targetIpcMain.handle("ai:detect-regions", async (event, input) => {
     assertAllowedSender(event, isRendererUrlAllowed);
 
     if (!runtime.status.enabled) {
-      return {
-        ok: false,
-        reason: "real_ai_disabled",
-        message: "真实 AI 未开启。",
-        retryable: false,
-      };
+      return createRealAiDisabledFailure();
+    }
+
+    if (!externalAiAuthorized) {
+      return createExternalAiNotAuthorizedFailure();
     }
 
     return runtime.adapter.detectRegions(input);
@@ -172,16 +202,33 @@ function registerAiIpc(runtime, options = {}) {
     assertAllowedSender(event, isRendererUrlAllowed);
 
     if (!runtime.status.enabled) {
-      return {
-        ok: false,
-        reason: "real_ai_disabled",
-        message: "真实 AI 未开启。",
-        retryable: false,
-      };
+      return createRealAiDisabledFailure();
+    }
+
+    if (!externalAiAuthorized) {
+      return createExternalAiNotAuthorizedFailure();
     }
 
     return runtime.adapter.recognizeQuestion(input);
   });
+}
+
+function createRealAiDisabledFailure() {
+  return {
+    ok: false,
+    reason: "real_ai_disabled",
+    message: "真实 AI 未开启。",
+    retryable: false,
+  };
+}
+
+function createExternalAiNotAuthorizedFailure() {
+  return {
+    ok: false,
+    reason: "external_ai_not_authorized",
+    message: "请先确认外部 AI 识别授权。",
+    retryable: false,
+  };
 }
 
 function assertAllowedSender(event, isRendererUrlAllowed = isAllowedRendererUrl) {
@@ -212,4 +259,5 @@ module.exports = {
   createAiRuntime,
   isAllowedRendererUrl,
   registerAiIpc,
+  registerFileIpc,
 };

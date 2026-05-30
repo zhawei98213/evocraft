@@ -40,9 +40,14 @@ async function callHandler(handler, event, input) {
     { ipcMain: fakeIpcMain, isAllowedRendererUrl: trustOnlyAppUrl },
   );
 
-  assert.equal(fakeIpcMain.handlers.size, 3);
+  assert.equal(fakeIpcMain.handlers.size, 4);
 
-  for (const channel of ["ai:runtime-status", "ai:detect-regions", "ai:recognize-question"]) {
+  for (const channel of [
+    "ai:runtime-status",
+    "ai:set-external-authorization",
+    "ai:detect-regions",
+    "ai:recognize-question",
+  ]) {
     await assert.rejects(
       callHandler(fakeIpcMain.handlers.get(channel), untrustedEvent, {}),
       /Blocked IPC from untrusted renderer/,
@@ -122,6 +127,29 @@ async function callHandler(handler, event, input) {
     { ipcMain: fakeIpcMain, isAllowedRendererUrl: trustOnlyAppUrl },
   );
 
+  assert.deepEqual(await fakeIpcMain.handlers.get("ai:detect-regions")(trustedEvent, detectInput), {
+    ok: false,
+    reason: "external_ai_not_authorized",
+    message: "请先确认外部 AI 识别授权。",
+    retryable: false,
+  });
+  assert.deepEqual(
+    await fakeIpcMain.handlers.get("ai:recognize-question")(trustedEvent, recognizeInput),
+    {
+      ok: false,
+      reason: "external_ai_not_authorized",
+      message: "请先确认外部 AI 识别授权。",
+      retryable: false,
+    },
+  );
+  assert.equal(detectCalls, 0);
+  assert.equal(recognizeCalls, 0);
+
+  assert.deepEqual(
+    await fakeIpcMain.handlers.get("ai:set-external-authorization")(trustedEvent, true),
+    { ok: true },
+  );
+
   assert.deepEqual(
     await fakeIpcMain.handlers.get("ai:detect-regions")(trustedEvent, detectInput),
     { ok: true, candidates: [selectedRegion] },
@@ -134,4 +162,16 @@ async function callHandler(handler, event, input) {
   assert.deepEqual(forwardedRecognizeInput, recognizeInput);
   assert.equal(detectCalls, 1);
   assert.equal(recognizeCalls, 1);
+
+  assert.deepEqual(
+    await fakeIpcMain.handlers.get("ai:set-external-authorization")(trustedEvent, false),
+    { ok: true },
+  );
+  assert.deepEqual(await fakeIpcMain.handlers.get("ai:detect-regions")(trustedEvent, detectInput), {
+    ok: false,
+    reason: "external_ai_not_authorized",
+    message: "请先确认外部 AI 识别授权。",
+    retryable: false,
+  });
+  assert.equal(detectCalls, 1);
 }
