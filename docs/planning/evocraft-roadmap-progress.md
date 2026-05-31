@@ -2291,13 +2291,49 @@
 - 提交并推送 final review follow-up。
 - 派发最终 re-review，确认三项 findings 已关闭后再进入分支收尾。
 
+### 2026-05-31：真实 AI 识别桌面迁移最终收口
+
+本轮任务是什么：
+
+- 根据最终 re-review 进度继续收口，确认真实 AI 识别桌面本地优先阶段是否可以从 implementation/review lane 转入分支管理。
+
+已完成什么：
+
+- 同步远端后确认本地分支包含 final re-review docs-only 提交 `6c3127b` 和 `ed02b62`。
+- Run ledger 已将 Final Whole-Slice Code Review 标记为 `passed`，final agent log 已记录 `PASS` 结论。
+- Final re-review 明确确认 `54d25e0` 关闭了三项首轮 findings：main-process 外部 AI 授权 gate、eval data URL 输入、一次性桌面图片读取 allowlist。
+- Subagent re-review 未发现新的 HIGH/MEDIUM 问题，并已把验证命令结果写入 agent log、run ledger 和 roadmap progress。
+- 项目记忆已更新为：桌面优先迁移第一阶段已闭环，下一阶段进入脱敏样本实测。
+- Fresh completion verification 已通过：`npm test` 5 files / 41 tests、`git diff --check` 和 `git status --short --branch` 均符合预期。
+
+卡在哪里：
+
+- 无当前实现 blocker。尚需提交推送本最终收口记录，并进入分支管理选项。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git log --oneline --decorate -8`
+- `sed -n '33,95p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
+- `tail -n 160 docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
+- `sed -n '1,260p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/final-code-review.md`
+- `tail -n 160 docs/planning/evocraft-roadmap-progress.md`
+- `sed -n '1,120p' docs/planning/evocraft-project-memory.md`
+- `git show --stat --oneline ed02b62`
+- `npm test`
+- `git diff --check`
+
+下一步的计划：
+
+- 提交并推送最终收口记录。
+- 进入 branch finishing：默认保留当前 pushed feature branch，等待用户决定是否创建 PR 或本地合并。
+
 ## 下一步
 
-1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。
-2. 真实 AI 接入前先建立桌面本地数据目录和文件夹 + JSON 索引，避免真实图片和模型日志继续依赖 `localStorage`。
-3. 使用 10-15 张三科混合脱敏样本跑 Qwen 小样本评测，确认 schema、prompt、失败边界、成本和编造答案风险。
-4. 生产签名、公证、自动更新和安装包发布流程另开任务。
-5. 平板和手机版本先补独立场景/信息架构 PRD，再决定 PWA、原生、React Native 或其他路线。
+1. 使用 10-15 张三科混合脱敏样本跑 Qwen 小样本评测，确认 schema、prompt、失败边界、成本和编造答案风险。
+2. 根据样本评测结果决定是否扩大到 50 张、是否引入火山豆包作为第二供应商 A/B。
+3. 生产签名、公证、自动更新和安装包发布流程另开任务。
+4. 平板和手机版本先补独立场景/信息架构 PRD，再决定 PWA、原生、React Native 或其他路线。
 
 ## 持续跟踪风险
 
