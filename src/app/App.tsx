@@ -23,9 +23,12 @@ import {
   wrongQuestionReducer,
   type Screen,
 } from "../features/wrongQuestion/wrongQuestionReducer";
-import { getDesktopBridge } from "../services/desktopBridge";
+import type { AiAdapter, AiRuntimeStatus } from "../services/aiAdapter";
+import { createDesktopAiAdapter } from "../services/desktopAiAdapter";
+import { getDesktopBridge, type EvoCraftDesktopApi } from "../services/desktopBridge";
+import { createDesktopRecordStore } from "../services/desktopRecordStore";
 import { mockAiAdapter } from "../services/mockAiAdapter";
-import { createLocalStorageRecordStore } from "../services/storage";
+import { createLocalStorageRecordStore, type RecordStore } from "../services/storage";
 
 interface ReviewForm {
   subject: Subject;
@@ -55,23 +58,103 @@ const emptyReviewForm: ReviewForm = {
   notes: "",
 };
 
-export function App() {
-  const recordStore = useMemo(
-    () => createLocalStorageRecordStore(getBrowserStorage()),
-    [],
+const externalAiAuthorizationMessage = "请先确认外部 AI 识别授权。";
+const missingDesktopAiBridgeMessage = "真实 AI 桥接能力不可用，已回退到本地 mock。";
+
+interface AppProps {
+  recordStore?: RecordStore;
+}
+
+function hasDesktopAiBridge(
+  bridge: EvoCraftDesktopApi | null,
+): bridge is EvoCraftDesktopApi &
+  Required<Pick<EvoCraftDesktopApi, "detectRegions" | "recognizeQuestion" | "setExternalAiAuthorization">> {
+  return Boolean(
+    bridge?.detectRegions && bridge?.recognizeQuestion && bridge?.setExternalAiAuthorization,
   );
+}
+
+export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
+  const desktopBridge = getDesktopBridge();
   const [state, dispatch] = useReducer(
     wrongQuestionReducer,
     undefined,
-    () => createInitialWrongQuestionState(recordStore.load()),
+    () => createInitialWrongQuestionState([]),
   );
-  const desktopBridge = getDesktopBridge();
+  const recordStore = useMemo(
+    () =>
+      injectedRecordStore ??
+      (desktopBridge
+        ? createDesktopRecordStore(desktopBridge)
+        : createLocalStorageRecordStore(getBrowserStorage())),
+    [desktopBridge, injectedRecordStore],
+  );
+  const aiAdapter: AiAdapter = useMemo(
+    () =>
+      hasDesktopAiBridge(desktopBridge) && state.aiRuntimeMode === "real"
+        ? createDesktopAiAdapter(desktopBridge)
+        : mockAiAdapter,
+    [desktopBridge, state.aiRuntimeMode],
+  );
+  const [isRecordStoreHydrated, setIsRecordStoreHydrated] = useState(false);
   const [reviewForm, setReviewForm] = useState<ReviewForm>(emptyReviewForm);
   const [regionDrag, setRegionDrag] = useState<RegionDragState | null>(null);
 
   useEffect(() => {
     document.body.dataset.screen = state.screen;
   }, [state.screen]);
+
+  useEffect(() => {
+    let active = true;
+    setIsRecordStoreHydrated(false);
+
+    recordStore
+      .load()
+      .then((records) => {
+        if (!active) return;
+        dispatch({ type: "RECORDS_LOADED", records });
+      })
+      .catch(() => undefined)
+      .finally(() => {
+        if (!active) return;
+        setIsRecordStoreHydrated(true);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [recordStore]);
+
+  useEffect(() => {
+    if (!desktopBridge?.getAiRuntimeStatus) return;
+
+    let active = true;
+
+    desktopBridge
+      .getAiRuntimeStatus()
+      .then((status: AiRuntimeStatus) => {
+        if (!active) return;
+        const canUseRealAi = status.enabled && hasDesktopAiBridge(desktopBridge);
+        dispatch({
+          type: "AI_RUNTIME_READY",
+          mode: canUseRealAi ? "real" : "mock",
+          message: status.enabled && !canUseRealAi ? missingDesktopAiBridgeMessage : status.message,
+        });
+      })
+      .catch(() => undefined);
+
+    return () => {
+      active = false;
+    };
+  }, [desktopBridge]);
+
+  useEffect(() => {
+    void desktopBridge
+      ?.setExternalAiAuthorization?.(
+        state.aiRuntimeMode === "real" && state.externalAiAcknowledged,
+      )
+      .catch(() => undefined);
+  }, [desktopBridge, state.aiRuntimeMode, state.externalAiAcknowledged]);
 
   useEffect(() => {
     if (!regionDrag) return undefined;
@@ -101,6 +184,32 @@ export function App() {
 
   function goToScreen(screen: Screen) {
     dispatch({ type: "GO_TO_SCREEN", screen });
+  }
+
+  async function ensureExternalAiAuthorization(surface: "upload" | "region") {
+    if (state.aiRuntimeMode !== "real") return true;
+
+    if (!state.externalAiAcknowledged) {
+      if (surface === "upload") {
+        dispatch({ type: "UPLOAD_BLOCKED", message: externalAiAuthorizationMessage });
+      } else {
+        dispatch({ type: "REGION_SELECTION_FAILED", message: externalAiAuthorizationMessage });
+      }
+      return false;
+    }
+
+    try {
+      await desktopBridge?.setExternalAiAuthorization?.(true);
+      return true;
+    } catch {
+      const message = "外部 AI 授权同步失败，请重试。";
+      if (surface === "upload") {
+        dispatch({ type: "UPLOAD_BLOCKED", message });
+      } else {
+        dispatch({ type: "REGION_SELECTION_FAILED", message });
+      }
+      return false;
+    }
   }
 
   async function handleFileSelected(event: ChangeEvent<HTMLInputElement>) {
@@ -148,7 +257,9 @@ export function App() {
       return;
     }
 
-    const result = await mockAiAdapter.detectRegions({ imageUri: state.uploadedImageUri });
+    if (!(await ensureExternalAiAuthorization("upload"))) return;
+
+    const result = await aiAdapter.detectRegions({ imageUri: state.uploadedImageUri });
     if (!result.ok) {
       dispatch({ type: "REGION_SELECTION_FAILED", message: result.message });
       return;
@@ -163,7 +274,9 @@ export function App() {
       return;
     }
 
-    const result = await mockAiAdapter.detectRegions({ imageUri: state.uploadedImageUri });
+    if (!(await ensureExternalAiAuthorization("region"))) return;
+
+    const result = await aiAdapter.detectRegions({ imageUri: state.uploadedImageUri });
     if (!result.ok) {
       dispatch({ type: "REGION_SELECTION_FAILED", message: result.message });
       return;
@@ -219,12 +332,14 @@ export function App() {
       return;
     }
 
+    if (!(await ensureExternalAiAuthorization("region"))) return;
+
     const selectedRegionImageUri = await createSelectedRegionImage(
       state.uploadedImageUri,
       selectedRegion,
     );
 
-    const result = await mockAiAdapter.recognizeQuestion({
+    const result = await aiAdapter.recognizeQuestion({
       subject: state.selectedSubject,
       imageUri: state.uploadedImageUri,
       selectedRegion,
@@ -239,12 +354,12 @@ export function App() {
     dispatch({ type: "DRAFT_READY", draft: result.draft });
   }
 
-  function saveRecord() {
-    if (!state.draft) return;
+  async function saveRecord() {
+    if (!state.draft || !isRecordStoreHydrated) return;
 
     const record = createRecordFromDraft(state.draft, reviewForm);
     const nextRecords = [record, ...state.records.filter((item) => item.id !== record.id)];
-    const saveResult = recordStore.save(nextRecords);
+    const saveResult = await recordStore.save(nextRecords);
 
     if (!saveResult.ok) {
       dispatch({ type: "SAVE_FAILED", message: getStorageErrorMessage(saveResult.reason) });
@@ -438,6 +553,31 @@ export function App() {
                     <small>当前照片和错题记录只保存在此浏览器；未来外部 AI 识别会单独授权。</small>
                   </span>
                 </label>
+
+                {state.aiRuntimeMode === "real" ? (
+                  <label className="privacy-consent ai-consent">
+                    <input
+                      checked={state.externalAiAcknowledged}
+                      onChange={(event) =>
+                        dispatch({
+                          type: "EXTERNAL_AI_ACKNOWLEDGED",
+                          acknowledged: event.target.checked,
+                        })
+                      }
+                      type="checkbox"
+                    />
+                    <span>
+                      <strong>真实 AI 测试模式</strong>
+                      <small>开启后会把确认的题目区域发送到外部 AI 服务进行识别。</small>
+                      {state.aiRuntimeMessage ? <small>{state.aiRuntimeMessage}</small> : null}
+                    </span>
+                  </label>
+                ) : (
+                  <div className="ai-mode-note">
+                    <strong>本地 mock 识别</strong>
+                    {state.aiRuntimeMessage ? <small>{state.aiRuntimeMessage}</small> : null}
+                  </div>
+                )}
 
                 <button
                   className="button-primary start-button"
@@ -648,6 +788,7 @@ export function App() {
             onBack={() => goToScreen("upload")}
             onFormChange={setReviewForm}
             onSave={saveRecord}
+            saveDisabled={!isRecordStoreHydrated}
             saveError={state.saveError}
           />
         )}
@@ -814,6 +955,7 @@ function ReviewScreen({
   onBack,
   onFormChange,
   onSave,
+  saveDisabled = false,
   saveError,
 }: {
   draft: WrongQuestionDraft;
@@ -821,6 +963,7 @@ function ReviewScreen({
   onBack: () => void;
   onFormChange: (form: ReviewForm) => void;
   onSave: () => void;
+  saveDisabled?: boolean;
   saveError: string;
 }) {
   function updateForm<K extends keyof ReviewForm>(key: K, value: ReviewForm[K]) {
@@ -838,7 +981,7 @@ function ReviewScreen({
           <button className="button-secondary" type="button" onClick={onBack}>
             重新上传
           </button>
-          <button className="button-primary" type="button" onClick={onSave}>
+          <button className="button-primary" disabled={saveDisabled} type="button" onClick={onSave}>
             保存到错题本
           </button>
         </div>

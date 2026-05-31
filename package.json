@@ -12,8 +12,11 @@
     "desktop:build": "npm run build && electron-builder --dir",
     "desktop:open": "npm run desktop:build && open -n release/mac/EvoCraft.app",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node tests/static-mvp.test.mjs && node tests/logo-assets.test.mjs && vitest run",
-    "test:electron-config": "node tests/electron-config.test.mjs",
+    "test": "node tests/static-mvp.test.mjs && node tests/logo-assets.test.mjs && node tests/ai-eval-config.test.mjs && vitest run",
+    "test:ai-eval-config": "node tests/ai-eval-config.test.mjs",
+    "test:electron-config": "node tests/electron-config.test.mjs && node tests/electron-ai-ipc.test.mjs && node tests/electron-file-ipc.test.mjs",
+    "test:electron-store": "node tests/electron-local-record-store.test.mjs",
+    "test:qwen-adapter": "node tests/qwen-adapter-contract.test.mjs",
     "test:static": "node tests/static-mvp.test.mjs",
     "test:react": "vitest run"
   },

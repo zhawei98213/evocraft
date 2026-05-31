@@ -5,6 +5,7 @@ Copy this template to `agents/task-NN-short-name.md` before or at subagent dispa
 ## Metadata
 
 - Agent ID:
+- Agent role:
 - Task ID:
 - Task title:
 - Parent plan: `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`

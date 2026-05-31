@@ -19,7 +19,8 @@ docs/superpowers/agent-runs/
     agent-log-template.md
     agents/
       task-01-short-name.md
-      task-02-short-name.md
+      task-01-spec-review.md
+      task-01-code-quality-review.md
 ```
 
 ## 3. Run Ledger 要求
@@ -54,6 +55,7 @@ docs/superpowers/agent-runs/
 - Agent ID。
 - Task ID。
 - 任务标题。
+- Agent role: `implementer`, `spec-reviewer`, `code-quality-reviewer`, or another explicit role.
 - 父级计划链接。
 - 分配时间。
 - 完成时间。
@@ -78,10 +80,11 @@ Leader 必须：
 1. 在派发 subagent 前创建 run ledger。
 2. 在派发时写清 task log 的初始任务边界。
 3. 收到 agent 报告后更新 task log。
-4. review 后更新 run ledger。
-5. 如果 agent 返工，记录返工原因和新的验证结果。
-6. 合并前确认所有 task log 都处于 `completed` 或明确 `cancelled`。
-7. 最终报告中引用 run ledger。
+4. 每个实现 agent 完成后，分别派发 spec reviewer 和 code quality reviewer，并为二者维护独立 task log。
+5. review 后更新 run ledger。
+6. 如果 agent 返工，记录返工原因和新的验证结果。
+7. 合并前确认所有 task log 都处于 `completed` 或明确 `cancelled`。
+8. 最终报告中引用 run ledger。
 
 ## 6. Agent 报告最小格式
 

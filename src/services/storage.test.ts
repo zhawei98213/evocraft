@@ -4,7 +4,7 @@ import { createMockRecognition, createRecordFromDraft } from "../domain/wrongQue
 import { createLocalStorageRecordStore } from "./storage";
 
 describe("createLocalStorageRecordStore", () => {
-  it("saves and loads records", () => {
+  it("saves and loads records", async () => {
     const storage = createMemoryStorage();
     const store = createLocalStorageRecordStore(storage);
     const record = createRecordFromDraft(createMockRecognition(), {
@@ -12,11 +12,11 @@ describe("createLocalStorageRecordStore", () => {
       now: "2026-05-17T08:00:00.000Z",
     });
 
-    expect(store.save([record])).toEqual({ ok: true });
-    expect(store.load()).toEqual([record]);
+    await expect(store.save([record])).resolves.toEqual({ ok: true });
+    await expect(store.load()).resolves.toEqual([record]);
   });
 
-  it("returns a recoverable write failure", () => {
+  it("returns a recoverable write failure", async () => {
     const store = createLocalStorageRecordStore({
       getItem: () => null,
       setItem: () => {
@@ -25,13 +25,13 @@ describe("createLocalStorageRecordStore", () => {
       removeItem: () => undefined,
     });
 
-    expect(store.save([])).toEqual({
+    await expect(store.save([])).resolves.toEqual({
       ok: false,
       reason: "storage_write_failed",
     });
   });
 
-  it("clears records", () => {
+  it("clears records", async () => {
     const storage = createMemoryStorage();
     const store = createLocalStorageRecordStore(storage);
     const record = createRecordFromDraft(createMockRecognition(), {
@@ -39,10 +39,10 @@ describe("createLocalStorageRecordStore", () => {
       now: "2026-05-17T08:00:00.000Z",
     });
 
-    store.save([record]);
+    await store.save([record]);
 
-    expect(store.clear()).toEqual({ ok: true });
-    expect(store.load()).toEqual([]);
+    await expect(store.clear()).resolves.toEqual({ ok: true });
+    await expect(store.load()).resolves.toEqual([]);
   });
 });
 

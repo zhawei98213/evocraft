@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-05-23
+最后更新：2026-05-30
 
 ## 路线图
 
@@ -83,6 +83,40 @@
 如果没有卡点，写 `无`。命令不需要粘贴完整输出，但要保留足够复现的命令名称或关键命令。
 
 ## 当前进度
+
+### 2026-05-30：54d25e0 Final Re-review PASS
+
+本轮任务是什么：
+
+- 只复审最终 whole-slice code review 首轮 `FAIL` 的三项 findings 是否已被 `54d25e0` 关闭，并把结论、检查点、命令和验证结果写入项目文档。
+
+已完成什么：
+
+- 复核 `54d25e0 Enforce desktop real AI consent in privileged boundaries`，确认这次 re-review 只覆盖三项首轮阻塞点，没有重新实现功能。
+- 确认 privileged Electron AI IPC 已在 `electron/main.cjs` 中独立维护 `externalAiAuthorized` 边界：`ai:detect-regions` / `ai:recognize-question` 在 provider 调用前会对未授权返回 `external_ai_not_authorized`，不再只依赖 renderer state，untrusted renderer 仍被拒绝。
+- 确认 `scripts/evaluate-ai-samples.mjs` 已把本地样本转成 `data:image/...;base64,...`，且共享 Qwen adapter 会在 fetch 前拒绝 `selectedRegionImageUri` 为 `file://...` 的输入。
+- 确认桌面 `file:read-image-data-url` 已收紧为系统 `dialog:select-image` 返回且尚未消费的一次性路径；未选路径和第二次读取都会被拒绝。
+- 跑完本轮要求的验证命令并全部通过：`git status --short --branch`、`git show --stat --oneline 54d25e0`、`npm run test:electron-config`、`npm run test:ai-eval-config`、`npm run test:qwen-adapter`、`npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts`、`git diff --check`。
+- 更新 final review agent log、real-ai-recognition run ledger 和 roadmap progress，记录最终 re-review 结论 `PASS`，且未发现新的 `HIGH/MEDIUM` 问题。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git show --stat --oneline 54d25e0`
+- `sed -n ...` / `nl -ba ...` / `rg -n ...` 审读 `electron/main.cjs`、`electron/ai/qwenAdapter.cjs`、`scripts/evaluate-ai-samples.mjs`、`tests/electron-ai-ipc.test.mjs`、`tests/electron-file-ipc.test.mjs`、`tests/qwen-adapter-contract.test.mjs`、`src/app/App.tsx`、run ledger 和 final review log
+- `npm run test:electron-config`
+- `npm run test:ai-eval-config`
+- `npm run test:qwen-adapter`
+- `npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts`
+- `git diff --check`
+
+下一步的计划：
+
+- 本轮 final re-review、docs-only 提交和推送都已完成；后续转入分支级收尾动作。
 
 ### 2026-05-10：产品文档基础与 PRD v1.0
 
@@ -1345,13 +1379,961 @@
 
 - 提交并推送本轮文档体系更新；随后按新协议启动 subagent-driven，并为每个 agent 创建/更新对应 task log。
 
+### 2026-05-23：真实 AI 识别 Task 0 基线与 Reviewer 日志补齐
+
+本轮任务是什么：
+
+- 按 subagent-driven 规则启动真实 AI 识别实施分支，并完成 Task 0 基线验证；同时把 reviewer agent 的独立日志补齐，满足“每一个 agent 的工作计划和进度都要记录”的要求。
+
+已完成什么：
+
+- 创建实现分支 `codex/real-ai-recognition-implementation`。
+- Task 0 implementer 已完成基线验证并提交 `02c1c03`。
+- `npm test`、`npm run test:electron-config`、`npm run build` 均已通过。
+- 补充 Task 0 spec reviewer 和 code quality reviewer 的独立 task log，并在 run ledger 增加 Agent Ledger。
+- 明确后续每个实现任务都要保留 implementer、spec reviewer、code quality reviewer 三类独立 agent log。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `sed -n '1,220p' /Users/zha/.codex/superpowers/skills/subagent-driven-development/SKILL.md`
+- `git status --short --branch`
+- `git log --oneline --decorate -5`
+- `sed -n '1,260p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
+- `sed -n '1,260p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-00-preflight.md`
+- `sed -n '1,240p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agent-log-template.md`
+- `rg --files docs/superpowers/agent-runs`
+
+下一步的计划：
+
+- 派发 Task 0 spec reviewer；通过后再派发 Task 0 code quality reviewer，然后进入 Task 1 异步 RecordStore 改造。
+
+### 2026-05-23：真实 AI 识别 Task 1 派发准备
+
+本轮任务是什么：
+
+- 在 Task 0 完成 implementer、spec reviewer、code quality reviewer 三段审查后，准备 Task 1 异步 RecordStore 改造的 agent 日志和派发边界。
+
+已完成什么：
+
+- Task 0 已关闭：基线验证、spec review、quality review 均通过，当前实现分支同步到 `origin/codex/real-ai-recognition-implementation`。
+- 创建 Task 1 implementer、spec reviewer、code quality reviewer 三份独立 task log。
+- 更新 run ledger，将 Task 1 标记为 `assigned`，并记录三类 agent 的工作计划与状态。
+- 明确 Task 1 只做 async RecordStore、Reducer 加载动作和 App 异步 load/save，不进入 Electron 文件存储、IPC 或真实 AI。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git log --oneline --decorate -6`
+- `sed -n '1,180p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
+- `sed -n '1,260p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-00-code-quality-review.md`
+- `sed -n '180,330p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+
+下一步的计划：
+
+- 提交并推送 Task 1 派发准备日志；随后派出 Task 1 implementer subagent。
+
+### 2026-05-24：真实 AI 识别 Task 1 关闭与 Task 2 派发准备
+
+本轮任务是什么：
+
+- 完成 Task 1 异步 RecordStore 的实现、审查、返工和复审，并为 Task 2 Electron 本地文件存储创建 agent 日志。
+
+已完成什么：
+
+- Task 1 implementer 将 browser `RecordStore` 改为 Promise 契约，并让 `App` 通过 `RECORDS_LOADED` 异步加载记录。
+- Task 1 spec review 通过。
+- Task 1 code quality review 发现真实异步延迟下的 hydration/save race，阻止进入 Task 2。
+- Task 1 implementer 返工：保存按钮在初始 hydration 完成前不可用，并补充 delayed-load + early-save 回归测试。
+- Task 1 code quality re-review 通过，阻塞解除。
+- 创建 Task 2 implementer、spec reviewer、code quality reviewer 三份独立 task log。
+- 更新 run ledger，将 Task 2 标记为 `assigned`，并明确 Task 2 只能实现 Electron main 侧本地文件存储和 Node 测试。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git log --oneline --decorate -10`
+- `sed -n '1,280p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
+- `sed -n '1,380p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-01-code-quality-review.md`
+- `sed -n '330,560p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+
+下一步的计划：
+
+- 提交并推送 Task 2 派发准备日志；随后派出 Task 2 implementer subagent。
+
+### 2026-05-24：真实 AI 识别 Task 2 关闭与 Task 3 派发准备
+
+本轮任务是什么：
+
+- 完成 Task 2 Electron main 本地文件存储的实现、审查、返工和复审，并为 Task 3 Record Store IPC 创建 agent 日志。
+
+已完成什么：
+
+- Task 2 implementer 新增 `electron/storage/localRecordStore.cjs`、`tests/electron-local-record-store.test.mjs` 和 `test:electron-store`。
+- Task 2 spec review 通过。
+- Task 2 code quality review 发现路径逃逸和外部 `file://` 资产透传问题，阻止进入 Task 3。
+- Task 2 implementer 返工：限制相对路径 hydration 的 recordDir containment，外部 `file://` 会复制到当前记录 `assets/`，并补充 traversal、external file、prune、broken record、updatedAt 排序测试。
+- Task 2 code quality re-review 通过，阻塞解除。
+- 创建 Task 3 implementer、spec reviewer、code quality reviewer 三份独立 task log。
+- 更新 run ledger，将 Task 3 标记为 `assigned`，并明确 Task 3 只做 Electron record IPC、preload API、typed bridge 和 renderer-side desktop store adapter，不进入 React app 自动选择。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git log --oneline --decorate -10`
+- `sed -n '1,340p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
+- `sed -n '1,380p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-02-code-quality-review.md`
+- `sed -n '560,760p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+
+下一步的计划：
+
+- 提交并推送 Task 3 派发准备日志；随后派出 Task 3 implementer subagent。
+
+### 2026-05-24：真实 AI 识别 Task 3 安全返工
+
+本轮任务是什么：
+
+- 根据 Task 3 code quality review 结果，修复 Electron record-store IPC 的信任边界和 payload 校验问题，避免在进入 Task 4 前把本地错题数据暴露给过宽的 renderer IPC surface。
+
+已完成什么：
+
+- Task 3 spec review 已通过，但 code quality review 阻止继续：原 sender allowlist 接受 dev URL 前缀和任意 `file://`，`records:save` 只校验数组不校验记录形状。
+- 新增 `electron/security/rendererTrust.cjs`，把 dev renderer URL 收紧为精确 origin/path/search，把生产 renderer 收紧为 packaged `dist/index.html` 文件 URL。
+- 更新 `electron/main.cjs`，所有 record IPC 继续走 `assertAllowedSender(event)`，并在 `records:save` 写入前逐条验证 `WrongQuestionRecord` 形状。
+- 更新 `electron/storage/localRecordStore.cjs`，直接调用 store 时也拒绝 malformed record arrays，避免绕过 IPC 后写坏本地数据。
+- 给 `tests/electron-config.test.mjs` 增加运行时 URL trust 回归测试，覆盖近似恶意 dev URL 和任意生产 `file://`。
+- 给 `tests/electron-local-record-store.test.mjs` 增加 malformed save 回归测试。
+- 更新 Task 3 implementer log 和 run ledger，Task 3 当前等待 code-quality re-review，Task 4 仍未启动。
+
+卡在哪里：
+
+- 无实现卡点；Task 3 需要 code-quality re-review 通过后才能进入 Task 4。
+
+执行的是什么命令：
+
+- `npm run test:electron-config`
+- `npm run test:electron-store`
+- `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx`
+- `npm run build`
+- `npm test`
+- `git diff --check`
+- `git status --short --ignored`
+
+下一步的计划：
+
+- 提交并推送 Task 3 follow-up fix。
+- 派出 Task 3 code-quality re-review agent；通过后再创建并派发 Task 4 React Desktop Store。
+
+### 2026-05-24：真实 AI 识别 Task 3 sparse-array 返工
+
+本轮任务是什么：
+
+- 根据 Task 3 code-quality re-review 结果，修复 malformed record payload 中 sparse array 会绕过 `every(...)` 校验并导致部分写入的问题。
+
+已完成什么：
+
+- 复审确认 `rendererTrust` 和 dense malformed-array 修复有效，但 sparse arrays 仍会让 `records.every(isValidWrongQuestionRecord)` 跳过空洞。
+- 先在 `tests/electron-local-record-store.test.mjs` 添加 sparse-array 回归测试，并确认 `npm run test:electron-store` 在修复前失败，失败证据显示 `valid-before-hole` 已被部分写入。
+- 在 `electron/storage/localRecordStore.cjs` 新增 `isValidWrongQuestionRecordArray(...)`，使用 index + `hasOwnProperty` 逐项检查，任何空洞或非法记录都会在写入前整体拒绝。
+- 更新 `electron/main.cjs` 和 local store direct save boundary，共用 sparse-safe validation helper。
+- 验证通过：`npm run test:electron-store`、`npm run test:electron-config`、`npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx`、`npm run build`、`npm test`、`git diff --check`。
+
+卡在哪里：
+
+- 无实现卡点；Task 3 仍需 code-quality re-review 通过后才能启动 Task 4。
+
+执行的是什么命令：
+
+- `npm run test:electron-store`（修复前失败，修复后通过）
+- `npm run test:electron-config`
+- `npm run test:react -- src/services/storage.test.ts src/app/App.test.tsx`
+- `npm run build`
+- `npm test`
+- `git diff --check`
+- `git status --short --branch`
+
+下一步的计划：
+
+- 提交并推送 sparse-array follow-up fix。
+- 再次派出 Task 3 code-quality re-review；通过后进入 Task 4 React Desktop Store。
+
+### 2026-05-24：真实 AI 识别 Task 4 派发准备
+
+本轮任务是什么：
+
+- 在 Task 3 record-store IPC 通过质量复审后，为 Task 4 React desktop store selection 创建 agent 日志和派发边界。
+
+已完成什么：
+
+- Task 3 已完成：renderer trust、record payload validation、sparse malformed arrays 均通过验证和质量复审记录。
+- 创建 Task 4 implementer、spec reviewer、code quality reviewer 三份独立 task log。
+- 更新 run ledger，将 Task 4 标记为 `assigned`。
+- 明确 Task 4 只做 `src/app/App.tsx` 桌面 record store 选择和 `src/app/App.test.tsx` 覆盖，不进入 AI adapter、Electron main/preload 或存储格式变更。
+
+卡在哪里：
+
+- 无。此前 code-quality reviewer 复用时遇到平台 usage limit；如 Task 4 新 subagent 仍不可用，将按同一 checklist 做 leader fallback 并记录。
+
+执行的是什么命令：
+
+- `sed -n '760,940p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+- `sed -n '1,280p' src/app/App.tsx`
+- `sed -n '1,360p' src/app/App.test.tsx`
+- `sed -n '1,160p' src/services/desktopRecordStore.ts`
+- `git status --short --branch`
+
+下一步的计划：
+
+- 提交并推送 Task 4 派发准备日志。
+- 派出 Task 4 implementer；如果 subagent 受 usage limit 阻塞，则由 leader 按 TDD fallback 实现并记录。
+
+### 2026-05-24：真实 AI 识别 Task 4 关闭与 Task 5 派发准备
+
+本轮任务是什么：
+
+- 完成 Task 4 React desktop store selection 的实现、spec review、code quality review，并为 Task 5 AI Adapter Contract 创建 agent 日志。
+
+已完成什么：
+
+- Task 4 implementer 新增桌面 store 回归测试，先验证 RED：`App` 原先不会调用 `window.evocraft.loadRecords()`。
+- Task 4 实现后，`App` 的记录存储选择顺序变为 injected `recordStore` -> Electron desktop bridge -> browser `localStorage` fallback。
+- Task 4 spec review 通过，确认没有进入 Electron main/preload、disk storage、AI adapter 或依赖变更。
+- Task 4 code-quality review 通过，确认 hydration guard、browser fallback、desktop upload bridge 覆盖仍然成立。
+- 创建 Task 5 implementer、spec reviewer、code quality reviewer 三份独立 task log。
+- 更新 run ledger，将 Task 5 标记为 `assigned`。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `sed -n '820,920p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+- `sed -n '1,220p' src/services/aiAdapter.ts`
+- `sed -n '1,260p' src/services/mockAiAdapter.ts`
+- `sed -n '1,220p' src/services/aiAdapter.test.ts`
+- `sed -n '1,260p' src/domain/wrongQuestion.test.ts`
+
+下一步的计划：
+
+- 提交并推送 Task 5 派发准备日志。
+- 派出 Task 5 implementer，按 TDD 扩展 adapter contract 和 mock recoverable failure，不接真实 AI。
+
+### 2026-05-24：真实 AI 识别 Task 5 关闭与 Task 6 派发准备
+
+本轮任务是什么：
+
+- 完成 Task 5 AI Adapter Contract 的实现、spec review、code quality review，并为 Task 6 本机 AI 评测脚手架创建 agent 日志。
+
+已完成什么：
+
+- Task 5 implementer 扩展 `AiAdapterFailureReason`，加入 `region_image_missing` 和后续真实 provider 所需失败原因。
+- mock adapter 现在会在题目区域截图缺失时返回可恢复、用户可读的 `region_image_missing`，而不是伪造成功 draft。
+- Task 5 spec review 通过，确认未接入真实 AI、未改 Electron/storage/UI runtime。
+- Task 5 code-quality review 通过，确认 contract、mock 行为、测试覆盖和范围边界均满足要求。
+- 创建 Task 6 implementer、spec reviewer、code quality reviewer 三份独立 task log。
+- 更新 run ledger，将 Task 6 标记为 `assigned`。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `sed -n '920,1120p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+- `sed -n '1120,1260p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+- `sed -n '1,360p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
+- `tail -n 130 docs/planning/evocraft-roadmap-progress.md`
+- `ls -la`
+
+下一步的计划：
+
+- 提交并推送 Task 6 派发准备日志。
+- 派出 Task 6 implementer，按 TDD 创建默认禁用的本机评测脚手架和隐私保护 ignore 规则。
+
+### 2026-05-24：真实 AI 识别 Task 6 隐私边界返工
+
+本轮任务是什么：
+
+- 根据 Task 6 code-quality review 的失败结论，修复本机 AI 评测脚手架在 `.env*` 凭据文件、git ignore 行为验证和默认测试套件里的隐私边界缺口。
+
+已完成什么：
+
+- 复核 reviewer 反馈：Task 6 harness 默认禁用、API key gate 和 placeholder 输出方向正确，但 `.env`、`.env.local`、`.env.*` 未被 git ignore 保护。
+- 在 `.gitignore` 添加 `.env`、`.env.local`、`.env.*`，覆盖根目录和 nested `ai-eval/.env*` 本地配置文件。
+- 扩展 `tests/ai-eval-config.test.mjs`，用 `git check-ignore --quiet` 验证 `.env*`、私有样本、私有 manifest、generated results 被忽略，同时确认 `.gitkeep`、`manifest.example.json`、`results/.gitignore` 不被误忽略。
+- 将 `node tests/ai-eval-config.test.mjs` 纳入默认 `npm test`，避免真实 provider 接入后隐私边界测试被跳过。
+- 更新 Task 6 implementer log、code-quality review log 和 run ledger，把 Task 6 状态从误标完成调整为等待 code-quality re-review。
+
+卡在哪里：
+
+- 无实现卡点；Task 6 必须在 follow-up commit/push 后通过 code-quality re-review，才能进入 Task 7 Qwen Adapter Spike。
+
+执行的是什么命令：
+
+- `npm run test:ai-eval-config`（修复前按预期失败，修复后通过）
+- `git diff --check`
+- `git check-ignore -v .env .env.local .env.production ai-eval/.env ai-eval/.env.local ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl`
+- `npm test`
+- `node scripts/evaluate-ai-samples.mjs`
+- `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs`
+- `EVOCRAFT_AI_EVAL_ENABLED=1 DASHSCOPE_API_KEY=dummy node scripts/evaluate-ai-samples.mjs ai-eval/samples/manifest.example.json /tmp/evocraft-ai-eval-test.jsonl`
+
+下一步的计划：
+
+- 提交并推送 Task 6 follow-up fix。
+- 派发 Task 6 code-quality re-review；通过后再创建并派发 Task 7 Qwen Adapter Spike。
+
+### 2026-05-24：真实 AI 识别 Task 6 质量复审通过
+
+本轮任务是什么：
+
+- 记录 Task 6 follow-up fix 的 code-quality re-review 结果，并关闭 AI evaluation harness 阶段。
+
+已完成什么：
+
+- Harvey 对 follow-up commit `85028ee` 返回 `PASS`。
+- 复审确认 `.env*`、nested `ai-eval/.env*`、私有样本、私有 manifest 和 generated results 均被 git ignore 保护。
+- 复审确认 `.gitkeep`、`manifest.example.json`、`results/.gitignore` 仍可追踪。
+- 复审确认 `tests/ai-eval-config.test.mjs` 使用 `git check-ignore` 做真实 ignore 行为回归，并且默认 `npm test` 会运行 ai-eval config test。
+- 复审确认 runner 仍默认禁用，只有显式 `EVOCRAFT_AI_EVAL_ENABLED=1` 后才要求 `DASHSCOPE_API_KEY`，dummy-key smoke 只写 `not-run` placeholder 行，没有真实 provider call。
+- 更新 Task 6 run ledger、implementer log 和 code-quality review log，把 Task 6 标记为完成。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git diff --check`
+- `npm run test:ai-eval-config`
+- `npm test`
+- `git check-ignore -v .env .env.local .env.production ai-eval/.env ai-eval/.env.local ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl`
+- `node scripts/evaluate-ai-samples.mjs`
+- `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs`
+- `EVOCRAFT_AI_EVAL_ENABLED=1 DASHSCOPE_API_KEY=dummy node scripts/evaluate-ai-samples.mjs ai-eval/samples/manifest.example.json /tmp/evocraft-ai-eval-review.jsonl`
+- `git diff --name-only 58c827a..85028ee`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl`
+- `npx tsc --noEmit --pretty false --project tsconfig.json`
+
+下一步的计划：
+
+- 提交并推送 Task 6 review-complete docs。
+- 创建 Task 7 Qwen Adapter Spike 的 implementer、spec reviewer 和 code-quality reviewer 日志，然后按 TDD 开始真实 provider adapter spike。
+
+### 2026-05-24：真实 AI 识别 Task 7 派发准备
+
+本轮任务是什么：
+
+- 在 Task 6 AI evaluation harness 通过质量复审后，为 Task 7 Qwen Adapter Spike 创建 agent 日志和派发边界。
+
+已完成什么：
+
+- 创建 Task 7 implementer、spec reviewer、code-quality reviewer 三份独立 task log。
+- 更新 run ledger，将 Task 7 标记为 `assigned`。
+- 明确 Task 7 只做 Electron/Node 侧 Qwen adapter spike、fake-fetch contract test、local evaluation runner 接入和 `package.json` script。
+- 明确 Task 7 不改 Electron main/preload IPC、renderer runtime、storage format，不引入依赖，不提交 API key、`.env`、private samples 或 generated results。
+- 明确 Task 8 才负责 real AI IPC 和 renderer adapter wiring。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `sed -n '1120,1320p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+- `sed -n '1320,1520p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+- `ls docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents`
+- `find src -maxdepth 3 -type f`
+- `sed -n '1,240p' src/services/aiAdapter.ts`
+- `sed -n '1,220p' src/services/mockAiAdapter.ts`
+- `sed -n '1,260p' src/services/aiAdapter.test.ts`
+
+下一步的计划：
+
+- 提交并推送 Task 7 派发准备日志。
+- 派出 Task 7 implementer，按 TDD 添加 Qwen adapter fake-fetch contract test、recognition prompt、Node adapter、eval runner 接入和 `test:qwen-adapter`。
+
+### 2026-05-24：真实 AI 识别 Task 7 实现与测试跟进
+
+本轮任务是什么：
+
+- 完成 Task 7 Qwen Adapter Spike 的实现，并在 leader review 中修复评测 runner 静态测试仍沿用 Task 6 placeholder 断言的问题。
+
+已完成什么：
+
+- Task 7 implementer 按 TDD 新增 `tests/qwen-adapter-contract.test.mjs`，先验证缺少 `electron/ai/qwenAdapter.cjs` 时 RED。
+- 新增 `electron/ai/recognitionPrompt.cjs` 和 `electron/ai/qwenAdapter.cjs`，支持 fake-fetch 注入、DashScope compatible endpoint、`qwen-vl-ocr-latest` 默认模型、识别-only prompt、失败原因映射、JSON/fenced JSON 解析和 draft 映射。
+- `scripts/evaluate-ai-samples.mjs` 在原有 `EVOCRAFT_AI_EVAL_ENABLED=1` 和 `DASHSCOPE_API_KEY` gate 之后，改为通过 `createQwenAdapter(...).recognizeQuestion(...)` 评测样本。
+- 新增 `test:qwen-adapter` package script。
+- Leader review 发现 `tests/ai-eval-config.test.mjs` 仍匹配 Task 6 的 `status: "not-run"` placeholder 注释，已先写 failing assertion，再移除 stale comments，并改为验证 runner 使用共享 Qwen adapter。
+
+卡在哪里：
+
+- 无实现卡点；Task 7 仍需 spec review 和 code-quality review 通过后才能进入 Task 8。
+
+执行的是什么命令：
+
+- `node tests/qwen-adapter-contract.test.mjs`（修复前 RED，修复后 GREEN）
+- `npm run test:qwen-adapter`
+- `npm run test:ai-eval-config`（leader follow-up 前按预期失败，修复后通过）
+- `git diff --check`
+- `node scripts/evaluate-ai-samples.mjs`
+- `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs`
+- `npm test`
+
+下一步的计划：
+
+- 提交并推送 Task 7 leader follow-up fix。
+- 派发 Task 7 spec reviewer；通过后再派 code-quality reviewer。
+
+### 2026-05-24：真实 AI 识别 Task 7 规格复审
+
+本轮任务是什么：
+
+- 记录 Task 7 Qwen Adapter Spike 的 spec review 结果，并同步 reviewed commit range。
+
+已完成什么：
+
+- Spec reviewer Mencius 复审 `5f9ba4f`、`0c8e488`、`309f8aa` 后返回 `PASS_WITH_CONCERNS`。
+- 复审确认 recognition prompt 保持识别-only，明确禁止解题、讲解、错因、知识点和相似题。
+- 复审确认 Qwen adapter 留在 Electron/Node 侧，要求 API key，只发送 `selectedRegionImageUri`，测试通过 fake-fetch 注入，不调用真实 provider。
+- 复审确认 eval runner 仍保留 `EVOCRAFT_AI_EVAL_ENABLED=1` 和 `DASHSCOPE_API_KEY` 双 gate。
+- 复审确认没有 Electron main/preload、renderer、`dist`、`release` 变更，也没有 tracked `.env`、local manifest、private sample 或 generated result。
+- 已把 Task 7 task ledger、implementer log 和 spec-review log 的 commit range 补齐到 `5f9ba4f`、`0c8e488`、`309f8aa`。
+
+卡在哪里：
+
+- 无阻塞卡点；spec review 的 concerns 只涉及 leader follow-up scope 和文档同步，当前已记录。Task 7 仍需 code-quality review 通过后才能进入 Task 8。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git diff --check`
+- `npm run test:qwen-adapter`
+- `npm run test:ai-eval-config`
+- `npm test`
+- `node scripts/evaluate-ai-samples.mjs`
+- `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs`
+- `git diff --name-only 704afd3..309f8aa`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/results/result-123.jsonl`
+
+下一步的计划：
+
+- 提交并推送 Task 7 spec-review docs。
+- 派发 Task 7 code-quality reviewer；通过后再创建并派发 Task 8 Real AI IPC。
+
+### 2026-05-24：真实 AI 识别 Task 7 质量复审返工
+
+本轮任务是什么：
+
+- 根据 Task 7 code-quality review 的 concerns，修复 Qwen adapter 在 auto 科目归类和 `reviewItems.status` 归一化上的数据质量风险。
+
+已完成什么：
+
+- 复核 reviewer 反馈：Task 7 总体可作为 spike 通过，但 `subject: "auto"` 会静默写成 `math`，且 malformed provider response 可以把任意 `reviewItems[*].status` 写进草稿。
+- 先扩展 `tests/qwen-adapter-contract.test.mjs`，覆盖 `response.ok === false`、非法 review status、auto mode 缺少 provider subject、auto mode 返回合法 provider subject 四个场景。
+- 验证新增测试先在非法 review status 场景失败，证明漏洞可复现。
+- 更新 `recognitionPrompt.cjs`，要求自动判断科目时返回 `subject`，取值只能是 `chinese`、`math` 或 `english`。
+- 更新 `qwenAdapter.cjs`，显式科目保持用户选择，auto mode 必须拿到合法 provider subject，否则返回 `provider_response_invalid`；`reviewItems.status` 限定到 `可信/需复核`，非法值降级为 `需复核`。
+- 重新跑 focused、默认套件、build 和 eval runner gate probes，全部通过。
+
+卡在哪里：
+
+- 无实现卡点；Task 7 需要 code-quality re-review 通过后才能进入 Task 8。
+
+执行的是什么命令：
+
+- `npm run test:qwen-adapter`（修复前按预期失败，修复后通过）
+- `npm run test:ai-eval-config`
+- `git diff --check`
+- `npm test`
+- `npm run build`
+- `node scripts/evaluate-ai-samples.mjs`
+- `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs`
+- `git status --short --branch`
+
+下一步的计划：
+
+- 提交并推送 Task 7 quality follow-up。
+- 派发 Task 7 code-quality re-review；通过后再创建并派发 Task 8 Real AI IPC。
+
+### 2026-05-24：真实 AI 识别 Task 7 prompt 复审返工
+
+本轮任务是什么：
+
+- 根据 Task 7 code-quality re-review 的失败结论，修复 explicit subject prompt 仍包含 auto-subject 指令的问题。
+
+已完成什么：
+
+- 复审确认前一轮 auto subject 和 review status 修复有效，但 prompt containment 仍有一个问题：显式选择 `chinese/math/english` 时，prompt 仍要求 provider 返回 `subject`。
+- 在 `tests/qwen-adapter-contract.test.mjs` 添加 prompt 回归：显式科目 prompt 不应包含 auto-subject 指令，auto prompt 必须包含。
+- 验证新增测试先失败，失败证据显示 `buildRecognitionPrompt({ subject: "chinese" })` 仍包含自动判断指令。
+- 修改 `recognitionPrompt.cjs`，只有 `subject === "auto"` 时才加入“必须返回 subject”的指令。
+- 重新跑 focused、默认套件、build 和 eval runner gate probes，全部通过。
+
+卡在哪里：
+
+- 无实现卡点；Task 7 仍需 code-quality re-review 通过后才能进入 Task 8。
+
+执行的是什么命令：
+
+- `npm run test:qwen-adapter`（修复前按预期失败，修复后通过）
+- `npm run test:ai-eval-config`
+- `git diff --check`
+- `npm test`
+- `npm run build`
+- `node scripts/evaluate-ai-samples.mjs`
+- `EVOCRAFT_AI_EVAL_ENABLED=1 node scripts/evaluate-ai-samples.mjs`
+
+下一步的计划：
+
+- 提交并推送 Task 7 prompt follow-up。
+- 再次派发 Task 7 code-quality re-review；通过后再创建并派发 Task 8 Real AI IPC。
+
+### 2026-05-26：真实 AI 识别 Task 8 派发准备
+
+本轮任务是什么：
+
+- 在 Task 7 Qwen adapter spike 完整通过 code-quality re-review 后，为 Task 8 Real AI IPC 创建 agent 日志和派发边界。
+
+已完成什么：
+
+- 确认 Task 7 已完成：Qwen adapter、评测 runner、auto subject、review status 和 prompt containment 全部通过复审。
+- 创建 Task 8 implementer、spec reviewer、code-quality reviewer 三份独立 task log。
+- 更新 run ledger，将 Task 8 标记为 `assigned`。
+- 明确 Task 8 只做 Electron main/preload AI IPC、typed desktop bridge、`desktopAiAdapter`、`AiRuntimeStatus` 和 focused tests。
+- 明确 Task 8 不做 app runtime switch、UI 授权文案、样式、真实/Mock 选择逻辑；这些留给 Task 9。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `sed -n '1460,1720p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+- `sed -n '1,260p' electron/main.cjs`
+- `sed -n '1,240p' electron/preload.cjs`
+- `sed -n '1,260p' src/services/desktopBridge.ts`
+- `sed -n '1,220p' src/services/desktopRecordStore.ts`
+- `sed -n '1,260p' tests/electron-config.test.mjs`
+- `sed -n '1,220p' src/services/aiAdapter.test.ts`
+
+下一步的计划：
+
+- 提交并推送 Task 8 派发准备日志。
+- 派出 Task 8 implementer，按 TDD 添加 Electron AI IPC、preload API、typed desktop bridge、desktop AI adapter 和 focused tests。
+
+### 2026-05-26：真实 AI 识别 Task 8 实现完成
+
+本轮任务是什么：
+
+- 完成 Task 8 Real AI IPC 的实现，把真实 AI 调用隔离到 Electron main process，并通过 preload/typed bridge 暴露给 renderer。
+
+已完成什么：
+
+- Task 8 implementer 先扩展 `tests/electron-config.test.mjs`，验证缺少 `ai:runtime-status` 等 IPC handlers 时 RED。
+- 先扩展 `src/services/aiAdapter.test.ts`，验证缺少 `src/services/desktopAiAdapter.ts` 时 RED。
+- `electron/main.cjs` 新增 `createAiRuntime()` 和 `registerAiIpc(...)`：读取 `EVOCRAFT_AI_ENABLED`、`EVOCRAFT_AI_PROVIDER`、`DASHSCOPE_API_KEY`，只在 enabled flag 和 key 都存在时进入 real mode；禁用时返回 `real_ai_disabled`，不调用 provider adapter。
+- `electron/preload.cjs` 暴露 `getAiRuntimeStatus`、`detectRegions`、`recognizeQuestion`，同时不暴露 API key。
+- `src/services/aiAdapter.ts` 新增 `AiRuntimeStatus`，`src/services/desktopBridge.ts` 补 typed AI bridge 方法。
+- 新增 `src/services/desktopAiAdapter.ts`，让 renderer 侧只通过 desktop bridge 委托 `detectRegions` 和 `recognizeQuestion`。
+- `src/services/aiAdapter.test.ts` 增加 desktop AI adapter delegation 测试。
+- 重新运行 leader verification：`npm run test:electron-config`、`npm run test:react -- src/services/aiAdapter.test.ts`、`npm run build`、`git diff --check` 均通过。
+
+卡在哪里：
+
+- 无实现卡点；Task 8 仍需 spec review 和 code-quality review 通过后才能进入 Task 9。
+
+执行的是什么命令：
+
+- `npm run test:electron-config`（修复前 RED，修复后通过）
+- `npm run test:react -- src/services/aiAdapter.test.ts`（修复前 RED，修复后通过）
+- `npm run build`
+- `git diff --check`
+- `git status --short --branch`
+
+下一步的计划：
+
+- 提交并推送 Task 8 进度记录。
+- 派发 Task 8 spec reviewer；通过后再派发 code-quality reviewer。
+
+### 2026-05-26：真实 AI 识别 Task 8 spec review follow-up
+
+本轮任务是什么：
+
+- 根据 Task 8 spec review 的 `FAIL` 结论，补齐 AI IPC handler 的可执行运行时边界测试。
+
+已完成什么：
+
+- 确认 spec review 反馈成立：原测试只做源码字符串和 desktop adapter 委托断言，没有执行 `ai:*` IPC handlers。
+- 先新增 `tests/electron-ai-ipc.test.mjs` 并纳入 `npm run test:electron-config`，验证当前实现无法在 Node 测试中 require `electron/main.cjs`，RED 失败为 `app.whenReady` 启动副作用。
+- 最小重构 `electron/main.cjs`：普通 Node require 不启动 Electron app；真实 Electron app 仍通过 `app.whenReady` 启动；`registerAiIpc(...)` 支持注入 fake `ipcMain` 和 sender trust 函数。
+- 新测试实际调用 `ai:runtime-status`、`ai:detect-regions`、`ai:recognize-question`，覆盖不可信 sender 拒绝、disabled mode 返回 `real_ai_disabled`、disabled 时不调用 provider、enabled 时调用 provider。
+- 重新运行 `npm run test:electron-config`、`npm run test:react -- src/services/aiAdapter.test.ts`、`npm run build` 均通过。
+
+卡在哪里：
+
+- 无实现卡点；Task 8 仍需 spec re-review 通过后才能进入 code-quality review。
+
+执行的是什么命令：
+
+- `npm run test:electron-config`（修复前 RED，修复后通过）
+- `npm run test:react -- src/services/aiAdapter.test.ts`
+- `npm run build`
+- `git status --short --branch`
+
+下一步的计划：
+
+- 运行 `git diff --check` 和隐私文件追踪检查。
+- 提交并推送 Task 8 runtime boundary test follow-up。
+- 派发 Task 8 spec re-review；通过后再派发 code-quality review。
+
+### 2026-05-26：真实 AI 识别 Task 8 code-quality review 完成
+
+本轮任务是什么：
+
+- 完成 Task 8 Real AI IPC 的代码质量审查闭环，确认是否可以进入 Task 9 App Runtime Switch。
+
+已完成什么：
+
+- Task 8 spec re-review 已通过，确认 `tests/electron-ai-ipc.test.mjs` 关闭了运行时 IPC 边界测试缺口。
+- code-quality reviewer 返回 `PASS_WITH_CONCERNS`，未发现 `HIGH` / `MEDIUM` 问题。
+- 审查确认 API key 仍只在 Electron main process，preload/renderer 不泄漏 secret；`registerAiIpc(...)` 默认仍使用真实 `ipcMain` 和 `isAllowedRendererUrl`；disabled mode 在 provider 调用前返回 `real_ai_disabled`。
+- 处理唯一 LOW concern：enabled-path IPC 测试原先用了假 `imageId` / `regionId` payload 和 `regions` 返回形状。
+- 在 `3240f03` 中把 enabled-path 测试改成真实 adapter contract 形状：`imageUri`、`selectedRegion`、`selectedRegionImageUri` 和 `candidates`，并断言 handler 转发的 exact input。
+- 更新 Task 8 code-quality review log 和 run ledger；Task 8 现在可以进入 Task 9。
+
+卡在哪里：
+
+- 无。Task 9 尚未开始。
+
+执行的是什么命令：
+
+- `npm run test:electron-config`
+- `npm run test:react -- src/services/aiAdapter.test.ts`
+- `npm run build`
+- `npm test`
+- `git diff --check`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl`
+
+下一步的计划：
+
+- 提交并推送 Task 8 code-quality review 记录。
+- 创建/确认 Task 9 App Runtime Switch agent 计划边界。
+- 派发 Task 9 implementer：只做 app runtime switch、授权文案、mock/real adapter selection 和最终验证，不扩大到解题/讲解/相似题。
+
+### 2026-05-26：真实 AI 识别 Task 9 派发准备
+
+本轮任务是什么：
+
+- 在 Task 8 完成后，为 Task 9 App Runtime Switch 准备 subagent-driven 记录和派发边界。
+
+已完成什么：
+
+- 确认 Task 8 已完成：Electron main AI IPC、preload bridge、desktop AI adapter、runtime IPC boundary tests、spec review 和 code-quality review 均已闭环。
+- 新增 Task 9 implementer、spec-reviewer 和 code-quality-reviewer 三份独立 agent log。
+- 更新 run ledger，将 Task 9 标记为 `assigned`。
+- 明确 Task 9 只做 app runtime status loading、mock 默认、真实 AI 测试模式提示、外部 AI 授权确认、adapter selection、reducer state/actions、UI tests 和最终验证。
+
+卡在哪里：
+
+- 无。Task 9 implementer 尚未派发。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `sed -n '1660,1965p' docs/superpowers/plans/2026-05-23-real-ai-recognition.md`
+- `rg --files docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents`
+- `sed -n '1,220p' docs/superpowers/agent-runs/README.md`
+
+下一步的计划：
+
+- 提交并推送 Task 9 派发准备日志。
+- 派发 Task 9 implementer，要求先写失败测试，再实现 runtime switch 和授权拦截。
+
+### 2026-05-26：真实 AI 识别 Task 9 实现完成
+
+本轮任务是什么：
+
+- 实现应用层真实 AI runtime switch、外部 AI 授权提示和 mock/real adapter selection。
+
+已完成什么：
+
+- 在 `src/app/App.test.tsx` 增加桌面 real AI disabled 默认 mock、real AI enabled 授权提示、未授权阻止真实识别、授权后调用 desktop AI adapter 的回归测试。
+- 在 `wrongQuestionReducer` 增加 `aiRuntimeMode`、`aiRuntimeMessage`、`externalAiAcknowledged`，并增加 `AI_RUNTIME_READY`、`EXTERNAL_AI_ACKNOWLEDGED`、`UPLOAD_BLOCKED` 状态迁移。
+- `App.tsx` 现在通过 `desktopBridge.getAiRuntimeStatus()` 加载运行时状态，默认使用 `mockAiAdapter`，仅在 desktop bridge AI methods 存在且 runtime 为 real 时使用 `createDesktopAiAdapter(...)`。
+- 上传页显示“本地 mock 识别”或“真实 AI 测试模式”授权提示；real mode 未勾选外部 AI 授权时阻止识别，并保留已选图片和文件名。
+- 添加 `.ai-mode-note` 和 `.ai-consent` 最小样式，没有扩大视觉改版范围。
+- 更新项目记忆、想法胶囊、Task 9 implementer log 和 run ledger；Task 9 进入 `review`，等待 spec review。
+
+卡在哪里：
+
+- 无。Task 9 尚需 spec review 和 code-quality review。
+
+执行的是什么命令：
+
+- `npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts`（新增授权保留图片断言修复前 RED，修复后 25 tests 通过）
+- `npm test`（5 files / 38 tests 通过）
+- `npm run test:electron-config`
+- `npm run test:electron-store`
+- `npm run test:ai-eval-config`
+- `npm run test:qwen-adapter`
+- `npm run build`
+- `npm run desktop:build`
+- `git diff --check`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl release dist`
+
+下一步的计划：
+
+- 提交并推送 Task 9 implementation。
+- 派发 Task 9 spec reviewer；通过后再派发 code-quality reviewer。
+
+### 2026-05-26：真实 AI 识别 Task 9 代码质量回修
+
+本轮任务是什么：
+
+- 根据 Task 9 code-quality review 结果，修复真实 AI runtime 延迟切换后的授权边界和缺失桥接方法时的 UI/行为不一致。
+
+已完成什么：
+
+- 新增延迟 `getAiRuntimeStatus()` 从 mock 切到 real 后，在 `重新自动找题` 和 `确认此区域并识别` 两个入口必须继续要求外部 AI 授权的回归测试。
+- 新增 `getAiRuntimeStatus()` 返回 real 但 desktop bridge 缺少 `detectRegions` / `recognizeQuestion` 时，应明确回退到本地 mock 的 UI 回归测试。
+- `App.tsx` 现在把真实 AI 有效模式收敛为 `runtime enabled + desktop AI bridge methods present`，缺少方法时显示 `真实 AI 桥接能力不可用，已回退到本地 mock。`。
+- 初次找题、重新自动找题和确认识别三个真实 AI 调用入口现在共用外部 AI 授权 gate，避免运行时状态晚到后绕过授权。
+- focused verification 已通过：`npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts` 共 28 tests。
+- full verification 已通过：`npm test` 共 5 files / 41 tests；`test:electron-config`、`test:electron-store`、`test:ai-eval-config`、`test:qwen-adapter`、`build`、`desktop:build`、`git diff --check` 和隐私/生成产物追踪检查均退出 0。
+- 已更新 Task 9 implementer log 和 run ledger；Task 9 状态为 `changes_requested_fixed`，等待提交推送与 code-quality re-review。
+
+卡在哪里：
+
+- 无。尚需提交推送 follow-up、派发 code-quality re-review。
+
+执行的是什么命令：
+
+- `npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts`（新增回归修复前 RED，修复后 28 tests 通过）
+- `npm test`
+- `npm run test:electron-config`
+- `npm run test:electron-store`
+- `npm run test:ai-eval-config`
+- `npm run test:qwen-adapter`
+- `npm run build`
+- `npm run desktop:build`
+- `git diff --check`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl release dist`
+- `git status --short --branch`
+- `rg --files docs/superpowers/agent-runs docs/planning docs/ideas`
+- `sed -n ...` / `tail -n ...` 读取 Task 9 logs、run ledger、项目记忆、想法胶囊和 roadmap progress
+
+下一步的计划：
+
+- 提交并推送代码质量回修。
+- 派发 Task 9 code-quality re-review；通过后再把 Task 9 标记完成并进入下一项。
+
+### 2026-05-30：真实 AI 识别 Task 9 代码质量复审通过
+
+本轮任务是什么：
+
+- 继续 Task 9 App Runtime Switch 的 code-quality re-review 收口，确认延迟 runtime flip 授权绕过和缺失 bridge methods 回退不一致两个问题是否关闭。
+
+已完成什么：
+
+- 处理复审 subagent 断流后的本地状态，确认断流前已经留下 docs-only 复审提交 `60e3de9`。
+- 复审记录显示结论为 `PASS`：Task 9 prior HIGH 和 MEDIUM findings 均已关闭，没有新增 HIGH/MEDIUM 问题。
+- Run ledger 已把 Task 9 App Runtime Switch 标记为 `completed`，Task 9 code-quality reviewer 状态为 `passed`。
+- 当前所有 Task 0-9 均已完成，真实 AI 识别桌面本地优先阶段进入最终验证/总 review 收尾。
+
+卡在哪里：
+
+- 无。尚需把复审提交和本进度记录推送到远端，然后进入最终验证与总 review。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git log --oneline -6`
+- `git show --stat --oneline --decorate --no-renames HEAD`
+- `git show --name-only --format=fuller HEAD`
+- `sed -n '1,340p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/task-09-code-quality-review.md`
+- `sed -n '35,95p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
+- `tail -n 80 docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
+
+下一步的计划：
+
+- 提交并推送本进度记录。
+- 运行最终验证命令组：`npm test`、`npm run test:electron-config`、`npm run test:electron-store`、`npm run test:ai-eval-config`、`npm run test:qwen-adapter`、`npm run build`、`npm run desktop:build`、`git diff --check`、`git status --short --branch`。
+- 按 subagent-driven 流程派发最终 code review，确认真实 AI 识别桌面迁移整体可收口。
+
+### 2026-05-30：真实 AI 识别最终验证通过
+
+本轮任务是什么：
+
+- 在 Task 0-9 全部完成后，运行真实 AI 识别桌面迁移阶段的最终验证命令组，并把结果写回 run ledger。
+
+已完成什么：
+
+- 最终验证命令组全部通过。
+- `npm test` 通过：5 files / 41 tests。
+- Electron config/AI IPC、Electron local store、AI eval config、Qwen adapter 合约、Web build、desktop build 全部通过。
+- `desktop:build` 生成 unpacked `release/mac`，按当前配置跳过 macOS signing（`identity: null`）。
+- `git diff --check` 通过；`.env`、私有样本/结果、`dist`、`release` 均没有被 git 追踪。
+- Run ledger 的 Final Verification 已更新为 passed，下一步进入整体 final code review。
+
+卡在哪里：
+
+- 无。尚需派发最终整体 code review；通过后再做分支收尾。
+
+执行的是什么命令：
+
+- `npm test`
+- `npm run test:electron-config`
+- `npm run test:electron-store`
+- `npm run test:ai-eval-config`
+- `npm run test:qwen-adapter`
+- `npm run build`
+- `npm run desktop:build`
+- `git diff --check`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl release dist`
+- `git status --short --branch`
+
+下一步的计划：
+
+- 提交并推送最终验证记录。
+- 派发最终整体 code review，确认真实 AI 识别桌面本地优先阶段是否可以关闭。
+- 如果 final code review 通过，更新最终 review 记录并进入分支收尾；如果失败，按 findings 回修。
+
+### 2026-05-30：真实 AI 识别最终 code review 准备
+
+本轮任务是什么：
+
+- 在最终验证通过后，为真实 AI 识别桌面迁移整体 code review 创建独立 agent 记录和 run ledger 条目。
+
+已完成什么：
+
+- 新增 `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/final-code-review.md`。
+- Run ledger 已新增 Final Whole-Slice Code Review 行，并将 final reviewer 标记为 `assigned`。
+- 明确 final reviewer 只能改 review log、run ledger 和 roadmap progress，不能修改实现代码。
+
+卡在哪里：
+
+- 无。尚需提交推送准备记录并派发 final code reviewer。
+
+执行的是什么命令：
+
+- `tail -n 70 docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
+- `tail -n 120 docs/planning/evocraft-roadmap-progress.md`
+
+下一步的计划：
+
+- 提交并推送 final code review 准备记录。
+- 派发最终整体 code review。
+- 根据 final review 结果决定进入分支收尾或回修。
+
+### 2026-05-30：真实 AI 识别最终 code review 回修
+
+本轮任务是什么：
+
+- 根据最终整体 code review 的 `FAIL` 结果，修复桌面真实 AI 接入的特权边界、云端图片输入格式和本地文件读取范围。
+
+已完成什么：
+
+- 确认并记录 final reviewer 的三项 findings：Electron `ai:*` IPC 缺少 main-process 外部 AI 授权 gate；AI eval runner 把本地样本作为 `file://` 传给 Qwen；桌面图片读取桥接接受 arbitrary renderer path。
+- 新增 `ai:set-external-authorization`，并让 `ai:detect-regions` / `ai:recognize-question` 在 provider 调用前检查 main-process 授权状态。
+- React 真实 AI 调用入口现在会同步外部 AI 授权到桌面 bridge，并在上传、重新自动找题、确认识别前做即时授权同步。
+- AI eval runner 现在把本地样本转换成 `data:image/...;base64,...`，Qwen adapter 会在 provider fetch 前拒绝 `file://` 等不支持的题目区域图片 URL。
+- Electron 图片读取改成只允许读取系统文件选择对话框返回的一次性路径；未通过选择的本地图片路径会在读盘前被拒绝。
+- 已更新 final agent log、run ledger、项目记忆和想法胶囊。
+- Focused verification 已通过：`npm run test:electron-config`、`npm run test:ai-eval-config`、`npm run test:qwen-adapter`、`npm run test:react -- src/app/App.test.tsx`、`npm run build`。
+- 完整验证矩阵已通过：focused React suite 28 tests、`npm test` 5 files / 41 tests、Electron config/store、AI eval config、Qwen adapter、web build、desktop build、diff check 和隐私/产物追踪检查均退出 0 或返回预期空输出。
+
+卡在哪里：
+
+- 无当前实现 blocker。尚需提交推送和最终 re-review。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git diff --stat`
+- `npm run test:electron-config`（回修前 RED，回修后退出 0）
+- `npm run test:ai-eval-config`（回修前 RED，回修后退出 0）
+- `npm run test:qwen-adapter`（回修前 RED，回修后退出 0）
+- `npm run test:react -- src/app/App.test.tsx`（回修前 RED，回修后 18 tests 通过）
+- `npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts`
+- `npm test`
+- `npm run test:electron-store`
+- `npm run build`
+- `npm run desktop:build`
+- `git diff --check`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl release dist`
+- `sed -n ...` / `tail -n ...` / `rg -n ...` 读取 final agent log、run ledger、项目记忆、想法胶囊和 roadmap progress
+
+下一步的计划：
+
+- 提交并推送 final review follow-up。
+- 派发最终 re-review，确认三项 findings 已关闭后再进入分支收尾。
+
+### 2026-05-31：真实 AI 识别桌面迁移最终收口
+
+本轮任务是什么：
+
+- 根据最终 re-review 进度继续收口，确认真实 AI 识别桌面本地优先阶段是否可以从 implementation/review lane 转入分支管理。
+
+已完成什么：
+
+- 同步远端后确认本地分支包含 final re-review docs-only 提交 `6c3127b` 和 `ed02b62`。
+- Run ledger 已将 Final Whole-Slice Code Review 标记为 `passed`，final agent log 已记录 `PASS` 结论。
+- Final re-review 明确确认 `54d25e0` 关闭了三项首轮 findings：main-process 外部 AI 授权 gate、eval data URL 输入、一次性桌面图片读取 allowlist。
+- Subagent re-review 未发现新的 HIGH/MEDIUM 问题，并已把验证命令结果写入 agent log、run ledger 和 roadmap progress。
+- 项目记忆已更新为：桌面优先迁移第一阶段已闭环，下一阶段进入脱敏样本实测。
+- Fresh completion verification 已通过：`npm test` 5 files / 41 tests、`git diff --check` 和 `git status --short --branch` 均符合预期。
+
+卡在哪里：
+
+- 无当前实现 blocker。尚需提交推送本最终收口记录，并进入分支管理选项。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git log --oneline --decorate -8`
+- `sed -n '33,95p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
+- `tail -n 160 docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
+- `sed -n '1,260p' docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/agents/final-code-review.md`
+- `tail -n 160 docs/planning/evocraft-roadmap-progress.md`
+- `sed -n '1,120p' docs/planning/evocraft-project-memory.md`
+- `git show --stat --oneline ed02b62`
+- `npm test`
+- `git diff --check`
+
+下一步的计划：
+
+- 提交并推送最终收口记录。
+- 进入 branch finishing：默认保留当前 pushed feature branch，等待用户决定是否创建 PR 或本地合并。
+
 ## 下一步
 
-1. 按 `docs/planning/2026-05-23-design-documentation-system.md` 和 `docs/superpowers/agent-runs/README.md` 的规则执行 `docs/superpowers/plans/2026-05-23-real-ai-recognition.md`。
-2. 真实 AI 接入前先建立桌面本地数据目录和文件夹 + JSON 索引，避免真实图片和模型日志继续依赖 `localStorage`。
-3. 使用 10-15 张三科混合脱敏样本跑 Qwen 小样本评测，确认 schema、prompt、失败边界、成本和编造答案风险。
-4. 生产签名、公证、自动更新和安装包发布流程另开任务。
-5. 平板和手机版本先补独立场景/信息架构 PRD，再决定 PWA、原生、React Native 或其他路线。
+1. 使用 10-15 张三科混合脱敏样本跑 Qwen 小样本评测，确认 schema、prompt、失败边界、成本和编造答案风险。
+2. 根据样本评测结果决定是否扩大到 50 张、是否引入火山豆包作为第二供应商 A/B。
+3. 生产签名、公证、自动更新和安装包发布流程另开任务。
+4. 平板和手机版本先补独立场景/信息架构 PRD，再决定 PWA、原生、React Native 或其他路线。
 
 ## 持续跟踪风险
 
