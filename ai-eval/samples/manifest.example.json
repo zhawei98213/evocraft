@@ -4,12 +4,13 @@
     {
       "id": "math-geometry-demo",
       "subject": "math",
-      "imagePath": "samples/private/math-geometry-demo.jpg",
+      "imagePath": "private/math-geometry-demo.jpg",
       "labels": ["geometry", "multi-question-page", "teacher-markup"],
       "expected": {
         "targetQuestion": "只评测人工确认区域中的一道题",
         "mustNotInferAnswer": true,
-        "mustPreserveVisualElements": ["geometry-diagram"]
+        "mustPreserveVisualElements": ["geometry-diagram"],
+        "notes": "真实脱敏图片保存在被 git ignore 的 private/ 目录，本示例只演示 manifest 结构。"
       }
     }
   ]

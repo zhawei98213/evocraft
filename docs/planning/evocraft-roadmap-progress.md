@@ -84,6 +84,42 @@
 
 ## 当前进度
 
+### 2026-05-31：Qwen 样本评测 Task 1 Manifest Validation 完成
+
+本轮任务是什么：
+
+- 按 Qwen 小样本评测计划完成 Task 1：为本地评测 manifest 建立离线 validation 和 dry-run 能力，确保后续真实 provider 调用前先拦住样本数量、路径、字段和隐私风险。
+
+已完成什么：
+
+- 使用 TDD 增加 `tests/ai-eval-config.test.mjs` 覆盖：`--validate-only`、`--allow-small-set`、非法 subject、重复 id、越界图片路径、symlink 样本逃逸、默认错误输出不带 stack trace，以及 10-15 张样本数量门槛。
+- 实现 `scripts/evaluate-ai-samples.mjs` CLI flags：`--validate-only` 可在不设置 `EVOCRAFT_AI_EVAL_ENABLED` / `DASHSCOPE_API_KEY` 的情况下只校验 manifest，不调用 provider；`--allow-small-set` 仅用于测试或极小 smoke set。
+- 增加 manifest contract：`schemaVersion`、非空 samples、10-15 张首轮门槛、唯一 lowercase-hyphen id、subject 白名单、manifest 目录内相对图片路径、拒绝 symlink 样本文件、realpath 仍需位于 manifest 目录内、labels 字符串数组、`mustNotInferAnswer === true`、视觉保留项字符串数组和图片可读性。
+- 将 provider loop 的图片路径解析改为复用同一个安全 resolver。
+- 更新 `ai-eval/samples/manifest.example.json`，把示例图片路径改为相对 manifest 的 `private/math-geometry-demo.jpg`，并注明真实脱敏图片只放 ignored private 目录。
+- 更新 `ai-eval/README.md`，补充 validate-only、allow-small-set 和 provider run 命令。
+- 更新 Task 1 agent log 和 run ledger，记录 RED/GREEN 证据与 leader 最终验证。
+- 完成 Task 1 spec review；code quality review 首轮发现 symlink 逃逸和 CLI 错误输出问题，已补测试并修复；code quality re-review 通过，前一轮 HIGH/MEDIUM 问题已关闭。
+
+卡在哪里：
+
+- 无。真实本地样本和 DashScope key 是否存在仍是 Task 3 的执行时检查点。
+
+执行的是什么命令：
+
+- `npm run test:ai-eval-config`
+- `node scripts/evaluate-ai-samples.mjs ... --validate-only --allow-small-set`
+- `rg -n "resolveSampleImagePath|validateManifest|allow-small-set|validate-only" scripts tests ai-eval -S`
+- `nl -ba tests/ai-eval-config.test.mjs | sed -n '70,120p'`
+- `npm test`
+- `git diff --check`
+- `git status --short --branch`
+- `git diff --stat`
+
+下一步的计划：
+
+- 按 Task 2 实现 redacted summary reporter：先写失败测试保证汇总不会泄漏 raw OCR、data URL、Authorization 或完整 provider response，再实现汇总脚本和 `docs/testing/ai-eval/` 文档。
+
 ### 2026-05-31：Qwen 样本评测 Task 0 预检完成
 
 本轮任务是什么：

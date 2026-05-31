@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, symlinkSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 assert.ok(existsSync("scripts/evaluate-ai-samples.mjs"), "evaluation script should exist");
 assert.ok(existsSync("ai-eval/README.md"), "evaluation README should exist");
@@ -65,6 +67,106 @@ assertGitNotIgnored("ai-eval/results/.gitignore");
 const pkg = JSON.parse(readFileSync("package.json", "utf8"));
 assert.equal(pkg.scripts["test:ai-eval-config"], "node tests/ai-eval-config.test.mjs");
 assert.match(pkg.scripts.test, /tests\/ai-eval-config\.test\.mjs/);
+
+const validSmallManifest = {
+  schemaVersion: 1,
+  samples: [
+    {
+      id: "math-geometry-001",
+      subject: "math",
+      imagePath: "private/sample.jpg",
+      labels: ["geometry"],
+      expected: {
+        targetQuestion: "人工确认区域中的一道题",
+        mustNotInferAnswer: true,
+        mustPreserveVisualElements: ["geometry-diagram"],
+      },
+    },
+  ],
+};
+
+assert.equal(runValidateOnly(createTempManifest(validSmallManifest), "--allow-small-set").status, 0);
+
+const symlinkWorkspace = createTempManifestWorkspace(validSmallManifest, []);
+const outsideSamplePath = join(tmpdir(), `evocraft-outside-${process.pid}-${Date.now()}.txt`);
+writeFileSync(outsideSamplePath, "outside sample content", "utf8");
+symlinkSync(outsideSamplePath, join(symlinkWorkspace.root, "private", "sample.jpg"));
+assertValidateFailureFromPath(symlinkWorkspace.manifestPath, /symbolic link|outside/i, "--allow-small-set");
+
+const invalidSubject = structuredClone(validSmallManifest);
+invalidSubject.samples[0].subject = "science";
+assertValidateFailure(invalidSubject, /invalid subject/, "--allow-small-set");
+
+const duplicateIds = structuredClone(validSmallManifest);
+duplicateIds.samples.push({ ...duplicateIds.samples[0] });
+assertValidateFailure(duplicateIds, /duplicate sample id/, "--allow-small-set");
+
+const escapingPath = structuredClone(validSmallManifest);
+escapingPath.samples[0].imagePath = "../outside.jpg";
+assertValidateFailure(escapingPath, /invalid imagePath/, "--allow-small-set");
+
+const absolutePath = structuredClone(validSmallManifest);
+const absoluteImagePath = join(tmpdir(), "outside.jpg");
+absolutePath.samples[0].imagePath = absoluteImagePath;
+assertValidateFailure(absolutePath, /invalid imagePath/, "--allow-small-set", { forbiddenText: absoluteImagePath });
+
+assertValidateFailure(validSmallManifest, /first-pass evaluation requires 10-15 samples/);
+
+function createTempManifest(contents, imageNames = ["sample.jpg"]) {
+  return createTempManifestWorkspace(contents, imageNames).manifestPath;
+}
+
+function createTempManifestWorkspace(contents, imageNames = ["sample.jpg"]) {
+  const root = mkdtempSync(join(tmpdir(), "evocraft-ai-eval-"));
+  mkdirSync(join(root, "private"), { recursive: true });
+  for (const imageName of imageNames) {
+    writeFileSync(join(root, "private", imageName), "fake image bytes");
+  }
+
+  const manifestPath = join(root, "manifest.local.json");
+  writeFileSync(manifestPath, JSON.stringify(contents), "utf8");
+  return { root, manifestPath };
+}
+
+function assertValidateFailure(manifest, expectedMessage, ...args) {
+  assertValidateFailureFromPath(createTempManifest(manifest), expectedMessage, ...args);
+}
+
+function assertValidateFailureFromPath(manifestPath, expectedMessage, ...args) {
+  const { extraArgs, options } = parseFailureAssertionArgs(args);
+  const result = runValidateOnly(manifestPath, ...extraArgs);
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, expectedMessage);
+  if (options.forbiddenText) {
+    assert.doesNotMatch(result.stderr, new RegExp(escapeRegExp(options.forbiddenText)));
+  }
+  assert.doesNotMatch(result.stderr, /file:\/\//);
+  assert.doesNotMatch(result.stderr, /\n\s+at\s+/);
+}
+
+function parseFailureAssertionArgs(args) {
+  const options = {};
+  if (args.length > 0) {
+    const lastArg = args.at(-1);
+    if (lastArg && typeof lastArg === "object" && !Array.isArray(lastArg)) {
+      Object.assign(options, args.pop());
+    }
+  }
+
+  return { extraArgs: args, options };
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function runValidateOnly(manifestPath, ...extraArgs) {
+  return spawnSync(
+    process.execPath,
+    ["scripts/evaluate-ai-samples.mjs", manifestPath, join(tmpdir(), "unused.jsonl"), "--validate-only", ...extraArgs],
+    { encoding: "utf8" },
+  );
+}
 
 function assertGitIgnored(path) {
   const result = spawnSync("git", ["check-ignore", "--quiet", path], { encoding: "utf8" });
