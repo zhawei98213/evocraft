@@ -2,7 +2,7 @@
 
 日期：2026-05-31
 
-状态：`task_2_completed`
+状态：`blocked_missing_local_inputs`
 
 执行模式：`subagent-driven`，但必须在本 ledger、task logs、父级 spec 和 plan 已提交后才能派发。
 
@@ -35,9 +35,9 @@
 | --- | --- | --- | --- | --- | --- |
 | 0. Preflight And Privacy Gate | `agents/task-00-preflight.md` | completed | 分支、ignore、baseline verification，docs-only log update | `npm run test:ai-eval-config`, `npm test`, `git diff --check` | Task 0 documentation commit |
 | 1. Manifest Validation And Dry Run | `agents/task-01-manifest-validation.md` | completed | eval runner validation, manifest example, config tests | `npm run test:ai-eval-config`, `npm test`, `git diff --check` | `1044308` |
-| 2. Redacted Summary Reporter | `agents/task-02-summary-reporter.md` | completed | result summary script, redaction tests, docs/testing README | `node tests/ai-eval-summary.test.mjs`, `npm run test:ai-eval-summary`, `npm test`, `git diff --check`, privacy tracking check | Pending leader commit |
-| 3. Local 10-15 Sample Run | `agents/task-03-local-sample-run.md` | pending | private local sample run or explicit local blocker record | manifest validation, provider run if credentials exist, redaction scan | pending |
-| 4. Evaluation Review And Next Decision | `agents/task-04-evaluation-review.md` | pending | redacted summary decision, project memory/progress update | `npm test`, `git diff --check`, private path tracking check | pending |
+| 2. Redacted Summary Reporter | `agents/task-02-summary-reporter.md` | completed | result summary script, redaction tests, docs/testing README | `node tests/ai-eval-summary.test.mjs`, `npm run test:ai-eval-summary`, `npm test`, `git diff --check`, privacy tracking check | `52488be` |
+| 3. Local 10-15 Sample Run | `agents/task-03-local-sample-run.md` | blocked | private local sample run or explicit local blocker record | prerequisite checks, ignore checks | Pending blocker documentation commit |
+| 4. Evaluation Review And Next Decision | `agents/task-04-evaluation-review.md` | blocked | redacted summary decision, project memory/progress update | Task 3 blocker review, no fabricated decision | Pending blocker documentation commit |
 
 ## Agent Ledger
 
@@ -46,8 +46,8 @@
 | `agents/task-00-preflight.md` | implementer | Task 0 | completed | Confirmed branch, real-AI merge ancestry, privacy ignore gates, and baseline tests before code work. |
 | `agents/task-01-manifest-validation.md` | implementer | Task 1 | completed | Added manifest validation and dry-run support with RED/GREEN coverage; no provider call was made. |
 | `agents/task-02-summary-reporter.md` | implementer | Task 2 | completed | Added redacted summary reporter, privacy regression coverage, doc index, and command documentation after RED/GREEN verification. |
-| `agents/task-03-local-sample-run.md` | implementer | Task 3 | pending | Run local samples only if manifest and credentials exist; otherwise record blocker. |
-| `agents/task-04-evaluation-review.md` | reviewer | Task 4 | pending | Classify evidence and update downstream decision docs. |
+| `agents/task-03-local-sample-run.md` | implementer | Task 3 | blocked | Local manifest and DashScope API key were missing; no provider call or summary generation occurred. |
+| `agents/task-04-evaluation-review.md` | reviewer | Task 4 | blocked | No model-quality decision possible because Task 3 did not produce a local sample summary. |
 
 ## Global Progress
 
@@ -84,6 +84,21 @@
 - Final verification passed: `node tests/ai-eval-summary.test.mjs`, `npm run test:ai-eval-summary`, `npm test`, `git diff --check`, and the privacy tracking gate `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json 'ai-eval/samples/private/*' 'ai-eval/results/*'`.
 - Privacy tracking output contained only `ai-eval/results/.gitignore`; no private sample paths, env files, manifests, or raw result files are tracked.
 
+### 2026-05-31 Task 3 Local Sample Run Blocked
+
+- Checked local prerequisites with `test -f ai-eval/samples/manifest.local.json` and `test -n "$DASHSCOPE_API_KEY"`.
+- The local ignored manifest file is missing.
+- `DASHSCOPE_API_KEY` is not set in the current shell.
+- Confirmed `ai-eval/samples/manifest.local.json` and `ai-eval/results/result-local.jsonl` are covered by git ignore.
+- No manifest validation, provider call, raw JSONL generation, or redacted summary generation occurred.
+
+### 2026-05-31 Task 4 Evaluation Decision Blocked
+
+- Reviewed Task 3 blocker.
+- No Qwen sample evaluation summary exists because the local sample run did not happen.
+- No model-quality decision was made; the current decision state is `blocked_by_missing_local_inputs`.
+- Reopen Task 3 and Task 4 after local ignored samples and `DASHSCOPE_API_KEY` are available.
+
 ### 2026-05-31 Run Prepared
 
 - Created the Qwen sample evaluation run ledger after real AI desktop migration was merged into `main`.
@@ -92,8 +107,7 @@
 
 ## Global Blockers
 
-- No implementation blocker in the committed repository.
-- Task 3 will be blocked if local sanitized samples or `DASHSCOPE_API_KEY` are not available at execution time.
+- Task 3 and Task 4 are blocked until the local ignored `ai-eval/samples/manifest.local.json` exists and `DASHSCOPE_API_KEY` is available in the shell environment.
 
 ## Review Rules
 

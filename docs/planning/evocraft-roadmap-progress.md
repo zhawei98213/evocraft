@@ -84,6 +84,40 @@
 
 ## 当前进度
 
+### 2026-05-31：Qwen 样本评测 Task 3 本地运行被阻塞
+
+本轮任务是什么：
+
+- 按 Qwen 小样本评测计划进入 Task 3，并同步处理 Task 4 的上游证据门槛：检查本地 10-15 张脱敏样本 manifest 和 DashScope API key 是否已经准备好；只有两者都存在才运行真实 provider 评测并进入模型效果决策。
+
+已完成什么：
+
+- 检查 `ai-eval/samples/manifest.local.json` 是否存在，结果为不存在。
+- 检查当前 shell 是否有 `DASHSCOPE_API_KEY`，结果为未设置。
+- 确认 `ai-eval/samples/manifest.local.json` 和 `ai-eval/results/result-local.jsonl` 仍被 git ignore 保护。
+- 更新 Task 3 agent log 和 run ledger，记录本地样本评测未发生。
+- 更新 Task 4 agent log，记录由于没有 Task 3 redacted summary，本轮不能形成 Qwen 效果决策。
+- 未执行 manifest validation、未调用 Qwen provider、未生成 raw JSONL、未生成 redacted summary。
+
+卡在哪里：
+
+- 缺少本地 ignored 样本 manifest：`ai-eval/samples/manifest.local.json`。
+- 当前 shell 缺少 `DASHSCOPE_API_KEY`。
+- Task 4 被 Task 3 上游证据阻塞；当前不能判断 `expand_to_50_samples`、`fix_prompt_or_schema_first`、`fix_provider_setup_first` 或 `consider_second_provider_ab`。
+
+执行的是什么命令：
+
+- `test -f ai-eval/samples/manifest.local.json`
+- `test -n "$DASHSCOPE_API_KEY"`
+- `git check-ignore --quiet ai-eval/samples/manifest.local.json`
+- `git check-ignore --quiet ai-eval/results/result-local.jsonl`
+- `git status --short --branch`
+- `sed -n '1,220p' docs/superpowers/agent-runs/2026-05-31-qwen-sample-evaluation/agents/task-04-evaluation-review.md`
+
+下一步的计划：
+
+- 准备本地 ignored `ai-eval/samples/manifest.local.json` 和 10-15 张脱敏图片，并在 shell 中提供 `DASHSCOPE_API_KEY` 后，重新执行 Task 3；在此之前 Task 4 不能形成模型效果决策，只能记录阻塞状态。
+
 ### 2026-05-31：Qwen 样本评测 Task 2 Redacted Summary Reporter 完成
 
 本轮任务是什么：
