@@ -2328,6 +2328,49 @@
 - 提交并推送最终收口记录。
 - 进入 branch finishing：默认保留当前 pushed feature branch，等待用户决定是否创建 PR 或本地合并。
 
+### 2026-05-31：真实 AI 识别 PR 合并到 main
+
+本轮任务是什么：
+
+- Review 上一轮分支收口动作，确认 PR 是否只创建未合并，并把真实 AI 识别桌面迁移正式合入 `main`。
+
+已完成什么：
+
+- 确认 PR #1 `[codex] Complete desktop real AI recognition migration` 已创建但此前未合并：`state=open`、`merged=false`、`mergeable=true`。
+- GitHub connector 对 merge API 返回 403 后，改用本地 `git merge --no-ff codex/real-ai-recognition-implementation` 在 `main` 上生成 merge commit。
+- 合并后的 `main` 已通过验证并推送到远端。
+- GitHub PR #1 现已显示 `state=closed`、`merged=true`，merge commit 为 `8bbe317`。
+- `origin/main` 已包含迁移分支 head `aafafbc`，真实 AI 识别桌面迁移阶段正式进入 mainline。
+
+卡在哪里：
+
+- 无。尚需清理本地临时分支，并从最新 `main` 重新开下一阶段 Qwen 样本评测分支。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git branch --show-current && git rev-parse HEAD`
+- `git fetch origin main codex/real-ai-recognition-implementation --prune`
+- `git merge-base --is-ancestor aafafbc39b105ef1a46f662beee13c211851d226 origin/main`
+- GitHub connector `_search_prs` / `_get_pr_info` 查询 PR #1
+- GitHub connector `_merge_pull_request`（返回 403）
+- `git switch main`
+- `git pull --ff-only origin main`
+- `git merge --no-ff codex/real-ai-recognition-implementation`
+- `npm test`
+- `npm run test:electron-config`
+- `npm run build`
+- `git diff --check`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl release dist`
+- `git push origin main`
+
+下一步的计划：
+
+- 提交并推送本 PR 合并记录。
+- 删除未产生新提交的本地 `codex/qwen-sample-evaluation` stacked 分支。
+- 删除已合入 `main` 的本地迁移分支。
+- 从最新 `main` 重新创建 `codex/qwen-sample-evaluation`，进入脱敏样本评测设计与计划。
+
 ## 下一步
 
 1. 使用 10-15 张三科混合脱敏样本跑 Qwen 小样本评测，确认 schema、prompt、失败边界、成本和编造答案风险。
