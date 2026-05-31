@@ -2,7 +2,7 @@
 
 日期：2026-05-31
 
-状态：`ready_for_execution`
+状态：`task_0_completed`
 
 执行模式：`subagent-driven`，但必须在本 ledger、task logs、父级 spec 和 plan 已提交后才能派发。
 
@@ -33,7 +33,7 @@
 
 | Task | Agent Log | Status | Scope | Required Verification | Commit |
 | --- | --- | --- | --- | --- | --- |
-| 0. Preflight And Privacy Gate | `agents/task-00-preflight.md` | pending | 分支、ignore、baseline verification，docs-only log update | `npm run test:ai-eval-config`, `npm test`, `git diff --check` | pending |
+| 0. Preflight And Privacy Gate | `agents/task-00-preflight.md` | completed | 分支、ignore、baseline verification，docs-only log update | `npm run test:ai-eval-config`, `npm test`, `git diff --check` | Task 0 documentation commit |
 | 1. Manifest Validation And Dry Run | `agents/task-01-manifest-validation.md` | pending | eval runner validation, manifest example, config tests | `npm run test:ai-eval-config`, `npm test`, `git diff --check` | pending |
 | 2. Redacted Summary Reporter | `agents/task-02-summary-reporter.md` | pending | result summary script, redaction tests, docs/testing README | `node tests/ai-eval-summary.test.mjs`, `npm test`, `git diff --check` | pending |
 | 3. Local 10-15 Sample Run | `agents/task-03-local-sample-run.md` | pending | private local sample run or explicit local blocker record | manifest validation, provider run if credentials exist, redaction scan | pending |
@@ -43,13 +43,21 @@
 
 | Agent Log | Role | Task | Status | Work Plan / Progress |
 | --- | --- | --- | --- | --- |
-| `agents/task-00-preflight.md` | implementer | Task 0 | pending | Confirm branch, privacy ignore gates, and baseline tests before code work. |
+| `agents/task-00-preflight.md` | implementer | Task 0 | completed | Confirmed branch, real-AI merge ancestry, privacy ignore gates, and baseline tests before code work. |
 | `agents/task-01-manifest-validation.md` | implementer | Task 1 | pending | Add manifest validation and dry-run support with RED/GREEN coverage. |
 | `agents/task-02-summary-reporter.md` | implementer | Task 2 | pending | Add redacted summary reporter with sensitive-content regression tests. |
 | `agents/task-03-local-sample-run.md` | implementer | Task 3 | pending | Run local samples only if manifest and credentials exist; otherwise record blocker. |
 | `agents/task-04-evaluation-review.md` | reviewer | Task 4 | pending | Classify evidence and update downstream decision docs. |
 
 ## Global Progress
+
+### 2026-05-31 Task 0 Preflight Complete
+
+- Confirmed branch `codex/qwen-sample-evaluation` is tracking `origin/codex/qwen-sample-evaluation`.
+- Confirmed real AI desktop migration commit `aafafbc39b105ef1a46f662beee13c211851d226` is an ancestor of `origin/main`.
+- Confirmed `.env*`, private sample manifest paths, private sample image paths, and ignored result files are protected by `.gitignore`.
+- Ran `npm run test:ai-eval-config`, `npm test`, and `git diff --check`; all exited `0`.
+- No application code was modified in Task 0.
 
 ### 2026-05-31 Run Prepared
 

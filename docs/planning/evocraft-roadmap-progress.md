@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-05-30
+最后更新：2026-05-31
 
 ## 路线图
 
@@ -83,6 +83,43 @@
 如果没有卡点，写 `无`。命令不需要粘贴完整输出，但要保留足够复现的命令名称或关键命令。
 
 ## 当前进度
+
+### 2026-05-31：Qwen 样本评测 Task 0 预检完成
+
+本轮任务是什么：
+
+- 按 `docs/superpowers/plans/2026-05-31-qwen-sample-evaluation.md` 启动 Qwen 小样本评测执行，先完成 Task 0 的分支、隐私 ignore gate 和基线测试预检，并把证据写入 run ledger 与 task log。
+
+已完成什么：
+
+- 确认当前分支是 `codex/qwen-sample-evaluation`，并跟踪 `origin/codex/qwen-sample-evaluation`。
+- 确认真实 AI 桌面迁移 commit `aafafbc39b105ef1a46f662beee13c211851d226` 已在 `origin/main` 祖先链上。
+- 确认 `.env`、`.env.local`、`ai-eval/samples/manifest.local.json`、`ai-eval/samples/private/math.jpg`、`ai-eval/results/result-123.jsonl` 和 `ai-eval/results/summary-123.json` 均被 git ignore。
+- 跑完 Task 0 要求的基线验证：`npm run test:ai-eval-config`、`npm test` 和 `git diff --check`。
+- 更新 `docs/superpowers/agent-runs/2026-05-31-qwen-sample-evaluation/README.md` 和 `agents/task-00-preflight.md`，记录 Task 0 已完成。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git log --oneline --decorate -5`
+- `git merge-base --is-ancestor aafafbc39b105ef1a46f662beee13c211851d226 origin/main`
+- `git check-ignore --quiet .env`
+- `git check-ignore --quiet .env.local`
+- `git check-ignore --quiet ai-eval/samples/manifest.local.json`
+- `git check-ignore --quiet ai-eval/samples/private/math.jpg`
+- `git check-ignore --quiet ai-eval/results/result-123.jsonl`
+- `git check-ignore --quiet ai-eval/results/summary-123.json`
+- `npm run test:ai-eval-config`
+- `npm test`
+- `git diff --check`
+
+下一步的计划：
+
+- 进入 Task 1：先写失败测试覆盖 `--validate-only`、`--allow-small-set`、非法 subject、重复 id、越界图片路径和 10-15 张样本数量门槛，再实现 manifest validation 与 dry run。
 
 ### 2026-05-30：54d25e0 Final Re-review PASS
 
