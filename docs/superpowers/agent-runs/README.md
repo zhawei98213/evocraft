@@ -109,3 +109,4 @@ Leader 把这些内容整理进对应 task log。
 ## 7. 当前 Runs
 
 - [真实 AI 识别接入](2026-05-23-real-ai-recognition/README.md)
+- [Qwen 脱敏样本评测](2026-05-31-qwen-sample-evaluation/README.md)

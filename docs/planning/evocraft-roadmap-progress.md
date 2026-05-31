@@ -2371,6 +2371,41 @@
 - 删除已合入 `main` 的本地迁移分支。
 - 从最新 `main` 重新创建 `codex/qwen-sample-evaluation`，进入脱敏样本评测设计与计划。
 
+### 2026-05-31：Qwen 脱敏样本评测设计与计划
+
+本轮任务是什么：
+
+- 按 A 方案进入下一阶段，在不运行真实样本、不提交私有图片、不改生产链路的前提下，为 Qwen 10-15 张脱敏样本评测产出设计文档、实施计划和 subagent run ledger。
+
+已完成什么：
+
+- 新建 `docs/superpowers/specs/2026-05-31-qwen-sample-evaluation-design.md`，定义样本范围、manifest 合同、数据流、评测维度、redacted summary、隐私安全、错误处理、测试策略和决策规则。
+- 新建 `docs/superpowers/plans/2026-05-31-qwen-sample-evaluation.md`，拆分 Task 0-4：preflight、manifest validation、redacted summary reporter、本地样本运行、评估复盘与下一步决策。
+- 新建 `docs/superpowers/agent-runs/2026-05-31-qwen-sample-evaluation/README.md` 和每个 task 的初始 agent log，保证后续 subagent-driven 执行有持久记录。
+- 更新 `docs/README.md`、`docs/superpowers/agent-runs/README.md` 和 `ai-eval/README.md`，把新设计/计划/run ledger 纳入文档索引。
+- 更新项目记忆和想法胶囊，明确 Qwen 小样本评测只能提交 redacted aggregate summary，不能提交真实样本、raw JSONL、完整 OCR/provider 响应或 API key。
+
+卡在哪里：
+
+- 无。尚未执行实现任务，也未运行 provider；Task 3 未来可能因本地脱敏样本或 `DASHSCOPE_API_KEY` 缺失而阻塞。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `sed -n '1,220p' docs/README.md`
+- `sed -n '1,220p' docs/planning/2026-05-23-design-documentation-system.md`
+- `sed -n '1,220p' docs/superpowers/agent-runs/README.md`
+- `sed -n '1,220p' ai-eval/README.md`
+- `sed -n '1,220p' ai-eval/samples/manifest.example.json`
+- `sed -n '1,240p' tests/ai-eval-config.test.mjs`
+- `mkdir -p docs/superpowers/agent-runs/2026-05-31-qwen-sample-evaluation/agents docs/testing/ai-eval`
+
+下一步的计划：
+
+- 运行文档自检、`npm test` 和 `git diff --check`。
+- 提交并推送本设计/计划/ledger 准备提交。
+- 之后按 run ledger 从 Task 0 preflight 开始 subagent-driven 执行。
+
 ## 下一步
 
 1. 使用 10-15 张三科混合脱敏样本跑 Qwen 小样本评测，确认 schema、prompt、失败边界、成本和编造答案风险。

@@ -1,0 +1,96 @@
+# Qwen Sample Evaluation Agent Run Ledger
+
+日期：2026-05-31
+
+状态：`ready_for_execution`
+
+执行模式：`subagent-driven`，但必须在本 ledger、task logs、父级 spec 和 plan 已提交后才能派发。
+
+父级 spec：
+
+- `docs/superpowers/specs/2026-05-31-qwen-sample-evaluation-design.md`
+
+父级 implementation plan：
+
+- `docs/superpowers/plans/2026-05-31-qwen-sample-evaluation.md`
+
+上游已完成阶段：
+
+- `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`
+
+## Execution Gate
+
+进入 subagent-driven 前必须满足：
+
+- Qwen sample evaluation 详细设计文档已存在。
+- Qwen sample evaluation 实施计划已存在。
+- 本 run ledger 已存在。
+- 每个初始 task log 已存在。
+- 当前分支基于已合入 `main` 的真实 AI 桌面迁移结果。
+- 私有样本、`.env*`、raw JSONL 结果仍被 git ignore。
+
+## Task Ledger
+
+| Task | Agent Log | Status | Scope | Required Verification | Commit |
+| --- | --- | --- | --- | --- | --- |
+| 0. Preflight And Privacy Gate | `agents/task-00-preflight.md` | pending | 分支、ignore、baseline verification，docs-only log update | `npm run test:ai-eval-config`, `npm test`, `git diff --check` | pending |
+| 1. Manifest Validation And Dry Run | `agents/task-01-manifest-validation.md` | pending | eval runner validation, manifest example, config tests | `npm run test:ai-eval-config`, `npm test`, `git diff --check` | pending |
+| 2. Redacted Summary Reporter | `agents/task-02-summary-reporter.md` | pending | result summary script, redaction tests, docs/testing README | `node tests/ai-eval-summary.test.mjs`, `npm test`, `git diff --check` | pending |
+| 3. Local 10-15 Sample Run | `agents/task-03-local-sample-run.md` | pending | private local sample run or explicit local blocker record | manifest validation, provider run if credentials exist, redaction scan | pending |
+| 4. Evaluation Review And Next Decision | `agents/task-04-evaluation-review.md` | pending | redacted summary decision, project memory/progress update | `npm test`, `git diff --check`, private path tracking check | pending |
+
+## Agent Ledger
+
+| Agent Log | Role | Task | Status | Work Plan / Progress |
+| --- | --- | --- | --- | --- |
+| `agents/task-00-preflight.md` | implementer | Task 0 | pending | Confirm branch, privacy ignore gates, and baseline tests before code work. |
+| `agents/task-01-manifest-validation.md` | implementer | Task 1 | pending | Add manifest validation and dry-run support with RED/GREEN coverage. |
+| `agents/task-02-summary-reporter.md` | implementer | Task 2 | pending | Add redacted summary reporter with sensitive-content regression tests. |
+| `agents/task-03-local-sample-run.md` | implementer | Task 3 | pending | Run local samples only if manifest and credentials exist; otherwise record blocker. |
+| `agents/task-04-evaluation-review.md` | reviewer | Task 4 | pending | Classify evidence and update downstream decision docs. |
+
+## Global Progress
+
+### 2026-05-31 Run Prepared
+
+- Created the Qwen sample evaluation run ledger after real AI desktop migration was merged into `main`.
+- Confirmed this run must not commit real child photos, local manifest files, raw JSONL provider results, API keys, or `.env*` files.
+- Next gate is Task 0 preflight.
+
+## Global Blockers
+
+- No implementation blocker in the committed repository.
+- Task 3 will be blocked if local sanitized samples or `DASHSCOPE_API_KEY` are not available at execution time.
+
+## Review Rules
+
+After each agent completes:
+
+1. Update that task's agent log.
+2. Update the task status in this ledger.
+3. Record commands and verification output.
+4. Review diff against assigned scope.
+5. Commit only the intended task scope.
+6. Move to the next task only after review passes or the blocker is explicitly recorded.
+
+For implementation tasks:
+
+1. Run the implementation agent.
+2. Run focused verification.
+3. Review against the parent spec and plan before moving on.
+4. If code changes touch shared behavior, add a follow-up code-quality review task before Task 4.
+
+## Final Verification
+
+Before this run can close:
+
+```bash
+npm test
+npm run test:ai-eval-config
+npm run test:ai-eval-summary
+git diff --check
+git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl release dist
+git status --short --branch
+```
+
+The final report must state whether a local sample run happened or was blocked by missing local samples/credentials.
