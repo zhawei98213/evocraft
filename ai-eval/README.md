@@ -27,6 +27,17 @@ EVOCRAFT_AI_EVAL_ENABLED=1 DASHSCOPE_API_KEY=your_key_here \
   node scripts/evaluate-ai-samples.mjs ai-eval/samples/manifest.local.json ai-eval/results/result-local.jsonl
 ```
 
+Redacted summary command:
+
+```bash
+node scripts/summarize-ai-eval-results.mjs \
+  ai-eval/results/result-local.jsonl \
+  docs/testing/ai-eval/2026-05-31-qwen-sample-summary.md
+```
+
+- The summary output is for committed aggregate conclusions only.
+- Do not commit raw JSONL rows, OCR text, provider raw responses, request bodies, auth headers, tokens, or image data URLs.
+
 Current design and execution docs:
 
 - `docs/superpowers/specs/2026-05-31-qwen-sample-evaluation-design.md`

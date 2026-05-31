@@ -84,6 +84,40 @@
 
 ## 当前进度
 
+### 2026-05-31：Qwen 样本评测 Task 2 Redacted Summary Reporter 完成
+
+本轮任务是什么：
+
+- 按 Qwen 小样本评测计划完成 Task 2：在不暴露 raw OCR、provider 原始响应、request body、鉴权信息和图片 data URL 的前提下，把 ignored JSONL 结果汇总成可入库的脱敏 Markdown summary。
+
+已完成什么：
+
+- 使用 TDD 新增 `tests/ai-eval-summary.test.mjs`，用临时 JSONL 输入覆盖 successful、failed、malformed 和 sensitive-content-bearing rows，并断言 aggregate output 只保留总量统计、subject counts、failure reason counts、review-item rows 和 median elapsed ms。
+- 先跑 `node tests/ai-eval-summary.test.mjs` 捕获 RED：测试因为 `scripts/summarize-ai-eval-results.mjs` 缺失而失败。
+- 实现 `scripts/summarize-ai-eval-results.mjs`，仅用 Node 内置 API 完成 CLI usage error exit `2`、JSONL 读取、parsed/malformed row 计数、subject/failure reason 聚合、success/failure/review-item row 计数、median elapsed ms 计算、输出目录创建和 redacted Markdown 写入。
+- Leader review 补充 top-level `result.reviewItems` 与敏感 `result.reason` 的 RED 用例；修复后 summary reporter 同时统计 draft-level/top-level review items，并把不安全的 aggregate label 归为 `redacted_failure_reason`。
+- Code quality review 首轮发现 subject label 泄漏、CLI 本地绝对路径输出、JSON `null`/primitive row 崩溃和 mixed review-item 计数问题；已补 RED 用例并修复为 subject allowlist、path-free CLI output/errors、non-object row 计 malformed 和合并 review-item 计数。
+- 更新 `package.json`，新增 `test:ai-eval-summary` 并把 summary test 纳入 `npm test`。
+- 更新 `ai-eval/README.md`，补充 summary command；新增 `docs/testing/ai-eval/README.md` 说明可提交/禁止提交的评测汇总内容；同步在 `docs/README.md` 建索引。
+- 更新 Task 2 agent log 和 Qwen sample evaluation run ledger，并修正 run ledger 中 Task 1 的 stale commit metadata 为 `1044308`。
+- 完成最终验证：`node tests/ai-eval-summary.test.mjs`、`npm run test:ai-eval-summary`、`npm test`、`git diff --check` 和隐私 tracking gate 全部通过。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `node tests/ai-eval-summary.test.mjs`
+- `npm run test:ai-eval-summary`
+- `npm test`
+- `git diff --check`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json 'ai-eval/samples/private/*' 'ai-eval/results/*'`
+
+下一步的计划：
+
+- 保持 Task 3 pending，等本地脱敏样本和 `DASHSCOPE_API_KEY` 就绪后运行真实小样本评测，再用新的 summary reporter 生成可入库的脱敏结论。
+
 ### 2026-05-31：Qwen 样本评测 Task 1 Manifest Validation 完成
 
 本轮任务是什么：

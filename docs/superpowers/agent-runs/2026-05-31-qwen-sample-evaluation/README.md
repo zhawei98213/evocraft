@@ -2,7 +2,7 @@
 
 日期：2026-05-31
 
-状态：`task_1_completed`
+状态：`task_2_completed`
 
 执行模式：`subagent-driven`，但必须在本 ledger、task logs、父级 spec 和 plan 已提交后才能派发。
 
@@ -34,8 +34,8 @@
 | Task | Agent Log | Status | Scope | Required Verification | Commit |
 | --- | --- | --- | --- | --- | --- |
 | 0. Preflight And Privacy Gate | `agents/task-00-preflight.md` | completed | 分支、ignore、baseline verification，docs-only log update | `npm run test:ai-eval-config`, `npm test`, `git diff --check` | Task 0 documentation commit |
-| 1. Manifest Validation And Dry Run | `agents/task-01-manifest-validation.md` | completed | eval runner validation, manifest example, config tests | `npm run test:ai-eval-config`, `npm test`, `git diff --check` | Pending leader commit |
-| 2. Redacted Summary Reporter | `agents/task-02-summary-reporter.md` | pending | result summary script, redaction tests, docs/testing README | `node tests/ai-eval-summary.test.mjs`, `npm test`, `git diff --check` | pending |
+| 1. Manifest Validation And Dry Run | `agents/task-01-manifest-validation.md` | completed | eval runner validation, manifest example, config tests | `npm run test:ai-eval-config`, `npm test`, `git diff --check` | `1044308` |
+| 2. Redacted Summary Reporter | `agents/task-02-summary-reporter.md` | completed | result summary script, redaction tests, docs/testing README | `node tests/ai-eval-summary.test.mjs`, `npm run test:ai-eval-summary`, `npm test`, `git diff --check`, privacy tracking check | Pending leader commit |
 | 3. Local 10-15 Sample Run | `agents/task-03-local-sample-run.md` | pending | private local sample run or explicit local blocker record | manifest validation, provider run if credentials exist, redaction scan | pending |
 | 4. Evaluation Review And Next Decision | `agents/task-04-evaluation-review.md` | pending | redacted summary decision, project memory/progress update | `npm test`, `git diff --check`, private path tracking check | pending |
 
@@ -45,7 +45,7 @@
 | --- | --- | --- | --- | --- |
 | `agents/task-00-preflight.md` | implementer | Task 0 | completed | Confirmed branch, real-AI merge ancestry, privacy ignore gates, and baseline tests before code work. |
 | `agents/task-01-manifest-validation.md` | implementer | Task 1 | completed | Added manifest validation and dry-run support with RED/GREEN coverage; no provider call was made. |
-| `agents/task-02-summary-reporter.md` | implementer | Task 2 | pending | Add redacted summary reporter with sensitive-content regression tests. |
+| `agents/task-02-summary-reporter.md` | implementer | Task 2 | completed | Added redacted summary reporter, privacy regression coverage, doc index, and command documentation after RED/GREEN verification. |
 | `agents/task-03-local-sample-run.md` | implementer | Task 3 | pending | Run local samples only if manifest and credentials exist; otherwise record blocker. |
 | `agents/task-04-evaluation-review.md` | reviewer | Task 4 | pending | Classify evidence and update downstream decision docs. |
 
@@ -70,6 +70,19 @@
 - Updated `ai-eval/samples/manifest.example.json` and `ai-eval/README.md` to match the stricter local evaluation workflow.
 - Spec review passed. Code quality review first found a symlink escape/privacy blocker and CLI error-output weaknesses; those were fixed by adding symlink/absolute-path/no-stack tests, rejecting symlinked sample files, checking real paths stay in the manifest directory, and keeping default validation errors concise. Code quality re-review passed with all previous HIGH/MEDIUM findings closed.
 - Final leader verification after all Task 1 edits passed: `npm run test:ai-eval-config`, `npm test`, and `git diff --check`.
+
+### 2026-05-31 Task 2 Redacted Summary Reporter Complete
+
+- Added RED coverage in `tests/ai-eval-summary.test.mjs` for successful, failed, malformed, and sensitive-content-bearing JSONL rows.
+- Confirmed RED with `node tests/ai-eval-summary.test.mjs`: the summary reporter test failed because `scripts/summarize-ai-eval-results.mjs` did not exist.
+- Implemented `scripts/summarize-ai-eval-results.mjs` with usage-exit `2`, parsed-row and malformed-row counting, subject counts, failure reason counts, success/failure counts, review-item row counts, median elapsed ms, recursive output-directory creation, and redacted Markdown output.
+- Added `test:ai-eval-summary` to `package.json` and included it in `npm test`.
+- Updated `ai-eval/README.md`, added `docs/testing/ai-eval/README.md`, and indexed the testing doc in `docs/README.md`.
+- Leader review added focused coverage for top-level `result.reviewItems` and sensitive `result.reason` values; the reporter now counts both draft-level and top-level review items while redacting unsafe aggregate labels to `redacted_failure_reason`.
+- Code quality review found subject-label leakage, path-bearing CLI output, non-object JSONL crashes, and mixed review-item counting gaps. These were fixed with subject allowlisting, path-free CLI output/errors, malformed counting for non-object rows, combined review-item counting, and matching regression coverage.
+- Code quality re-review passed with all previous HIGH/MEDIUM findings closed.
+- Final verification passed: `node tests/ai-eval-summary.test.mjs`, `npm run test:ai-eval-summary`, `npm test`, `git diff --check`, and the privacy tracking gate `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json 'ai-eval/samples/private/*' 'ai-eval/results/*'`.
+- Privacy tracking output contained only `ai-eval/results/.gitignore`; no private sample paths, env files, manifests, or raw result files are tracked.
 
 ### 2026-05-31 Run Prepared
 
@@ -109,7 +122,7 @@ npm test
 npm run test:ai-eval-config
 npm run test:ai-eval-summary
 git diff --check
-git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json ai-eval/samples/private/math.jpg ai-eval/results/result-123.jsonl release dist
+git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json 'ai-eval/samples/private/*' 'ai-eval/results/*' release dist
 git status --short --branch
 ```
 
