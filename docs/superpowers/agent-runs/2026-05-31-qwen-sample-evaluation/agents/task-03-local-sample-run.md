@@ -48,6 +48,7 @@ Forbidden scope:
 - `DASHSCOPE_API_KEY` is not set in the current shell environment.
 - Confirmed the local manifest path and ignored result path are still covered by git ignore.
 - Stopped before manifest validation, provider evaluation, or summary generation because both required local prerequisites are missing.
+- 2026-06-01: Rechecked local inputs after the user asked to continue. `manifest.local.json` is still missing, `ai-eval/samples/private/` is absent, the current shell still has no `DASHSCOPE_API_KEY`, and no common ignored env file contains a `DASHSCOPE_API_KEY=` entry.
 
 ## Commands Run
 
@@ -57,6 +58,11 @@ test -n "$DASHSCOPE_API_KEY"
 git check-ignore --quiet ai-eval/samples/manifest.local.json
 git check-ignore --quiet ai-eval/results/result-local.jsonl
 git status --short --branch
+test -f ai-eval/samples/manifest.local.json
+test -d ai-eval/samples/private
+find ai-eval/samples/private -maxdepth 1 -type f 2>/dev/null | wc -l
+test -n "$DASHSCOPE_API_KEY"
+for f in .env .env.local ai-eval/.env ai-eval/.env.local; do if [ -f "$f" ] && grep -q '^DASHSCOPE_API_KEY=' "$f"; then printf '%s\n' "$f"; fi; done
 ```
 
 ## Files Changed
@@ -73,6 +79,11 @@ git status --short --branch
 - `git check-ignore --quiet ai-eval/samples/manifest.local.json` -> exit `0`.
 - `git check-ignore --quiet ai-eval/results/result-local.jsonl` -> exit `0`.
 - `git status --short --branch` -> exit `0`; branch was `codex/qwen-sample-evaluation...origin/codex/qwen-sample-evaluation`.
+- 2026-06-01 recheck: `test -f ai-eval/samples/manifest.local.json` -> exit `1`.
+- 2026-06-01 recheck: `test -d ai-eval/samples/private` -> exit `1`.
+- 2026-06-01 recheck: `find ai-eval/samples/private -maxdepth 1 -type f 2>/dev/null | wc -l` -> `0`.
+- 2026-06-01 recheck: `test -n "$DASHSCOPE_API_KEY"` -> exit `1`.
+- 2026-06-01 recheck: common ignored env-file scan printed no files containing `DASHSCOPE_API_KEY=`.
 
 ## Blockers
 

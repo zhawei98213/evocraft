@@ -51,6 +51,16 @@
 
 ## Global Progress
 
+### 2026-06-01 Task 3/4 Blocker Rechecked
+
+- Rechecked local prerequisites after continuing the run.
+- `ai-eval/samples/manifest.local.json` is still missing.
+- `ai-eval/samples/private/` is absent and contains `0` local sample files.
+- The current shell still does not have `DASHSCOPE_API_KEY`.
+- Common ignored env files did not contain a `DASHSCOPE_API_KEY=` entry.
+- The ignore gates for local manifest and result paths still pass.
+- No manifest validation, provider call, raw JSONL generation, redacted summary generation, or model-quality decision occurred.
+
 ### 2026-05-31 Task 0 Preflight Complete
 
 - Confirmed branch `codex/qwen-sample-evaluation` is tracking `origin/codex/qwen-sample-evaluation`.

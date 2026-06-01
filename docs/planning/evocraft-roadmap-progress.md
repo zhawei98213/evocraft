@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-05-31
+最后更新：2026-06-01
 
 ## 路线图
 
@@ -83,6 +83,43 @@
 如果没有卡点，写 `无`。命令不需要粘贴完整输出，但要保留足够复现的命令名称或关键命令。
 
 ## 当前进度
+
+### 2026-06-01：Qwen 样本评测本地输入阻塞复查
+
+本轮任务是什么：
+
+- 根据当前进度继续 Qwen 小样本评测执行，重新检查 Task 3 所需本地脱敏样本 manifest、private 样本目录和 DashScope key 是否已经准备好。
+
+已完成什么：
+
+- 重新读取项目记忆、路线图进度、想法胶囊和 Qwen sample evaluation run ledger。
+- 重新检查 `ai-eval/samples/manifest.local.json`，结果仍不存在。
+- 检查 `ai-eval/samples/private/`，结果目录不存在，样本文件数为 `0`。
+- 检查当前 shell 的 `DASHSCOPE_API_KEY`，结果仍未设置。
+- 扫描 `.env`、`.env.local`、`ai-eval/.env`、`ai-eval/.env.local` 是否包含 `DASHSCOPE_API_KEY=`，结果没有匹配文件。
+- 再次确认 `ai-eval/samples/manifest.local.json` 和 `ai-eval/results/result-local.jsonl` 被 git ignore 保护。
+- 更新 Task 3/4 agent logs 和 run ledger，记录 2026-06-01 的复查结果。
+
+卡在哪里：
+
+- 缺少本地 ignored `ai-eval/samples/manifest.local.json`。
+- 缺少本地 `ai-eval/samples/private/` 脱敏样本文件。
+- 缺少可用于本机评测的 `DASHSCOPE_API_KEY`。
+
+执行的是什么命令：
+
+- `test -f ai-eval/samples/manifest.local.json`
+- `test -d ai-eval/samples/private`
+- `find ai-eval/samples/private -maxdepth 1 -type f 2>/dev/null | wc -l`
+- `test -n "$DASHSCOPE_API_KEY"`
+- `for f in .env .env.local ai-eval/.env ai-eval/.env.local; do if [ -f "$f" ] && grep -q '^DASHSCOPE_API_KEY=' "$f"; then printf '%s\n' "$f"; fi; done`
+- `git check-ignore --quiet ai-eval/samples/manifest.local.json`
+- `git check-ignore --quiet ai-eval/results/result-local.jsonl`
+- `git status --short --branch`
+
+下一步的计划：
+
+- 先准备本地 ignored `ai-eval/samples/manifest.local.json`、`ai-eval/samples/private/` 下 10-15 张脱敏图片，并让 shell 或 ignored env 文件提供 `DASHSCOPE_API_KEY`；这些本地输入准备好后才能重新执行 Task 3 的 validate/provider/summary/redaction 流程。
 
 ### 2026-05-31：Qwen 样本评测 Task 3 本地运行被阻塞
 
