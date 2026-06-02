@@ -8,6 +8,9 @@ const { createLocalRecordStore, isValidWrongQuestionRecordArray } = require("./s
 const isDev = Boolean(process.env.ELECTRON_RENDERER_URL);
 const devRendererUrl = process.env.ELECTRON_RENDERER_URL ?? "http://127.0.0.1:5173";
 const allowedImageExtensions = new Set([".png", ".jpg", ".jpeg", ".webp", ".bmp", ".heic"]);
+const defaultAiProvider = "qwen";
+const defaultAiModel = "qwen-vl-ocr-latest";
+const missingAiConfigurationMessage = "请在设置里填写 API Key 和 LLM 名称后启用真实 AI。";
 
 function createWindow() {
   const window = new BrowserWindow({
@@ -146,20 +149,90 @@ function registerRecordIpc(recordStore) {
   });
 }
 
-function createAiRuntime() {
-  const enabledFlag = process.env.EVOCRAFT_AI_ENABLED === "1";
-  const provider = process.env.EVOCRAFT_AI_PROVIDER ?? "qwen";
-  const apiKey = process.env.DASHSCOPE_API_KEY ?? "";
-  const enabled = enabledFlag && Boolean(apiKey);
-
-  return {
-    status: {
-      enabled,
-      provider,
-      mode: enabled ? "real" : "mock",
-      message: enabledFlag && !apiKey ? "真实 AI 已开启但缺少 API Key。" : "",
+function createAiRuntime(options = {}) {
+  const hasOption = (key) => Object.prototype.hasOwnProperty.call(options, key);
+  const envEnabled = process.env.EVOCRAFT_AI_ENABLED === "1";
+  const initialApiKey = hasOption("apiKey")
+    ? options.apiKey
+    : envEnabled
+      ? process.env.DASHSCOPE_API_KEY ?? ""
+      : "";
+  let config = normalizeAiRuntimeConfig({
+    apiKey: initialApiKey,
+    model: hasOption("model")
+      ? options.model
+      : process.env.EVOCRAFT_AI_MODEL ?? process.env.DASHSCOPE_MODEL ?? defaultAiModel,
+    provider: hasOption("provider")
+      ? options.provider
+      : process.env.EVOCRAFT_AI_PROVIDER ?? defaultAiProvider,
+  });
+  const endpoint = options.endpoint;
+  const fetchImpl = hasOption("fetchImpl") ? options.fetchImpl : globalThis.fetch;
+  let adapter = createConfiguredQwenAdapter(config, { endpoint, fetchImpl });
+  const runtime = {
+    get status() {
+      return createAiRuntimeStatus(config);
     },
-    adapter: createQwenAdapter({ apiKey }),
+    get adapter() {
+      return adapter;
+    },
+    configure(input) {
+      const nextConfig = normalizeAiRuntimeConfig({
+        provider: defaultAiProvider,
+        apiKey: input?.apiKey,
+        model: input?.model,
+      });
+
+      if (!nextConfig.apiKey || !nextConfig.model) {
+        return {
+          ok: false,
+          message: "请填写 API Key 和 LLM 名称。",
+          status: runtime.status,
+        };
+      }
+
+      config = nextConfig;
+      adapter = createConfiguredQwenAdapter(config, { endpoint, fetchImpl });
+      return {
+        ok: true,
+        status: runtime.status,
+      };
+    },
+  };
+
+  return runtime;
+}
+
+function createConfiguredQwenAdapter(config, options = {}) {
+  return createQwenAdapter({
+    apiKey: config.apiKey,
+    model: config.model,
+    endpoint: options.endpoint,
+    fetchImpl: options.fetchImpl,
+  });
+}
+
+function normalizeAiRuntimeConfig(input = {}) {
+  return {
+    provider: normalizeString(input.provider, defaultAiProvider) || defaultAiProvider,
+    apiKey: normalizeString(input.apiKey, ""),
+    model: normalizeString(input.model, defaultAiModel) || defaultAiModel,
+  };
+}
+
+function normalizeString(value, fallback) {
+  return typeof value === "string" ? value.trim() : fallback;
+}
+
+function createAiRuntimeStatus(config) {
+  const configured = Boolean(config.apiKey);
+  return {
+    enabled: configured,
+    configured,
+    provider: config.provider,
+    model: config.model,
+    mode: configured ? "real" : "mock",
+    message: configured ? "" : missingAiConfigurationMessage,
   };
 }
 
@@ -171,6 +244,21 @@ function registerAiIpc(runtime, options = {}) {
   targetIpcMain.handle("ai:runtime-status", (event) => {
     assertAllowedSender(event, isRendererUrlAllowed);
     return runtime.status;
+  });
+
+  targetIpcMain.handle("ai:configure", (event, input) => {
+    assertAllowedSender(event, isRendererUrlAllowed);
+
+    if (typeof runtime.configure !== "function") {
+      return {
+        ok: false,
+        message: "真实 AI 配置桥接不可用。",
+        status: runtime.status,
+      };
+    }
+
+    externalAiAuthorized = false;
+    return runtime.configure(input);
   });
 
   targetIpcMain.handle("ai:set-external-authorization", (event, acknowledged) => {

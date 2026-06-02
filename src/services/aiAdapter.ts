@@ -22,10 +22,21 @@ export interface AiAdapterFailure {
 
 export interface AiRuntimeStatus {
   enabled: boolean;
+  configured: boolean;
   provider: string;
+  model: string;
   mode: "mock" | "real";
   message: string;
 }
+
+export interface AiRuntimeConfigurationInput {
+  apiKey: string;
+  model: string;
+}
+
+export type AiRuntimeConfigurationResult =
+  | { ok: true; status: AiRuntimeStatus }
+  | { ok: false; message: string; status?: AiRuntimeStatus };
 
 export interface DetectRegionsInput {
   imageUri: string;

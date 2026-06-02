@@ -100,7 +100,9 @@ describe("createDesktopAiAdapter", () => {
       clearRecords: async () => ({ ok: true as const }),
       getAiRuntimeStatus: async () => ({
         enabled: false,
+        configured: false,
         provider: "qwen",
+        model: "qwen-vl-ocr-latest",
         mode: "mock",
         message: "",
       }),

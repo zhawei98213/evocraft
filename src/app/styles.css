@@ -77,13 +77,15 @@ textarea:focus-visible {
 
 body[data-screen="hub"] .app-shell,
 body[data-screen="records"] .app-shell,
-body[data-screen="detail"] .app-shell {
+body[data-screen="detail"] .app-shell,
+body[data-screen="settings"] .app-shell {
   grid-template-columns: 236px minmax(640px, 1fr);
 }
 
 body[data-screen="hub"] .ai-review-panel,
 body[data-screen="records"] .ai-review-panel,
-body[data-screen="detail"] .ai-review-panel {
+body[data-screen="detail"] .ai-review-panel,
+body[data-screen="settings"] .ai-review-panel {
   display: none;
 }
 
@@ -407,6 +409,7 @@ body[data-screen="detail"] .ai-review-panel {
 .recent-section,
 .mini-records,
 .upload-card,
+.settings-panel,
 .region-canvas-card,
 .region-tools,
 .records-panel,
@@ -768,6 +771,54 @@ body[data-screen="detail"] .ai-review-panel {
 .start-button {
   width: 100%;
   margin-top: 22px;
+}
+
+.settings-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 720px);
+  gap: 18px;
+}
+
+.settings-panel {
+  padding: 22px;
+}
+
+.settings-status {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.settings-status div {
+  min-width: 0;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-blue);
+  padding: 14px;
+}
+
+.settings-status span,
+.settings-status strong {
+  display: block;
+}
+
+.settings-status span {
+  color: var(--steel);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.settings-status strong {
+  margin-top: 6px;
+  color: var(--charcoal);
+  font-size: 15px;
+  overflow-wrap: anywhere;
+}
+
+.settings-form {
+  display: grid;
+  gap: 16px;
 }
 
 .region-layout {

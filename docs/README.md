@@ -18,6 +18,8 @@
 - [真实 AI 识别接入设计](superpowers/specs/2026-05-23-real-ai-recognition-design.md)：确认第一版真实 AI 只做识别整理、Electron main 调用 Qwen、本地文件夹 + JSON 索引持久化和评测脚本策略。
 - [真实 AI 识别实施计划](superpowers/plans/2026-05-23-real-ai-recognition.md)：把真实 AI 接入拆成本地文件存储、AI adapter v1、Qwen 评测脚本、Electron main IPC、开发开关和授权提示任务。
 - [真实 AI 识别 Agent Run Ledger](superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md)：记录 subagent-driven 执行中每个 agent 的计划、进度、命令、验证和 review。
+- [应用内真实 AI 配置设计](superpowers/specs/2026-06-02-app-visible-ai-config-design.md)：把 API key 和 LLM 名称从隐藏环境变量迁移到桌面设置页，同时保持 main-process 密钥边界。
+- [应用内真实 AI 配置实施计划](superpowers/plans/2026-06-02-app-visible-ai-config.md)：实现设置页、`ai:configure` IPC、runtime 状态同步和验证步骤。
 - [Qwen 脱敏样本评测设计](superpowers/specs/2026-05-31-qwen-sample-evaluation-design.md)：确认第一轮 10-15 张本地脱敏样本评测的样本规范、manifest 合同、隐私边界、结果 redaction 和决策规则。
 - [Qwen 脱敏样本评测实施计划](superpowers/plans/2026-05-31-qwen-sample-evaluation.md)：把样本评测拆成 preflight、manifest validation、redacted summary reporter、本地样本运行和评估决策任务。
 - [Qwen 脱敏样本评测 Agent Run Ledger](superpowers/agent-runs/2026-05-31-qwen-sample-evaluation/README.md)：记录后续 subagent-driven 执行中每个 agent 的任务边界、进度、命令和 review。

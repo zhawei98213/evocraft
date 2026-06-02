@@ -1,6 +1,8 @@
 import type { WrongQuestionRecord } from "../domain/wrongQuestion";
 import type {
   AiAdapterFailure,
+  AiRuntimeConfigurationInput,
+  AiRuntimeConfigurationResult,
   AiRuntimeStatus,
   DetectRegionsInput,
   DetectRegionsSuccess,
@@ -16,6 +18,9 @@ export interface EvoCraftDesktopApi {
   saveRecords(records: WrongQuestionRecord[]): Promise<StorageResult | StorageFailure>;
   clearRecords(): Promise<StorageResult | StorageFailure>;
   getAiRuntimeStatus?(): Promise<AiRuntimeStatus>;
+  configureAiRuntime?(
+    input: AiRuntimeConfigurationInput,
+  ): Promise<AiRuntimeConfigurationResult>;
   setExternalAiAuthorization?(acknowledged: boolean): Promise<{ ok: true }>;
   detectRegions?(input: DetectRegionsInput): Promise<DetectRegionsSuccess | AiAdapterFailure>;
   recognizeQuestion?(

@@ -13,6 +13,13 @@ import { App } from "./App";
 import type { EvoCraftDesktopApi } from "../services/desktopBridge";
 import type { RecordStore } from "../services/storage";
 
+type TestDesktopApi = EvoCraftDesktopApi & {
+  configureAiRuntime?: (input: {
+    apiKey: string;
+    model: string;
+  }) => Promise<{ ok: boolean; status?: unknown; message?: string }>;
+};
+
 afterEach(() => {
   vi.restoreAllMocks();
   Reflect.deleteProperty(window, "evocraft");
@@ -306,7 +313,9 @@ describe("App", () => {
     const desktopApi = installDesktopBridge({
       getAiRuntimeStatus: vi.fn().mockResolvedValue({
         enabled: false,
+        configured: false,
         provider: "qwen",
+        model: "qwen-vl-ocr-latest",
         mode: "mock",
         message: "",
       }),
@@ -327,7 +336,9 @@ describe("App", () => {
     installDesktopBridge({
       getAiRuntimeStatus: vi.fn().mockResolvedValue({
         enabled: true,
+        configured: true,
         provider: "qwen",
+        model: "qwen-vl-ocr-latest",
         mode: "real",
         message: "",
       }),
@@ -346,13 +357,89 @@ describe("App", () => {
     ).toBeInTheDocument();
   });
 
+  it("shows app-visible AI configuration with API Key and LLM name", async () => {
+    installDesktopBridge({
+      getAiRuntimeStatus: vi.fn().mockResolvedValue({
+        enabled: false,
+        configured: false,
+        provider: "qwen",
+        model: "qwen-vl-ocr-latest",
+        mode: "mock",
+        message: "请在设置里填写 API Key 和 LLM 名称后启用真实 AI。",
+      }),
+      configureAiRuntime: vi.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "设置" }));
+
+    expect(screen.getByRole("heading", { name: "设置" })).toBeInTheDocument();
+    expect(screen.getByLabelText("API Key")).toBeInTheDocument();
+    expect(screen.getByLabelText("LLM 名称")).toHaveValue("qwen-vl-ocr-latest");
+    expect(screen.getByText("当前使用本地 mock 识别")).toBeInTheDocument();
+  });
+
+  it("submits desktop AI configuration without echoing the API key", async () => {
+    const desktopApi = installDesktopBridge({
+      getAiRuntimeStatus: vi.fn().mockResolvedValue({
+        enabled: false,
+        configured: false,
+        provider: "qwen",
+        model: "qwen-vl-ocr-latest",
+        mode: "mock",
+        message: "请在设置里填写 API Key 和 LLM 名称后启用真实 AI。",
+      }),
+      configureAiRuntime: vi.fn().mockResolvedValue({
+        ok: true,
+        status: {
+          enabled: true,
+          configured: true,
+          provider: "qwen",
+          model: "qwen-vl-max",
+          mode: "real",
+          message: "",
+        },
+      }),
+      detectRegions: vi.fn(),
+      recognizeQuestion: vi.fn(),
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "设置" }));
+    await user.type(screen.getByLabelText("API Key"), "dashscope-secret-key");
+    await user.clear(screen.getByLabelText("LLM 名称"));
+    await user.type(screen.getByLabelText("LLM 名称"), "qwen-vl-max");
+    await user.click(screen.getByRole("button", { name: "保存配置" }));
+
+    await waitFor(() => {
+      expect(desktopApi.configureAiRuntime).toHaveBeenCalledWith({
+        apiKey: "dashscope-secret-key",
+        model: "qwen-vl-max",
+      });
+    });
+    expect(screen.queryByDisplayValue("dashscope-secret-key")).not.toBeInTheDocument();
+    expect(screen.getByText("真实 AI 已配置")).toBeInTheDocument();
+    expect(screen.getByText("LLM 名称：qwen-vl-max")).toBeInTheDocument();
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+
+    expect(await screen.findByText("真实 AI 测试模式")).toBeInTheDocument();
+    expect(screen.getByText("LLM 名称：qwen-vl-max")).toBeInTheDocument();
+  });
+
   it("blocks desktop real AI region detection until external authorization is acknowledged", async () => {
     const desktopApi = installDesktopBridge({
       selectImage: vi.fn().mockResolvedValue("/Users/zha/Desktop/question.png"),
       readImageAsDataUrl: vi.fn().mockResolvedValue("data:image/png;base64,desktop-image"),
       getAiRuntimeStatus: vi.fn().mockResolvedValue({
         enabled: true,
+        configured: true,
         provider: "qwen",
+        model: "qwen-vl-ocr-latest",
         mode: "real",
         message: "",
       }),
@@ -384,7 +471,9 @@ describe("App", () => {
       readImageAsDataUrl: vi.fn().mockResolvedValue("data:image/png;base64,desktop-image"),
       getAiRuntimeStatus: vi.fn().mockResolvedValue({
         enabled: true,
+        configured: true,
         provider: "qwen",
+        model: "qwen-vl-ocr-latest",
         mode: "real",
         message: "",
       }),
@@ -434,7 +523,9 @@ describe("App", () => {
   it("blocks rerun detection after a delayed real AI runtime flip until authorization is acknowledged", async () => {
     const runtimeStatus = createDeferred<{
       enabled: boolean;
+      configured: boolean;
       provider: string;
+      model: string;
       mode: "mock" | "real";
       message: string;
     }>();
@@ -463,7 +554,14 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { name: "选择题目区域" })).toBeInTheDocument();
     await act(async () => {
-      runtimeStatus.resolve({ enabled: true, provider: "qwen", mode: "real", message: "" });
+      runtimeStatus.resolve({
+        enabled: true,
+        configured: true,
+        provider: "qwen",
+        model: "qwen-vl-ocr-latest",
+        mode: "real",
+        message: "",
+      });
       await runtimeStatus.promise;
     });
     await user.click(screen.getByRole("button", { name: "重新自动找题" }));
@@ -475,7 +573,9 @@ describe("App", () => {
   it("blocks recognition after a delayed real AI runtime flip until authorization is acknowledged", async () => {
     const runtimeStatus = createDeferred<{
       enabled: boolean;
+      configured: boolean;
       provider: string;
+      model: string;
       mode: "mock" | "real";
       message: string;
     }>();
@@ -506,7 +606,14 @@ describe("App", () => {
 
     expect(screen.getByRole("heading", { name: "选择题目区域" })).toBeInTheDocument();
     await act(async () => {
-      runtimeStatus.resolve({ enabled: true, provider: "qwen", mode: "real", message: "" });
+      runtimeStatus.resolve({
+        enabled: true,
+        configured: true,
+        provider: "qwen",
+        model: "qwen-vl-ocr-latest",
+        mode: "real",
+        message: "",
+      });
       await runtimeStatus.promise;
     });
     await user.click(screen.getByRole("button", { name: "确认此区域并识别" }));
@@ -519,7 +626,9 @@ describe("App", () => {
     installDesktopBridge({
       getAiRuntimeStatus: vi.fn().mockResolvedValue({
         enabled: true,
+        configured: true,
         provider: "qwen",
+        model: "qwen-vl-ocr-latest",
         mode: "real",
         message: "",
       }),
@@ -538,7 +647,7 @@ describe("App", () => {
   });
 });
 
-function installDesktopBridge(overrides: Partial<EvoCraftDesktopApi>) {
+function installDesktopBridge(overrides: Partial<TestDesktopApi>) {
   const desktopApi = {
     selectImage: vi.fn().mockResolvedValue(null),
     readImageAsDataUrl: vi.fn(),
@@ -547,13 +656,19 @@ function installDesktopBridge(overrides: Partial<EvoCraftDesktopApi>) {
     clearRecords: vi.fn().mockResolvedValue({ ok: true }),
     getAiRuntimeStatus: vi.fn().mockResolvedValue({
       enabled: false,
+      configured: false,
       provider: "mock",
+      model: "qwen-vl-ocr-latest",
       mode: "mock",
       message: "",
     }),
     setExternalAiAuthorization: vi.fn().mockResolvedValue({ ok: true }),
+    configureAiRuntime: vi.fn().mockResolvedValue({
+      ok: false,
+      message: "桌面配置桥接不可用，已继续使用本地 mock。",
+    }),
     ...overrides,
-  } satisfies EvoCraftDesktopApi;
+  } satisfies TestDesktopApi;
 
   Object.defineProperty(window, "evocraft", {
     configurable: true,

@@ -49,8 +49,8 @@
 
 - React renderer 只负责 UI、复核和状态展示。
 - Electron preload 暴露最小 IPC API。
-- Electron main process 负责本地文件、图片资产、配置读取和真实 AI 调用。
-- API key 只能存在于本机配置或开发环境变量中，不进入 renderer，不写入错题记录。
+- Electron main process 负责本地文件、图片资产、会话内 AI 配置和真实 AI 调用。
+- API key 由应用设置页显式提交给 Electron main process 会话内持有；renderer 只作为短暂输入载体，不读取、回显或持久化已保存 key，key 不写入错题记录。
 - 业务层继续依赖 provider-agnostic `AiAdapter`，不直接绑定供应商 SDK。
 - 未来走向 SaaS 时，把 AI adapter 和存储 adapter 迁移到 backend；当前不提前引入 backend。
 
@@ -166,20 +166,23 @@ OpenAI 视觉能力可作为远期对照评测或极少数疑难 fallback 候选
 
 ## 8. 桌面应用集成
 
-应用内真实 AI 通过开发开关启用，默认继续走 mock。
+2026-06-02 更新：应用内真实 AI 不再只依赖隐藏环境变量作为产品配置方式。桌面版必须提供显式 `设置` 页面，让用户填写 API key 和 LLM 名称，并通过 preload IPC 交给 Electron main process 会话内持有。环境变量可以作为本地开发或评测脚本的兼容输入，但不再是桌面应用的唯一或首选配置路径。
 
-推荐配置：
+桌面应用配置：
 
-- `EVOCRAFT_AI_PROVIDER=qwen`
-- `EVOCRAFT_AI_ENABLED=false`
-- `DASHSCOPE_API_KEY=<local-only>`
+- provider 当前固定为 `qwen`。
+- API key 由设置页提交给 Electron main process。
+- LLM 名称由设置页显式填写，默认 `qwen-vl-ocr-latest`。
+- runtime status 可以返回 provider、model、configured 和 mock/real mode，但不能返回 API key。
+- 配置成功后只代表真实 AI runtime 可用；发送题目区域前仍需要独立外部 AI 授权。
 
-实现时可使用更统一的实际变量名，但原则是：默认关闭，密钥本地读取，不写入仓库和用户记录。
+实现原则：默认未配置时继续 mock，密钥不写入仓库、用户记录、评测结果或 renderer 长期存储。
 
 UI 规则：
 
-- 未开启真实 AI 时，继续显示 mock/本地识别状态。
-- 开启真实 AI 后，用户必须看到外部 AI 上传授权提示。
+- 未配置真实 AI 时，继续显示 mock/本地识别状态。
+- 配置真实 AI 后，用户必须看到外部 AI 上传授权提示。
+- 设置页必须明确显示 `API Key` 和 `LLM 名称` 字段。
 - 儿童可见 UI 不展示 provider、model id、token 等技术词。
 - 复核页仍使用“识别草稿”“需复核”“请检查”等表达。
 - 模型失败时保留手动填写和保存路径。
@@ -227,6 +230,6 @@ UI 规则：
 - 没有把真实 AI 接入写成模型训练。
 - 没有把第一版范围扩大到解题、讲解、相似题。
 - 没有要求当前桌面阶段先上 backend。
-- 没有把 API key 暴露到 renderer。
+- 没有把 API key 暴露到 git、错题记录、模型调用日志或 renderer 长期存储；renderer 只作为设置页输入的短暂提交载体。
 - 没有继续把真实图片长期存入 `localStorage`。
 - 保留了 SQLite 和 SaaS 的后续迁移路径。

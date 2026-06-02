@@ -1,6 +1,7 @@
 import {
   type CSSProperties,
   type ChangeEvent,
+  type FormEvent,
   type PointerEvent,
   useEffect,
   useMemo,
@@ -23,7 +24,7 @@ import {
   wrongQuestionReducer,
   type Screen,
 } from "../features/wrongQuestion/wrongQuestionReducer";
-import type { AiAdapter, AiRuntimeStatus } from "../services/aiAdapter";
+import type { AiAdapter, AiRuntimeConfigurationResult, AiRuntimeStatus } from "../services/aiAdapter";
 import { createDesktopAiAdapter } from "../services/desktopAiAdapter";
 import { getDesktopBridge, type EvoCraftDesktopApi } from "../services/desktopBridge";
 import { createDesktopRecordStore } from "../services/desktopRecordStore";
@@ -60,6 +61,7 @@ const emptyReviewForm: ReviewForm = {
 
 const externalAiAuthorizationMessage = "请先确认外部 AI 识别授权。";
 const missingDesktopAiBridgeMessage = "真实 AI 桥接能力不可用，已回退到本地 mock。";
+const defaultAiModel = "qwen-vl-ocr-latest";
 
 interface AppProps {
   recordStore?: RecordStore;
@@ -99,6 +101,8 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
   const [isRecordStoreHydrated, setIsRecordStoreHydrated] = useState(false);
   const [reviewForm, setReviewForm] = useState<ReviewForm>(emptyReviewForm);
   const [regionDrag, setRegionDrag] = useState<RegionDragState | null>(null);
+  const [aiConfigForm, setAiConfigForm] = useState({ apiKey: "", model: defaultAiModel });
+  const [aiConfigFeedback, setAiConfigFeedback] = useState("");
 
   useEffect(() => {
     document.body.dataset.screen = state.screen;
@@ -134,12 +138,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
       .getAiRuntimeStatus()
       .then((status: AiRuntimeStatus) => {
         if (!active) return;
-        const canUseRealAi = status.enabled && hasDesktopAiBridge(desktopBridge);
-        dispatch({
-          type: "AI_RUNTIME_READY",
-          mode: canUseRealAi ? "real" : "mock",
-          message: status.enabled && !canUseRealAi ? missingDesktopAiBridgeMessage : status.message,
-        });
+        applyAiRuntimeStatus(status);
       })
       .catch(() => undefined);
 
@@ -184,6 +183,58 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
 
   function goToScreen(screen: Screen) {
     dispatch({ type: "GO_TO_SCREEN", screen });
+  }
+
+  function applyAiRuntimeStatus(status: AiRuntimeStatus) {
+    const canUseRealAi = status.enabled && hasDesktopAiBridge(desktopBridge);
+    dispatch({
+      type: "AI_RUNTIME_READY",
+      mode: canUseRealAi ? "real" : "mock",
+      message: status.enabled && !canUseRealAi ? missingDesktopAiBridgeMessage : status.message,
+      provider: status.provider,
+      model: status.model || defaultAiModel,
+      configured: status.configured,
+    });
+    setAiConfigForm((current) => ({
+      ...current,
+      model: status.model || current.model || defaultAiModel,
+    }));
+  }
+
+  async function saveAiConfiguration(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const apiKey = aiConfigForm.apiKey.trim();
+    const model = aiConfigForm.model.trim();
+
+    if (!apiKey || !model) {
+      setAiConfigFeedback("请填写 API Key 和 LLM 名称。");
+      return;
+    }
+
+    if (!desktopBridge?.configureAiRuntime) {
+      setAiConfigFeedback("桌面配置桥接不可用，已继续使用本地 mock。");
+      return;
+    }
+
+    try {
+      const result: AiRuntimeConfigurationResult = await desktopBridge.configureAiRuntime({
+        apiKey,
+        model,
+      });
+
+      if (!result.ok) {
+        setAiConfigFeedback(result.message);
+        if (result.status) applyAiRuntimeStatus(result.status);
+        return;
+      }
+
+      dispatch({ type: "EXTERNAL_AI_ACKNOWLEDGED", acknowledged: false });
+      applyAiRuntimeStatus(result.status);
+      setAiConfigForm({ apiKey: "", model: result.status.model || model });
+      setAiConfigFeedback("配置已保存。");
+    } catch {
+      setAiConfigFeedback("真实 AI 配置保存失败，请重试。");
+    }
   }
 
   async function ensureExternalAiAuthorization(surface: "upload" | "region") {
@@ -401,7 +452,9 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
         </nav>
 
         <div className="rail-footer">
-          <RailButton disabled>设置</RailButton>
+          <RailButton active={state.screen === "settings"} onClick={() => goToScreen("settings")}>
+            设置
+          </RailButton>
           <div className="student-switch">
             <span className="avatar" aria-hidden="true">
               小
@@ -569,6 +622,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                     <span>
                       <strong>真实 AI 测试模式</strong>
                       <small>开启后会把确认的题目区域发送到外部 AI 服务进行识别。</small>
+                      <small>LLM 名称：{state.aiModel}</small>
                       {state.aiRuntimeMessage ? <small>{state.aiRuntimeMessage}</small> : null}
                     </span>
                   </label>
@@ -597,6 +651,82 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                   </button>
                 </div>
                 <RecordList records={state.records.slice(0, 3)} compact />
+              </section>
+            </div>
+          </section>
+        )}
+
+        {state.screen === "settings" && (
+          <section className="screen settings-screen" aria-labelledby="settings-title">
+            <header className="workspace-header">
+              <div>
+                <h1 id="settings-title">设置</h1>
+                <p>配置桌面版真实 AI。配置完成后，上传题目区域前仍需要单独确认外部 AI 授权。</p>
+              </div>
+            </header>
+
+            <div className="settings-layout">
+              <section className="settings-panel" aria-labelledby="ai-config-title">
+                <div className="section-heading">
+                  <div>
+                    <h2 id="ai-config-title">真实 AI 配置</h2>
+                    <p>API key 仅用于当前桌面会话，不写入错题记录。</p>
+                  </div>
+                  <span
+                    className={`status-chip ${state.aiRuntimeMode === "real" ? "ai" : "review"}`}
+                  >
+                    {state.aiRuntimeMode === "real" ? "真实 AI 已配置" : "当前使用本地 mock 识别"}
+                  </span>
+                </div>
+
+                <div className="settings-status">
+                  <div>
+                    <span>Provider</span>
+                    <strong>{state.aiProvider}</strong>
+                  </div>
+                  <div>
+                    <span>LLM 名称</span>
+                    <strong>LLM 名称：{state.aiModel}</strong>
+                  </div>
+                </div>
+
+                <form className="settings-form" onSubmit={saveAiConfiguration}>
+                  <label>
+                    <span>API Key</span>
+                    <input
+                      autoComplete="off"
+                      placeholder="输入 DashScope API Key"
+                      type="password"
+                      value={aiConfigForm.apiKey}
+                      onChange={(event) =>
+                        setAiConfigForm((current) => ({
+                          ...current,
+                          apiKey: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+                  <label>
+                    <span>LLM 名称</span>
+                    <input
+                      type="text"
+                      value={aiConfigForm.model}
+                      onChange={(event) =>
+                        setAiConfigForm((current) => ({
+                          ...current,
+                          model: event.target.value,
+                        }))
+                      }
+                    />
+                  </label>
+
+                  <button className="button-primary" type="submit">
+                    保存配置
+                  </button>
+                  <p className="form-error" role="alert">
+                    {aiConfigFeedback}
+                  </p>
+                </form>
               </section>
             </div>
           </section>

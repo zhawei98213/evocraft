@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-06-01
+最后更新：2026-06-02
 
 ## 路线图
 
@@ -83,6 +83,53 @@
 如果没有卡点，写 `无`。命令不需要粘贴完整输出，但要保留足够复现的命令名称或关键命令。
 
 ## 当前进度
+
+### 2026-06-02：应用内真实 AI 配置界面完成
+
+本轮任务是什么：
+
+- 查看当前进度，确认上轮 Qwen 小样本评测被本地样本和环境变量 API key 阻塞；按用户要求把桌面真实 AI 配置从隐藏环境变量迁移为应用内显式设置界面，展示并提交 `API Key` 和 `LLM 名称`。
+
+已完成什么：
+
+- 读取项目记忆、路线图进度、想法胶囊、PRD 编写规范、当前 PRD、真实 AI 设计和相关实现入口。
+- 新增 `docs/superpowers/specs/2026-06-02-app-visible-ai-config-design.md` 和 `docs/superpowers/plans/2026-06-02-app-visible-ai-config.md`，并在 `docs/README.md` 建索引。
+- 更新 PRD v1.7、真实 AI 识别设计、想法胶囊和项目记忆，明确应用内配置是桌面真实 AI 的主路径，API key 由 Electron main process 会话内持有，配置成功后仍需独立外部 AI 授权。
+- 使用 TDD 先补 RED 测试：React 设置页/API key/LLM 名称测试、`ai:configure` IPC 测试和 preload/static 合同测试；确认 RED 失败在设置页与 IPC 缺失。
+- 实现 Electron main-process 会话内 AI runtime config、`ai:configure` IPC、preload `configureAiRuntime`、runtime status 中的 provider/model/configured 字段和模型名传递。
+- 实现 React 设置页：左侧 `设置` 导航可进入，配置表单包含 `API Key` 和 `LLM 名称`，保存后清空 key 输入、不回显 key，上传页展示真实 AI 测试模式和当前 LLM 名称。
+- 保留外部 AI 授权 gate：配置真实 AI 不等于授权上传，`ai:configure` 会重置 main-process external authorization。
+- 完成验证：focused RED/GREEN、Electron config、Qwen adapter、全量测试、构建、diff 空白检查和敏感/生成文件 tracking gate。
+
+卡在哪里：
+
+- 无。应用内桌面真实 AI 配置已实现。
+- 独立 Qwen 小样本评测仍按上一轮记录被本地 ignored `manifest.local.json`、`ai-eval/samples/private/` 脱敏样本和评测 CLI 的本地 `DASHSCOPE_API_KEY` 阻塞；本轮未运行真实样本评测。
+
+执行的是什么命令：
+
+- `rg -n "evo-craft|evocraft|api key|API key|LLM|llm|provider|env|OPENAI|ANTHROPIC|GEMINI" /Users/zha/.codex/memories/MEMORY.md`
+- `git status --short --branch`
+- `sed -n ... docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/prd/2026-05-16-prd-writing-standards.md docs/prd/2026-05-10-wrong-question-capture-mvp-prd.md docs/superpowers/specs/2026-05-23-real-ai-recognition-design.md`
+- `rg --files ...`
+- `rg -n "DASHSCOPE_API_KEY|api key|API key|model|llm|LLM|qwen|externalAi|ai:|real AI|env|环境" src electron scripts tests docs -S`
+- RED：`npm run test:react -- src/app/App.test.tsx`
+- RED：`node tests/electron-ai-ipc.test.mjs`
+- RED：`npm run test:electron-config`
+- GREEN：`npm run test:react -- src/app/App.test.tsx`
+- GREEN：`npm run test:react -- src/features/wrongQuestion/wrongQuestionReducer.test.ts src/services/aiAdapter.test.ts`
+- GREEN：`npm run test:electron-config`
+- `npm test`
+- `npm run build`
+- `npm run test:qwen-adapter`
+- `git diff --check`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json 'ai-eval/samples/private/*' 'ai-eval/results/*' dist release`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json 'ai-eval/samples/private/*' 'ai-eval/results/*' dist release | rg -v '^ai-eval/results/\\.gitignore$'`
+
+下一步的计划：
+
+- 桌面应用运行到需要真实 AI 时，在 `设置` 页面输入 DashScope API key 和 LLM 名称；当前默认 LLM 名称为 `qwen-vl-ocr-latest`。
+- 若继续执行独立 Qwen 小样本评测，仍需先准备本地 ignored `ai-eval/samples/manifest.local.json`、`ai-eval/samples/private/` 下 10-15 张脱敏图片，并为评测 CLI 提供本地 `DASHSCOPE_API_KEY`。
 
 ### 2026-06-01：Qwen 样本评测本地输入阻塞复查
 

@@ -6,7 +6,14 @@ import type {
 } from "../../domain/wrongQuestion";
 import { deleteRegionCandidate } from "../../domain/wrongQuestion";
 
-export type Screen = "hub" | "upload" | "select-region" | "review" | "records" | "detail";
+export type Screen =
+  | "hub"
+  | "upload"
+  | "select-region"
+  | "review"
+  | "records"
+  | "detail"
+  | "settings";
 
 export interface WrongQuestionState {
   screen: Screen;
@@ -14,6 +21,9 @@ export interface WrongQuestionState {
   privacyAcknowledged: boolean;
   aiRuntimeMode: "mock" | "real";
   aiRuntimeMessage: string;
+  aiProvider: string;
+  aiModel: string;
+  aiConfigured: boolean;
   externalAiAcknowledged: boolean;
   uploadedImageUri: string;
   uploadedFileName: string;
@@ -38,7 +48,14 @@ export type WrongQuestionAction =
   | { type: "UPLOAD_FAILED"; message: string }
   | { type: "UPLOAD_BLOCKED"; message: string }
   | { type: "PRIVACY_ACKNOWLEDGED"; acknowledged: boolean }
-  | { type: "AI_RUNTIME_READY"; mode: "mock" | "real"; message: string }
+  | {
+      type: "AI_RUNTIME_READY";
+      mode: "mock" | "real";
+      message: string;
+      provider?: string;
+      model?: string;
+      configured?: boolean;
+    }
   | { type: "EXTERNAL_AI_ACKNOWLEDGED"; acknowledged: boolean }
   | { type: "START_REGION_SELECTION" }
   | { type: "REGION_CANDIDATES_READY"; candidates: RegionCandidate[] }
@@ -59,6 +76,9 @@ export function createInitialWrongQuestionState(records: WrongQuestionRecord[]):
     privacyAcknowledged: false,
     aiRuntimeMode: "mock",
     aiRuntimeMessage: "",
+    aiProvider: "qwen",
+    aiModel: "qwen-vl-ocr-latest",
+    aiConfigured: false,
     externalAiAcknowledged: false,
     uploadedImageUri: "",
     uploadedFileName: "",
@@ -138,6 +158,9 @@ export function wrongQuestionReducer(
         ...state,
         aiRuntimeMode: action.mode,
         aiRuntimeMessage: action.message,
+        aiProvider: action.provider ?? state.aiProvider,
+        aiModel: action.model ?? state.aiModel,
+        aiConfigured: action.configured ?? action.mode === "real",
         externalAiAcknowledged: action.mode === "mock" ? false : state.externalAiAcknowledged,
       };
 
