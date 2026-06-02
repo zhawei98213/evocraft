@@ -61,6 +61,8 @@ const emptyReviewForm: ReviewForm = {
 
 const externalAiAuthorizationMessage = "请先确认外部 AI 识别授权。";
 const missingDesktopAiBridgeMessage = "真实 AI 桥接能力不可用，已回退到本地 mock。";
+const missingDesktopAiConfigurationBridgeMessage =
+  "真实 AI 配置只能在桌面应用窗口中保存。";
 const defaultAiModel = "qwen-vl-ocr-latest";
 
 interface AppProps {
@@ -103,6 +105,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
   const [regionDrag, setRegionDrag] = useState<RegionDragState | null>(null);
   const [aiConfigForm, setAiConfigForm] = useState({ apiKey: "", model: defaultAiModel });
   const [aiConfigFeedback, setAiConfigFeedback] = useState("");
+  const canConfigureAiRuntime = Boolean(desktopBridge?.configureAiRuntime);
 
   useEffect(() => {
     document.body.dataset.screen = state.screen;
@@ -205,19 +208,20 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
     event.preventDefault();
     const apiKey = aiConfigForm.apiKey.trim();
     const model = aiConfigForm.model.trim();
+    const configureAiRuntime = desktopBridge?.configureAiRuntime;
 
     if (!apiKey || !model) {
       setAiConfigFeedback("请填写 API Key 和 LLM 名称。");
       return;
     }
 
-    if (!desktopBridge?.configureAiRuntime) {
-      setAiConfigFeedback("桌面配置桥接不可用，已继续使用本地 mock。");
+    if (!configureAiRuntime) {
+      setAiConfigFeedback(missingDesktopAiConfigurationBridgeMessage);
       return;
     }
 
     try {
-      const result: AiRuntimeConfigurationResult = await desktopBridge.configureAiRuntime({
+      const result: AiRuntimeConfigurationResult = await configureAiRuntime({
         apiKey,
         model,
       });
@@ -691,10 +695,17 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                 </div>
 
                 <form className="settings-form" onSubmit={saveAiConfiguration}>
+                  {!canConfigureAiRuntime && (
+                    <p className="settings-note">
+                      <strong>{missingDesktopAiConfigurationBridgeMessage}</strong>
+                      <small>请打开 Electron 桌面应用的设置页配置；当前网页预览继续使用本地 mock。</small>
+                    </p>
+                  )}
                   <label>
                     <span>API Key</span>
                     <input
                       autoComplete="off"
+                      disabled={!canConfigureAiRuntime}
                       placeholder="输入 DashScope API Key"
                       type="password"
                       value={aiConfigForm.apiKey}
@@ -709,6 +720,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                   <label>
                     <span>LLM 名称</span>
                     <input
+                      disabled={!canConfigureAiRuntime}
                       type="text"
                       value={aiConfigForm.model}
                       onChange={(event) =>
@@ -720,7 +732,11 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                     />
                   </label>
 
-                  <button className="button-primary" type="submit">
+                  <button
+                    className="button-primary"
+                    disabled={!canConfigureAiRuntime}
+                    type="submit"
+                  >
                     保存配置
                   </button>
                   <p className="form-error" role="alert">

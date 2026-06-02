@@ -84,6 +84,39 @@
 
 ## 当前进度
 
+### 2026-06-02：网页预览禁用真实 AI 配置输入
+
+本轮任务是什么：
+
+- 处理用户在 Codex in-app browser 的 Vite 网页预览中输入 API key 后看到“桌面配置桥接不可用，已继续使用本地 mock”的问题，区分网页预览和 Electron 桌面窗口的真实 AI 配置能力。
+
+已完成什么：
+
+- 按 systematic debugging 确认当前 in-app browser URL 为 `http://127.0.0.1:5173/`，页面标题为 `EvoCraft Desktop`，但 `window.evocraft` 不存在，因此没有 Electron preload 配置 bridge。
+- 补充 React RED 测试，要求非桌面环境的设置页显示桌面专用提示，并禁用 `API Key`、`LLM 名称` 和 `保存配置`。
+- 更新设置页：无 `configureAiRuntime` bridge 时显示“真实 AI 配置只能在桌面应用窗口中保存”，提示打开 Electron 桌面应用，禁用配置输入和保存按钮，继续使用本地 mock。
+- 更新 PRD v1.8、应用内真实 AI 配置设计、想法胶囊和项目记忆，明确网页预览不能接收真实 AI provider 凭据。
+
+卡在哪里：
+
+- 无。根因是用户当前操作面是 Codex in-app browser / Vite 网页预览，不是 Electron 桌面窗口；已通过 UI guard 防止再次误输入。
+
+执行的是什么命令：
+
+- Browser plugin 检查当前页：读取 `url/title/window.evocraft`，确认 `hasBridge: false`。
+- `npm run test:react -- src/app/App.test.tsx`（RED：新增测试失败于缺少桌面专用提示和禁用态）
+- `npm run test:react -- src/app/App.test.tsx`（GREEN：21 tests passed）
+- Browser plugin 渲染验证：桌面视口下设置页 `hasBridge: false`、桌面专用提示存在、`API Key` / `LLM 名称` / `保存配置` 均 disabled、console 无 error/warn。
+- `npm test`（44 tests passed）
+- `npm run test:electron-config`
+- `npm run build`
+- `git diff --check`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json 'ai-eval/samples/private/*' 'ai-eval/results/*' dist release | rg -v '^ai-eval/results/\\.gitignore$' || true`
+
+下一步的计划：
+
+- 在 Electron 桌面应用窗口中进入 `设置` 后再输入 API key 和 `qwen-vl-ocr-latest`；Codex in-app browser / Vite 网页预览只用于 mock 预览，不再接收真实 AI 配置。
+
 ### 2026-06-02：应用内真实 AI 配置界面完成
 
 本轮任务是什么：

@@ -821,6 +821,28 @@ body[data-screen="settings"] .ai-review-panel {
   gap: 16px;
 }
 
+.settings-note {
+  margin: 0;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-md);
+  background: rgba(255, 251, 235, 0.85);
+  padding: 12px 14px;
+  color: #92400e;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.settings-note strong,
+.settings-note small {
+  display: block;
+}
+
+.settings-note small {
+  margin-top: 4px;
+  font-weight: 600;
+}
+
 .region-layout {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 320px;

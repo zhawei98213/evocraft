@@ -2,7 +2,7 @@
 
 日期：2026-06-02
 
-文档状态：已确认设计，进入实现
+文档状态：已确认设计，已实现并补充非桌面配置 guard
 
 适用阶段：Phase 1 错题收集桌面版真实 AI 测试模式
 
@@ -33,6 +33,7 @@
 - Runtime status 返回 provider、model、是否已配置和当前 mock/real 模式，但不返回 API key。
 - 上传页继续保留外部 AI 授权复选框；配置完成不等于自动授权上传。
 - 缺少配置或桥接能力时继续回退到本地 mock。
+- 非桌面网页预览中不接受真实 AI 配置输入，禁用 API key / LLM 输入和保存按钮，并提示用户改用 Electron 桌面应用窗口。
 
 ## 3. 非目标
 
@@ -100,7 +101,7 @@ type AiRuntimeStatus = {
 - 未配置：显示当前使用本地 mock，提示填写 API key 和 LLM 名称。
 - 配置成功：显示真实 AI 已配置和当前 LLM 名称，不显示 API key。
 - 配置失败：保留输入，显示可恢复错误。
-- 非桌面环境或桥接缺失：显示桌面配置桥接不可用，继续使用本地 mock。
+- 非桌面环境或桥接缺失：显示真实 AI 配置只能在桌面应用窗口中保存，禁用配置输入和保存按钮，继续使用本地 mock。
 
 上传页状态：
 
@@ -112,6 +113,7 @@ type AiRuntimeStatus = {
 
 - API key 仅用于当前桌面会话，不写入仓库、错题记录或本地评测产物。
 - Renderer 不读取已保存 key，不在状态栏、错误信息或测试快照中回显 key。
+- Web preview 没有 Electron preload bridge 时不得把 key 当作可保存配置接收；用户在浏览器预览里不能提交真实 provider 凭据。
 - Main process 的 `ai:*` IPC 继续校验 trusted renderer URL。
 - `ai:detect-regions` 和 `ai:recognize-question` 仍要求 runtime enabled 且 main-process external authorization 为 true。
 
@@ -121,6 +123,7 @@ type AiRuntimeStatus = {
   - 设置页展示 `API Key` 和 `LLM 名称` 字段。
   - 保存配置调用 desktop bridge。
   - 配置成功后上传页进入真实 AI 测试模式，但不回显 API key。
+  - 非桌面网页预览中配置输入和保存按钮禁用，并显示桌面专用提示。
 - Node IPC tests：
   - `ai:configure` 拒绝不可信 renderer。
   - 配置成功后 status 为 real/configured，且不包含 API key。

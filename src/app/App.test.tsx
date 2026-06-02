@@ -381,6 +381,18 @@ describe("App", () => {
     expect(screen.getByText("当前使用本地 mock 识别")).toBeInTheDocument();
   });
 
+  it("marks real AI configuration as desktop-only when the configuration bridge is unavailable", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "设置" }));
+
+    expect(screen.getByText("真实 AI 配置只能在桌面应用窗口中保存。")).toBeInTheDocument();
+    expect(screen.getByLabelText("API Key")).toBeDisabled();
+    expect(screen.getByLabelText("LLM 名称")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "保存配置" })).toBeDisabled();
+  });
+
   it("submits desktop AI configuration without echoing the API key", async () => {
     const desktopApi = installDesktopBridge({
       getAiRuntimeStatus: vi.fn().mockResolvedValue({
