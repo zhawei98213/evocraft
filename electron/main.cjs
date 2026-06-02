@@ -48,15 +48,7 @@ if (app?.whenReady) {
       callback({
         responseHeaders: {
           ...details.responseHeaders,
-          "Content-Security-Policy": [
-            [
-              "default-src 'self'",
-              "img-src 'self' data: blob: file:",
-              "style-src 'self' 'unsafe-inline'",
-              "script-src 'self'",
-              "connect-src 'self' http://127.0.0.1:5173 ws://127.0.0.1:5173",
-            ].join("; "),
-          ],
+          "Content-Security-Policy": [createRendererContentSecurityPolicy()],
         },
       });
     });
@@ -342,9 +334,37 @@ function getImageMimeType(extension) {
   return "image/png";
 }
 
+function createRendererContentSecurityPolicy(options = {}) {
+  const policyIsDev = Object.prototype.hasOwnProperty.call(options, "isDev")
+    ? Boolean(options.isDev)
+    : isDev;
+  const policyDevRendererUrl = options.devRendererUrl ?? devRendererUrl;
+
+  return [
+    "default-src 'self'",
+    "img-src 'self' data: blob: file:",
+    "style-src 'self' 'unsafe-inline'",
+    policyIsDev ? "script-src 'self' 'unsafe-inline'" : "script-src 'self'",
+    policyIsDev
+      ? `connect-src 'self' ${getHttpOrigin(policyDevRendererUrl)} ${getWebSocketOrigin(policyDevRendererUrl)}`
+      : "connect-src 'self'",
+  ].join("; ");
+}
+
+function getHttpOrigin(url) {
+  return new URL(url).origin;
+}
+
+function getWebSocketOrigin(url) {
+  const parsedUrl = new URL(url);
+  parsedUrl.protocol = parsedUrl.protocol === "https:" ? "wss:" : "ws:";
+  return parsedUrl.origin;
+}
+
 module.exports = {
   assertAllowedSender,
   createAiRuntime,
+  createRendererContentSecurityPolicy,
   isAllowedRendererUrl,
   registerAiIpc,
   registerFileIpc,

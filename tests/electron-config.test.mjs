@@ -5,6 +5,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const require = createRequire(import.meta.url);
+const { createRendererContentSecurityPolicy } = require("../electron/main.cjs");
 const { isTrustedRendererUrl } = require("../electron/security/rendererTrust.cjs");
 
 assert.ok(existsSync("electron/main.cjs"), "electron/main.cjs should exist");
@@ -44,6 +45,24 @@ assert.match(
   main,
   /if \(process\.env\.ELECTRON_OPEN_DEVTOOLS === "1"\) \{\s*window\.webContents\.openDevTools/,
 );
+
+const devContentSecurityPolicy = createRendererContentSecurityPolicy({
+  isDev: true,
+  devRendererUrl: "http://127.0.0.1:5173",
+});
+assert.match(devContentSecurityPolicy, /script-src 'self' 'unsafe-inline'/);
+assert.match(
+  devContentSecurityPolicy,
+  /connect-src 'self' http:\/\/127\.0\.0\.1:5173 ws:\/\/127\.0\.0\.1:5173/,
+);
+
+const productionContentSecurityPolicy = createRendererContentSecurityPolicy({
+  isDev: false,
+  devRendererUrl: "http://127.0.0.1:5173",
+});
+assert.match(productionContentSecurityPolicy, /script-src 'self'(;|$)/);
+assert.doesNotMatch(productionContentSecurityPolicy, /script-src 'self' 'unsafe-inline'/);
+assert.doesNotMatch(productionContentSecurityPolicy, /http:\/\/127\.0\.0\.1:5173/);
 
 const preload = readFileSync("electron/preload.cjs", "utf8");
 assert.match(preload, /contextBridge\.exposeInMainWorld\("evocraft"/);

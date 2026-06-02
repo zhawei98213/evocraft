@@ -84,6 +84,44 @@
 
 ## 当前进度
 
+### 2026-06-02：Electron dev CSP 修复并验证真实设置链路
+
+本轮任务是什么：
+
+- 继续用户要求，验证正确的 Electron 桌面设置链路；临时重启 Electron 后发现 React 没有挂载，导致设置表单无法出现，需要先修复 Electron dev CSP。
+
+已完成什么：
+
+- 通过 Electron DevTools Protocol 读取 renderer console，定位根因：`script-src 'self'` 阻止了 Vite/React Refresh inline preamble，随后 `@vitejs/plugin-react can't detect preamble`，React root 为空。
+- 按 TDD 补充 `tests/electron-config.test.mjs`：dev CSP 必须允许 Vite inline preamble 和 dev websocket，production CSP 不得允许 dev inline script 或 `127.0.0.1:5173` connect source。
+- 实现 `createRendererContentSecurityPolicy()` 并让 Electron header 复用该函数；dev 只在 `ELECTRON_RENDERER_URL` 模式放开 `script-src 'unsafe-inline'` 和 dev connect source，production 保持严格。
+- 重启临时 Electron 后确认 React 正常挂载，`window.evocraft` 存在。
+- 使用用户提供的 key 只在临时进程中完成真实桌面 UI 表单验证：设置页保存成功、API key 输入框清空、状态进入 `real`、status 不含 key、未授权前返回 `external_ai_not_authorized`、授权后 `qwen-vl-ocr-latest` 真实调用成功。
+- 关闭带调试端口的 Electron，重新启动普通 `npm run electron:dev` 窗口。
+
+卡在哪里：
+
+- 无。中途卡点是 Electron dev CSP 过严导致 Vite React preamble 被拦截，已修复并用 Node/Electron 合同测试锁住。
+
+执行的是什么命令：
+
+- Electron DevTools Protocol 脚本读取 renderer DOM / console / CSP error。
+- `npm run test:electron-config`（RED：`createRendererContentSecurityPolicy` 尚不存在）
+- `npm run test:electron-config`（GREEN）
+- 临时 `ELECTRON_RENDERER_URL=http://127.0.0.1:5173 ./node_modules/.bin/electron --remote-debugging-port=9333 .`
+- 临时 CDP 脚本验证设置页表单保存和真实 Qwen 调用，输出不含 API key。
+- `npm run electron:dev`
+- `npm test`（44 tests passed）
+- `npm run test:electron-config`
+- `npm run build`
+- `git diff --check`
+- `git ls-files -- .env .env.local '.env.*' ai-eval/.env ai-eval/.env.local 'ai-eval/.env.*' ai-eval/samples/manifest.local.json 'ai-eval/samples/private/*' 'ai-eval/results/*' dist release | rg -v '^ai-eval/results/\\.gitignore$' || true`
+- `rg -n "<redacted-user-api-key>" . -g '!node_modules' -g '!dist' -g '!release' || true`（实际执行时检查的是用户提供的 key 字符串，仓库无匹配）
+
+下一步的计划：
+
+- 普通 Electron 窗口已恢复运行；继续真实 AI 试用时，需要在该桌面窗口设置页重新输入 API key，因为临时调试窗口已关闭且会话配置不持久化。
+
 ### 2026-06-02：网页预览禁用真实 AI 配置输入
 
 本轮任务是什么：
