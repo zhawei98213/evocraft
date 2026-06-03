@@ -2719,6 +2719,7 @@
 - 修复空候选恢复提示和 provider 空标题兜底。
 - 用同一张真实图片验证修复后自动找题返回 `整题候选`、两个小题候选和整图兜底；显式数学识别可以进入可复核草稿。
 - 新增脱敏测试记录 `docs/testing/2026-06-03-real-image-flow-debugging.md`，并同步 PRD v1.9、真实 AI 识别设计、文档索引、项目记忆和想法胶囊。
+- 启动 Electron 桌面窗口时发现 `records:load` 并发初始化会抢同一个 `index.json.tmp`，导致 rename `ENOENT`；已把本地记录存储 atomic write 改为唯一临时文件名，并新增并发空 load 回归测试。
 
 卡在哪里：
 
@@ -2731,6 +2732,7 @@
 - `rg -n "subject|SUBJECT|detectRegions|REGION_CANDIDATES_READY|createSelectedRegionImage|externalAi|configureAiRuntime|wrongQuestion" src electron tests docs/prd package.json`
 - `npm run test:react -- src/features/wrongQuestion/wrongQuestionReducer.test.ts src/app/App.test.tsx`
 - `npm run test:qwen-adapter`
+- `npm run test:electron-store`
 - `sips --help`
 - Hidden-input Qwen adapter probes for `detectRegions` and `recognizeQuestion`; API key and raw provider output were not written to repository files.
 

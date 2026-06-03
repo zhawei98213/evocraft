@@ -34,6 +34,17 @@ await runTest("saves records, rebuilds index, and clears the store", async (user
   assert.deepEqual(await store.load(), []);
 });
 
+await runTest("handles concurrent empty loads without temp-file collisions", async (userDataDir) => {
+  const store = createLocalRecordStore(userDataDir);
+
+  const [firstLoad, secondLoad] = await Promise.all([store.load(), store.load()]);
+
+  assert.deepEqual(firstLoad, []);
+  assert.deepEqual(secondLoad, []);
+  const index = await readIndex(userDataDir);
+  assert.deepEqual(index.records, []);
+});
+
 await runTest("does not hydrate traversal paths outside the record directory", async (userDataDir) => {
   const outsidePath = join(userDataDir, "outside.txt");
   const recordDir = join(userDataDir, "wrong-question", "records", "attack");

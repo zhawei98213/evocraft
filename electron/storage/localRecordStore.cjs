@@ -1,4 +1,4 @@
-const { createHash } = require("node:crypto");
+const { createHash, randomUUID } = require("node:crypto");
 const { mkdir, readdir, readFile, rename, rm, writeFile } = require("node:fs/promises");
 const { dirname, extname, join, relative, resolve } = require("node:path");
 const { pathToFileURL, fileURLToPath } = require("node:url");
@@ -177,7 +177,7 @@ async function writeIndex(indexPath, records) {
 }
 
 async function writeJsonAtomic(filePath, value) {
-  const tempPath = `${filePath}.tmp`;
+  const tempPath = `${filePath}.${process.pid}.${randomUUID()}.tmp`;
   await writeFile(tempPath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
   await rename(tempPath, filePath);
 }
