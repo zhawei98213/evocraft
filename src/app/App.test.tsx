@@ -532,6 +532,55 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "选择题目区域" })).toBeInTheDocument();
   });
 
+  it("sends the selected subject to desktop real AI recognition", async () => {
+    const desktopApi = installDesktopBridge({
+      selectImage: vi.fn().mockResolvedValue("/Users/zha/Desktop/question.png"),
+      readImageAsDataUrl: vi.fn().mockResolvedValue("data:image/png;base64,desktop-image"),
+      getAiRuntimeStatus: vi.fn().mockResolvedValue({
+        enabled: true,
+        configured: true,
+        provider: "qwen",
+        model: "qwen-vl-ocr-latest",
+        mode: "real",
+        message: "",
+      }),
+      detectRegions: vi.fn().mockResolvedValue({
+        ok: true,
+        candidates: createMockRegionCandidates(),
+      }),
+      recognizeQuestion: vi.fn().mockResolvedValue({
+        ok: true,
+        draft: createMockRecognition({ subject: "math" }),
+      }),
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+    await screen.findByText("真实 AI 测试模式");
+    await user.click(screen.getByRole("radio", { name: "数学" }));
+    expect(screen.getByRole("radio", { name: "数学" })).toHaveAttribute("aria-checked", "true");
+    await user.click(screen.getByRole("button", { name: "从电脑选择图片" }));
+    await waitFor(() => {
+      expect(screen.getByText("question.png")).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("checkbox", { name: /本地隐私确认/ }));
+    await user.click(screen.getByRole("checkbox", { name: /真实 AI 测试模式/ }));
+    await user.click(screen.getByRole("button", { name: "下一步：选择题目区域" }));
+    await screen.findByRole("heading", { name: "选择题目区域" });
+    await user.click(screen.getByRole("button", { name: "确认此区域并识别" }));
+
+    await waitFor(() => {
+      expect(desktopApi.recognizeQuestion).toHaveBeenCalledWith(
+        expect.objectContaining({
+          subject: "math",
+        }),
+      );
+    });
+    expect(screen.getByRole("heading", { name: "识别复核" })).toBeInTheDocument();
+  });
+
   it("blocks rerun detection after a delayed real AI runtime flip until authorization is acknowledged", async () => {
     const runtimeStatus = createDeferred<{
       enabled: boolean;

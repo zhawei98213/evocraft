@@ -46,6 +46,60 @@ describe("wrongQuestionReducer", () => {
     expect(selecting.selectedRegionId).toBe("candidate-2");
   });
 
+  it("tracks the selected subject before recognition", () => {
+    const selected = wrongQuestionReducer(createInitialWrongQuestionState([]), {
+      type: "SUBJECT_SELECTED",
+      subject: "math",
+    });
+
+    expect(selected.selectedSubject).toBe("math");
+  });
+
+  it("selects the highest-confidence region candidate by default", () => {
+    const state = createInitialWrongQuestionState([]);
+
+    const selecting = wrongQuestionReducer(state, {
+      type: "REGION_CANDIDATES_READY",
+      candidates: [
+        {
+          id: "candidate-low",
+          label: "候选低",
+          x: 0.1,
+          y: 0.1,
+          width: 0.5,
+          height: 0.2,
+          unit: "ratio",
+          source: "ai_candidate",
+          confidence: 0.4,
+        },
+        {
+          id: "candidate-high",
+          label: "候选高",
+          x: 0.1,
+          y: 0.4,
+          width: 0.5,
+          height: 0.2,
+          unit: "ratio",
+          source: "ai_candidate",
+          confidence: 0.86,
+        },
+      ],
+    });
+
+    expect(selecting.selectedRegionId).toBe("candidate-high");
+  });
+
+  it("keeps empty automatic region results recoverable with manual drawing", () => {
+    const selecting = wrongQuestionReducer(createInitialWrongQuestionState([]), {
+      type: "REGION_CANDIDATES_READY",
+      candidates: [],
+    });
+
+    expect(selecting.screen).toBe("select-region");
+    expect(selecting.selectedRegionId).toBeNull();
+    expect(selecting.regionError).toBe("没有找到候选框，请手动画框或重新自动找题。");
+  });
+
   it("deletes the selected region and moves selection to the next available region", () => {
     const selecting = {
       ...createInitialWrongQuestionState([]),

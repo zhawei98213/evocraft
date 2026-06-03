@@ -24,6 +24,7 @@
 - [Qwen 脱敏样本评测实施计划](superpowers/plans/2026-05-31-qwen-sample-evaluation.md)：把样本评测拆成 preflight、manifest validation、redacted summary reporter、本地样本运行和评估决策任务。
 - [Qwen 脱敏样本评测 Agent Run Ledger](superpowers/agent-runs/2026-05-31-qwen-sample-evaluation/README.md)：记录后续 subagent-driven 执行中每个 agent 的任务边界、进度、命令和 review。
 - [AI 评测脱敏汇总说明](testing/ai-eval/README.md)：说明哪些评测汇总信息可以入库、哪些敏感内容必须继续留在 ignored 本地结果文件中。
+- [真实图片流程调试记录](testing/2026-06-03-real-image-flow-debugging.md)：记录 2026-06-03 用户提供真实图片暴露的科目选择、Qwen 自动找题、坐标归一化和标题兜底问题。
 - [React 桌面主干 UI 截图](design/desktop-trunk/README.md)：React/Vite 桌面主干跑通后保存的六屏视觉回归基线。
 - [EvoCraft Logo 方向探索](design/logo/2026-05-18-evocraft-logo-options.md)：第一组应用 logo 视觉方向和当前扫描笔记选定稿，已接入 React 品牌位、favicon 与 Electron macOS app icon。
 - [MVP 收尾加固设计](superpowers/specs/2026-05-16-mvp-hardening-tech-route-design.md)：隐私确认、本地删除、失败恢复和技术路线的实现设计。

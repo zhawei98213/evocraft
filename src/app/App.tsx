@@ -64,6 +64,13 @@ const missingDesktopAiBridgeMessage = "真实 AI 桥接能力不可用，已回�
 const missingDesktopAiConfigurationBridgeMessage =
   "真实 AI 配置只能在桌面应用窗口中保存。";
 const defaultAiModel = "qwen-vl-ocr-latest";
+const subjectOptions: Array<{ value: "auto" | Subject; label: string }> = [
+  { value: "auto", label: "自动" },
+  ...Object.entries(SUBJECTS).map(([value, label]) => ({
+    value: value as Subject,
+    label,
+  })),
+];
 
 interface AppProps {
   recordStore?: RecordStore;
@@ -585,12 +592,20 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                     选择学科 <span>可由 AI 自动识别</span>
                   </h2>
                   <div className="segmented-control" role="radiogroup" aria-label="选择学科">
-                    <button className="is-selected" type="button">
-                      自动
-                    </button>
-                    <button type="button">语文</button>
-                    <button type="button">数学</button>
-                    <button type="button">英语</button>
+                    {subjectOptions.map((option) => (
+                      <button
+                        aria-checked={state.selectedSubject === option.value}
+                        className={state.selectedSubject === option.value ? "is-selected" : ""}
+                        key={option.value}
+                        onClick={() =>
+                          dispatch({ type: "SUBJECT_SELECTED", subject: option.value })
+                        }
+                        role="radio"
+                        type="button"
+                      >
+                        {option.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 

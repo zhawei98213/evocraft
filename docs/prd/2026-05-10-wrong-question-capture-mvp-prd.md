@@ -1,10 +1,10 @@
-# EvoCraft 错题收集应用 MVP PRD v1.8
+# EvoCraft 错题收集应用 MVP PRD v1.9
 
-最后更新：2026-06-02
+最后更新：2026-06-03
 
 文档状态：已确认，按 `2026-05-16-prd-writing-standards.md` 重整。
 
-版本号：v1.8
+版本号：v1.9
 
 当前维护者：EvoCraft product agents
 
@@ -18,10 +18,12 @@
 - 技术路线决策：`docs/planning/2026-05-16-mvp-technical-route-decision.md`
 - 真实 AI 识别接入设计：`docs/superpowers/specs/2026-05-23-real-ai-recognition-design.md`
 - 应用内真实 AI 配置设计：`docs/superpowers/specs/2026-06-02-app-visible-ai-config-design.md`
+- 真实图片流程调试记录：`docs/testing/2026-06-03-real-image-flow-debugging.md`
 - 实现入口：`src/app/App.tsx`
 
 变更摘要：
 
+- v1.9 补充真实图片流程调试要求：科目选择必须真实写入识别请求；桌面真实 AI 自动找题不得继续返回固定 mock 框，必须调用 provider、归一化 0-1 或 Qwen 0-1000 坐标、合成整题候选，并在解析失败时保留整图/手动画框兜底；provider 空标题必须回退为可复核草稿标题。
 - v1.8 明确非桌面网页预览不能接收真实 AI 配置：设置页必须提示“桌面应用窗口中保存”，禁用 API key / LLM 输入和保存按钮，避免用户在没有 Electron preload bridge 的页面输入凭据。
 - v1.7 补充应用内真实 AI 配置边界：桌面版必须有显式设置页，展示 `API Key` 和 `LLM 名称` 字段；配置由 Electron main process 会话内持有，不能只依赖环境变量，且配置成功后仍需单独外部 AI 上传授权。
 - v1.6 补充真实 AI 识别接入边界：第一版只做识别整理，不做解题、讲解、错因或相似题；桌面版由 Electron main process 调用真实 AI，本地持久化采用文件夹 + JSON 索引，干净题面先走结构化重排。
@@ -116,6 +118,8 @@ EvoCraft 是面向上海孩子的 AI 学习助手应用集合，不是单一错�
 - 真实 AI/OCR 接入默认国内模型优先，第一候选链路为阿里云百炼 Qwen 体系，火山引擎豆包视觉理解作为备选或后续 A/B。
 - 桌面版真实 AI 配置必须在应用内显式完成，设置页展示 `API Key` 和 `LLM 名称`；API key 由 Electron main process 会话内持有，不写入错题记录、仓库或长期 renderer 存储。
 - 真实 AI 配置和外部 AI 上传授权是两个独立 gate；配置成功后，用户仍必须在上传流程中单独授权外部 AI 识别。
+- 科目选择不是装饰控件：用户选择 `语文`、`数学` 或 `英语` 时，后续真实 AI 识别请求必须使用该显式科目；只有用户选择 `自动` 时才要求 provider 返回合法科目。
+- 桌面真实 AI 自动找题必须调用 provider 并做保守归一化，不能继续使用固定 mock 框；候选框失败时仍要通过整图候选或手动画框保持流程可恢复。
 
 实现阶段可自行决定：
 
@@ -352,6 +356,8 @@ EvoCraft 是面向上海孩子的 AI 学习助手应用集合，不是单一错�
 | WQ-FR-020 | P2 | 系统可以展示未来应用占位，但不能干扰错题收集主流程。 | 应用集合定位 | 浏览器检查 |
 | WQ-FR-021 | P1 | 桌面版必须提供 `设置` 页面，明确展示 `API Key` 和 `LLM 名称` 字段，并允许用户在应用内提交真实 AI 配置。 | 用户反馈 / 真实 AI 配置边界 | 自动测试 / Electron IPC 测试 |
 | WQ-FR-022 | P1 | API key 配置成功后不得被 runtime status、UI 状态、错题记录或日志回显；真实 AI 调用仍必须经过外部 AI 授权 gate。 | 隐私原则 / main-process 边界 | 自动测试 / 代码检查 |
+| WQ-FR-023 | P1 | 科目选择控件必须真实改变后续识别请求的 `subject`；显式选择数学、语文或英语时不得继续按自动科目发送。 | 真实图片流程调试 / 复核用户故事 | 自动测试 / 桌面流程测试 |
+| WQ-FR-024 | P1 | 桌面真实 AI 自动找题必须调用 provider 并归一化候选框坐标；当 provider 坐标不可用或解析失败时，必须保留整张图片候选和手动画框兜底。 | 真实图片流程调试 / 失败恢复 | Qwen adapter contract / 桌面流程测试 |
 
 ## 11. 非功能需求
 

@@ -47,6 +47,7 @@ export type WrongQuestionAction =
   | { type: "IMAGE_SELECTED"; imageUri: string; fileName: string; fileMeta: string }
   | { type: "UPLOAD_FAILED"; message: string }
   | { type: "UPLOAD_BLOCKED"; message: string }
+  | { type: "SUBJECT_SELECTED"; subject: "auto" | Subject }
   | { type: "PRIVACY_ACKNOWLEDGED"; acknowledged: boolean }
   | {
       type: "AI_RUNTIME_READY";
@@ -146,6 +147,12 @@ export function wrongQuestionReducer(
         uploadError: action.message,
       };
 
+    case "SUBJECT_SELECTED":
+      return {
+        ...state,
+        selectedSubject: action.subject,
+      };
+
     case "PRIVACY_ACKNOWLEDGED":
       return {
         ...state,
@@ -194,12 +201,20 @@ export function wrongQuestionReducer(
 
     case "REGION_CANDIDATES_READY": {
       const selectedRegionId = action.candidates[1]?.id ?? action.candidates[0]?.id ?? null;
+      const selectedCandidate =
+        action.candidates.length > 0
+          ? action.candidates.reduce((best, candidate) =>
+              candidate.confidence > best.confidence ? candidate : best,
+            )
+          : null;
       return {
         ...state,
         screen: "select-region",
         regionCandidates: action.candidates,
-        selectedRegionId,
-        regionError: "",
+        selectedRegionId: selectedCandidate?.id ?? selectedRegionId,
+        regionError: action.candidates.length
+          ? ""
+          : "没有找到候选框，请手动画框或重新自动找题。",
       };
     }
 

@@ -20,4 +20,15 @@ function buildRecognitionPrompt({ subject }) {
   ].join("\n");
 }
 
-module.exports = { buildRecognitionPrompt };
+function buildRegionDetectionPrompt() {
+  return [
+    "你是 EvoCraft 的错题照片题目区域检测模块。",
+    "只检测图片中适合单独整理的一道题或小题区域，不要解题。",
+    "坐标必须是相对整张图片的 0 到 1 比例，原点在图片左上角。",
+    "优先覆盖完整题干、编号、图形、表格、公式和对应作答区域，不要只框手写答案。",
+    "最多返回 3 个候选；如果有连续小题，也可以分别返回小题候选。",
+    '只返回 JSON 对象，格式为 {"candidates":[{"label":"题目区域","x":0,"y":0,"width":1,"height":1,"confidence":0.8}]}。',
+  ].join("\n");
+}
+
+module.exports = { buildRecognitionPrompt, buildRegionDetectionPrompt };

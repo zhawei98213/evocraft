@@ -2702,6 +2702,43 @@
 - 提交并推送本设计/计划/ledger 准备提交。
 - 之后按 run ledger 从 Task 0 preflight 开始 subagent-driven 执行。
 
+### 2026-06-03：真实图片流程调试与 Qwen 自动找题修复
+
+本轮任务是什么：
+
+- 使用用户提供的一张真实数学错题照片跑桌面真实 AI 测试流程，列出问题并修复需要代码处理的缺陷。
+
+已完成什么：
+
+- 用真实图片复现 `subject: "auto"` 下 Qwen 未返回合法 subject 导致识别失败；同图显式 `subject: "math"` 可成功识别。
+- 确认上传页科目按钮原本只是静态视觉按钮，点击 `数学` 不会写入状态，也不会影响真实 AI 请求。
+- 修复科目选择：`自动/语文/数学/英语` 变为可访问 radio 控件，并把选择写入 reducer，真实识别请求会使用显式科目。
+- 确认 Qwen adapter 的 `detectRegions` 原本返回固定 hardcoded 候选框，不是真实自动找题。
+- 实现真实 Qwen 自动找题 provider 调用、0-1 与 Qwen 0-1000 坐标归一化、横向保守扩展、`整题候选` 合成、`整张图片候选` 兜底和长 label 标准化。
+- 修复默认候选选择逻辑，从固定第二个候选改为最高置信候选。
+- 修复空候选恢复提示和 provider 空标题兜底。
+- 用同一张真实图片验证修复后自动找题返回 `整题候选`、两个小题候选和整图兜底；显式数学识别可以进入可复核草稿。
+- 新增脱敏测试记录 `docs/testing/2026-06-03-real-image-flow-debugging.md`，并同步 PRD v1.9、真实 AI 识别设计、文档索引、项目记忆和想法胶囊。
+
+卡在哪里：
+
+- 无。真实图片流程仍需人工复核识别草稿；Qwen 可能把可见学生书写提取到 `studentAnswer`，这符合当前需复核边界。
+
+执行的是什么命令：
+
+- `file <user-provided-image>`
+- `lsof -iTCP:5173 -sTCP:LISTEN -nP`
+- `rg -n "subject|SUBJECT|detectRegions|REGION_CANDIDATES_READY|createSelectedRegionImage|externalAi|configureAiRuntime|wrongQuestion" src electron tests docs/prd package.json`
+- `npm run test:react -- src/features/wrongQuestion/wrongQuestionReducer.test.ts src/app/App.test.tsx`
+- `npm run test:qwen-adapter`
+- `sips --help`
+- Hidden-input Qwen adapter probes for `detectRegions` and `recognizeQuestion`; API key and raw provider output were not written to repository files.
+
+下一步的计划：
+
+- 运行全量测试、Electron IPC 测试、构建、diff 检查和敏感信息扫描。
+- 确认桌面窗口继续使用当前会话 key；如果窗口被重启，需要用户在设置页重新输入 API key。
+
 ## 下一步
 
 1. 使用 10-15 张三科混合脱敏样本跑 Qwen 小样本评测，确认 schema、prompt、失败边界、成本和编造答案风险。
