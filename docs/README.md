@@ -10,7 +10,7 @@
 - [应用集合架构](planning/evocraft-app-collection-architecture.md)：EvoCraft 作为 AI 学习助手应用集合的顶层结构。
 - [想法胶囊](ideas/2026-05-10-evocraft-seed-capsule.md)：原始想法碎片和产品方向。
 - [PRD 编写规范 v1.1](prd/2026-05-16-prd-writing-standards.md)：后续 PRD 新建、重大更新、需求评审和规范反向提炼的统一标准。
-- [MVP PRD v1.5](prd/2026-05-10-wrong-question-capture-mvp-prd.md)：用于生成 UI 图和指导开发的错题收集 MVP 产品需求文档。
+- [MVP PRD v1.10](prd/2026-05-10-wrong-question-capture-mvp-prd.md)：用于生成 UI 图和指导开发的错题收集 MVP 产品需求文档。
 - [已实现 MVP UI 设计图](design/implemented-mvp/2026-05-16-implemented-mvp-ui-design.md)：由当前静态 Web 实现自动跑通主流程后保存的 UI 基线截图。
 - [MVP 技术路线决策](planning/2026-05-16-mvp-technical-route-decision.md)：基于 PRD v1.5、已实现 UI 基线和桌面优先方向确认 React/Vite/TypeScript、AI adapter、Electron 桌面壳和后端的推进顺序。
 - [桌面优先技术选型设计](superpowers/specs/2026-05-16-desktop-first-technical-selection-design.md)：确认下一阶段采用 React/Vite/TypeScript 工程主干、provider-agnostic AI adapter 和 Electron 桌面壳。
@@ -20,6 +20,9 @@
 - [真实 AI 识别 Agent Run Ledger](superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md)：记录 subagent-driven 执行中每个 agent 的计划、进度、命令、验证和 review。
 - [应用内真实 AI 配置设计](superpowers/specs/2026-06-02-app-visible-ai-config-design.md)：把 API key 和 LLM 名称从隐藏环境变量迁移到桌面设置页，同时保持 main-process 密钥边界。
 - [应用内真实 AI 配置实施计划](superpowers/plans/2026-06-02-app-visible-ai-config.md)：实现设置页、`ai:configure` IPC、runtime 状态同步和验证步骤。
+- [桌面真实 AI 流程诊断与交互重设计](superpowers/specs/2026-06-06-desktop-ai-flow-ux-redesign-design.md)：规划真实 AI 日志、科目后置、候选框就地删除、API key 本机加密持久化、图标验收和 Product Design 重设计边界。
+- [桌面真实 AI 流程诊断与交互重设计实施计划](superpowers/plans/2026-06-06-desktop-ai-flow-ux-redesign.md)：把 2026-06-06 真实桌面试用反馈拆成可执行修复和验证任务。
+- [Product Design 重设计 Brief](design/2026-06-06-product-design-redesign-brief.md)：后续使用 Product Design workflow 重设计 EvoCraft 桌面错题收集界面前的 brief。
 - [Qwen 脱敏样本评测设计](superpowers/specs/2026-05-31-qwen-sample-evaluation-design.md)：确认第一轮 10-15 张本地脱敏样本评测的样本规范、manifest 合同、隐私边界、结果 redaction 和决策规则。
 - [Qwen 脱敏样本评测实施计划](superpowers/plans/2026-05-31-qwen-sample-evaluation.md)：把样本评测拆成 preflight、manifest validation、redacted summary reporter、本地样本运行和评估决策任务。
 - [Qwen 脱敏样本评测 Agent Run Ledger](superpowers/agent-runs/2026-05-31-qwen-sample-evaluation/README.md)：记录后续 subagent-driven 执行中每个 agent 的任务边界、进度、命令和 review。

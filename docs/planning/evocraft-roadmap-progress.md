@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-06-02
+最后更新：2026-06-06
 
 ## 路线图
 
@@ -83,6 +83,45 @@
 如果没有卡点，写 `无`。命令不需要粘贴完整输出，但要保留足够复现的命令名称或关键命令。
 
 ## 当前进度
+
+### 2026-06-06：桌面真实 AI 流程问题计划与文档同步
+
+本轮任务是什么：
+
+- 用户在真实 AI 桌面试用后反馈五个问题：连接 AI 后点击题目区域无反应且缺少后台日志；上传页前置科目选择可能不合理；候选框不能在框上直接删除；应用图标疑似回退；API key 输入一次后应保存且可更改。用户明确要求本轮先写计划、更新相应文档并记录进度，不直接实现全部改动。
+
+已完成什么：
+
+- 新增详细设计 `docs/superpowers/specs/2026-06-06-desktop-ai-flow-ux-redesign-design.md`，明确 redacted main-process 日志、科目后置、画布内候选框删除、API key 本机加密持久化、图标链路验收和 Product Design 重设计边界。
+- 新增实施计划 `docs/superpowers/plans/2026-06-06-desktop-ai-flow-ux-redesign.md`，拆分日志、选区点击、科目后置、候选框删除、key 持久化、图标、Product Design 重设计和验证收尾任务。
+- 新增 Product Design brief `docs/design/2026-06-06-product-design-redesign-brief.md`；按 Product Design get-context/user-context 规则运行预检，确认没有已保存 Product Design 用户上下文，后续应以当前代码、截图和项目内设计基线为来源。
+- 更新 MVP PRD 到 v1.10，把本轮反馈提升为功能需求和非功能需求。
+- 更新想法胶囊和项目记忆，明确旧的“上传页前置科目选择”和“API key 只会话内持有”决策已被新反馈修正。
+- 更新文档索引，加入本轮设计、计划和 Product Design brief。
+- 完成文档变更验证：`git diff --check` 通过；全量测试 48 项通过；生产构建通过；用户提供的 API key 字符串未出现在仓库扫描结果中。
+
+卡在哪里：
+
+- 无。按用户要求，本轮没有进入代码实现；下一步实施时需要先复现真实 AI 模式下题目区域点击无反应，并用新增日志定位根因。验证时发现默认 PATH 下 `node` 指向 Codex.app 内置 Node，会因 macOS 签名策略拒绝加载 `rolldown` native binding；已改用 `/usr/local/bin` 下的系统 Node v26.1.0 完成测试和构建。
+
+执行的是什么命令：
+
+- `rg -n "v1\\.9|WQ-FR-024|科目|LLM|API|最近|配置|设置|题目区域|候选" docs/prd/2026-05-10-wrong-question-capture-mvp-prd.md docs/README.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md docs/ideas/2026-05-10-evocraft-seed-capsule.md`
+- `sed -n '1,220p' docs/prd/2026-05-10-wrong-question-capture-mvp-prd.md`
+- `sed -n '200,390p' docs/prd/2026-05-10-wrong-question-capture-mvp-prd.md`
+- `sed -n '1,220p' docs/prd/2026-05-16-prd-writing-standards.md`
+- `sed -n '1,130p' docs/planning/evocraft-project-memory.md`
+- `sed -n '1,120p' docs/ideas/2026-05-10-evocraft-seed-capsule.md`
+- `python3 /Users/zha/.codex/plugins/cache/openai-curated-remote/product-design/0.1.43/skills/user-context/scripts/user_context_preflight.py`
+- `git diff --check`
+- `rg -n "<user-provided-api-key>|DASHSCOPE_API_KEY=|Authorization:|data:image/.+base64" docs src electron tests package.json .gitignore || true`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm test`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run build`
+
+下一步的计划：
+
+- 按 `docs/superpowers/plans/2026-06-06-desktop-ai-flow-ux-redesign.md` 执行基础修复：先加 redacted 日志并复现点击无反应，再改科目后置、候选框就地删除、API key 持久化和图标验收。
+- 基础流程稳定后，按 Product Design brief 先确认设计 brief，再进入三个视觉/交互方向探索和后续可运行原型或 React UI 改造。
 
 ### 2026-06-02：Electron dev CSP 修复并验证真实设置链路
 

@@ -1,6 +1,6 @@
 # EvoCraft 项目记忆
 
-最后更新：2026-06-03
+最后更新：2026-06-06
 
 ## 一句话产品意图
 
@@ -21,7 +21,7 @@ EvoCraft 是面向上海孩子的 AI 学习助手应用集合。第一阶段从�
 
 阶段：`1 - 错题收集应用 MVP`
 
-当前目标：MVP 收集闭环已完成；桌面优先迁移第一阶段已闭环，当前有 `React + Vite + TypeScript` 工程主干、typed wrong-question domain、provider-agnostic mock AI adapter contract、storage port、React UI 迁移、截图验证、最小 `Electron` 桌面壳、Electron 本地记录存储、Qwen 评测/adapter spike、main-process real AI IPC、应用内真实 AI 测试模式、外部 AI 授权提示，以及通过 final re-review 的 main-process 授权、eval data URL 和一次性文件读取边界。2026-06-02 已确认真实 AI 配置方式要从隐藏环境变量迁移到应用内设置页：用户显式填写 API key 和 LLM 名称，Electron main process 会话内持有配置，配置成功后仍需单独外部 AI 授权；网页预览没有 Electron preload bridge 时必须禁用配置输入并提示改用桌面应用窗口。2026-06-03 使用用户提供的真实数学错题图片跑通真实 Qwen 流程后，已修复科目选择未写入请求、Qwen 自动找题固定框、0-1000 坐标归一化、默认候选选择和空标题兜底问题。当前仍处于 Qwen 10-15 张脱敏样本评测准备阶段，Task 0 预检、Task 1 manifest validation/dry-run 和 Task 2 redacted summary reporter 已完成；Task 3 本地样本运行在 2026-06-01 复查后仍被阻塞：缺少本地 ignored `ai-eval/samples/manifest.local.json`、缺少 `ai-eval/samples/private/` 脱敏样本文件，且评测 CLI 仍缺少本地 `DASHSCOPE_API_KEY`；因此还不能形成 Qwen 效果决策。
+当前目标：MVP 收集闭环已完成；桌面优先迁移第一阶段已闭环，当前有 `React + Vite + TypeScript` 工程主干、typed wrong-question domain、provider-agnostic mock AI adapter contract、storage port、React UI 迁移、截图验证、最小 `Electron` 桌面壳、Electron 本地记录存储、Qwen 评测/adapter spike、main-process real AI IPC、应用内真实 AI 测试模式、外部 AI 授权提示，以及通过 final re-review 的 main-process 授权、eval data URL 和一次性文件读取边界。2026-06-02 已确认真实 AI 配置方式要从隐藏环境变量迁移到应用内设置页：用户显式填写 API key 和 LLM 名称，Electron main process 持有配置，配置成功后仍需单独外部 AI 授权；网页预览没有 Electron preload bridge 时必须禁用配置输入并提示改用桌面应用窗口。2026-06-03 使用用户提供的真实数学错题图片跑通真实 Qwen 流程后，已修复科目选择未写入请求、Qwen 自动找题固定框、0-1000 坐标归一化、默认候选选择和空标题兜底问题。2026-06-06 根据真实桌面试用反馈，下一轮实施目标改为：补 redacted 后台日志，修复真实 AI 模式下题目区域点击无反应，科目从上传页前置选择后移到识别后建议和复核确认，候选框支持画布内直接删除，复核桌面图标链路，并把 API key 改成本机加密持久化、可更改、可清除。当前仍处于 Qwen 10-15 张脱敏样本评测准备阶段，Task 0 预检、Task 1 manifest validation/dry-run 和 Task 2 redacted summary reporter 已完成；Task 3 本地样本运行在 2026-06-01 复查后仍被阻塞：缺少本地 ignored `ai-eval/samples/manifest.local.json`、缺少 `ai-eval/samples/private/` 脱敏样本文件，且评测 CLI 仍缺少本地 `DASHSCOPE_API_KEY`；因此还不能形成 Qwen 效果决策。
 
 当前 MVP 边界：只完成 EvoCraft 应用集合中第一个应用“错题收集”的核心闭环，也就是“从一张可能包含多道题的上传图片中，确认一道题区域并收集成错题记录”。本轮已把隐私确认、本地删除/清空和失败恢复纳入 MVP 收尾范围。保留应用集合的顶层结构，但暂不实现整卷批量拆题、其他学习应用、完整游戏化经济或复杂多应用平台能力。
 
@@ -67,14 +67,17 @@ EvoCraft 是面向上海孩子的 AI 学习助手应用集合。第一阶段从�
 - 模型调用必须分层：常规题用低成本视觉 OCR/轻量结构化模型，复杂公式、几何图和低置信度场景再升级到更强模型。
 - 第一版真实 AI 接入只做识别整理：候选题目区域、OCR、科目判断、结构化错题草稿、视觉片段保留、需复核项和模型调用记录；解题、讲解、错因、知识点和相似题进入 Phase 2 错题理解。
 - 干净题面第一版采用结构化重排策略，由应用根据 AI 输出渲染可编辑题面；图像去痕、重绘和 inpainting 作为后续专项能力，不进入首轮真实 AI 接入。
-- 桌面版真实 AI 调用放在 Electron main process；React renderer 只通过 preload IPC 请求识别。2026-06-02 起，API key 由设置页显式输入并提交给 Electron main process，会话内持有，不写入错题记录、仓库或长期 renderer 存储；当前阶段不引入 SaaS backend，未来有账号、同步、多端协作或云端数据价值时再迁移。
+- 桌面版真实 AI 调用放在 Electron main process；React renderer 只通过 preload IPC 请求识别。2026-06-06 起，API key 由设置页显式输入并提交给 Electron main process，本机通过 Electron `safeStorage` 加密持久化，允许用户更改和清除，不写入错题记录、仓库、日志或 renderer 可读取存储；当前阶段不引入 SaaS backend，未来有账号、同步、多端协作或云端数据价值时再迁移。
 - 真实 AI 配置是桌面应用窗口专用能力：Codex in-app browser 或普通 Vite 网页预览没有 Electron preload bridge 时，设置页必须禁用 API key / LLM 输入和保存按钮，并明确提示继续使用本地 mock。
 - 应用层真实 AI 仍默认关闭并回到本地 mock；只有 Electron main 报告 real mode 且用户显式勾选外部 AI 授权后，renderer 才会通过 preload 调用 desktop AI adapter。缺少授权时必须保留已选图片和可恢复状态，不让用户重新上传。
 - 真实 AI 授权边界必须覆盖所有调用入口，而不是只覆盖上传页首次进入：如果运行时状态在用户已进入选区页后才从 mock 切到 real，重新自动找题和确认识别也必须先通过同一个外部 AI 授权 gate。真实 AI 有效模式还必须要求 preload bridge 同时具备 `detectRegions` 和 `recognizeQuestion`，否则界面要明确回退到本地 mock。
 - 外部 AI 授权不能只存在于 React renderer 状态；Electron main process 的 `ai:*` IPC 必须独立检查已同步的外部 AI 授权，未授权时在 provider 调用前返回可恢复失败。
 - 真实 AI 配置和外部 AI 授权是两个独立 gate：设置页配置 API key / LLM 名称只让 runtime 具备真实 AI 能力，不代表用户已经同意把题目区域发送给外部 AI。
-- 上传页科目选择必须真实影响识别请求：显式选择 `数学`、`语文` 或 `英语` 时，后续真实 AI 请求不得继续按 `auto` 发送；`auto` 模式仍要求 provider 返回合法 subject。
+- 科目不再作为上传前置选择。首次识别默认允许 provider 自动建议科目；复核页必须展示模型建议并允许用户改为 `数学`、`语文` 或 `英语`，provider 无法返回合法 subject 时保存前必须要求用户选择。
 - Qwen `region_detection` 不能继续使用固定 mock 框；桌面真实 AI 自动找题必须调用 provider，接受 0-1 或 Qwen 常见 0-1000 坐标，保守扩展横向阅读范围，合成整题候选，并保留整张图片候选和手动画框作为失败兜底。
+- 真实 AI 的配置、授权、自动找题、识别和失败路径必须输出 redacted main-process 诊断日志，供 `npm run electron:dev` 后台排查；日志不得包含 API key、完整图片 data URL、raw provider response 或完整 OCR 内容。
+- 候选框删除必须能在画布框上直接完成，列表删除入口可以保留但不能作为唯一删除路径；删除按钮点击不能触发选中、拖拽或缩放。
+- EvoCraft 图标链路必须覆盖应用内品牌位、renderer favicon、Electron dev 窗口和 packaged macOS app icon；疑似回退时先审计路径和视觉资产。
 - 桌面图片读取必须遵循最小权限：renderer 不能用 arbitrary path 请求 main 读取本地图片，只能读取本次系统文件选择对话框明确返回且尚未消费的一次性路径。
 - 本机 AI 评测可以读取本地脱敏样本，但进入云端 provider adapter 前必须转成可发送的 `data:image/...;base64,...` 输入；共享 adapter 需要拒绝 `file://` 等本地路径 URL，避免把本地文件引用当作云端可访问资源。
 - Qwen 脱敏样本评测必须先跑 10-15 张小样本，不直接扩大到 50 张；评测提交物只能是 redacted aggregate summary，真实图片、`manifest.local.json`、raw JSONL、完整 OCR/provider 响应和 API key 均不得入库。
