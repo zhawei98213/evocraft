@@ -1,7 +1,9 @@
-const { app, BrowserWindow, dialog, ipcMain, session } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain, safeStorage, session } = require("electron");
 const { readFile } = require("node:fs/promises");
 const { extname, join, resolve } = require("node:path");
+const { createAiConfigStore } = require("./ai/configStore.cjs");
 const { createQwenAdapter } = require("./ai/qwenAdapter.cjs");
+const { createRuntimeLogger } = require("./ai/runtimeLogger.cjs");
 const { isTrustedRendererUrl } = require("./security/rendererTrust.cjs");
 const { createLocalRecordStore, isValidWrongQuestionRecordArray } = require("./storage/localRecordStore.cjs");
 
@@ -19,6 +21,7 @@ function createWindow() {
     height: 980,
     minWidth: 1180,
     minHeight: 760,
+    icon: getDesktopIconPath(),
     webPreferences: {
       preload: join(__dirname, "preload.cjs"),
       nodeIntegration: false,
@@ -53,10 +56,18 @@ if (app?.whenReady) {
       });
     });
 
-    const recordStore = createLocalRecordStore(app.getPath("userData"));
+    const userDataDir = app.getPath("userData");
+    const recordStore = createLocalRecordStore(userDataDir);
+    const runtimeLogger = createRuntimeLogger();
     registerFileIpc();
-    registerRecordIpc(recordStore);
-    registerAiIpc(createAiRuntime());
+    registerRecordIpc(recordStore, { logger: runtimeLogger });
+    registerAiIpc(
+      createAiRuntime({
+        configStore: createAiConfigStore(userDataDir, { safeStorage }),
+        logger: runtimeLogger,
+      }),
+      { logger: runtimeLogger },
+    );
     createWindow();
   });
 
@@ -119,33 +130,92 @@ function registerFileIpc(options = {}) {
   });
 }
 
-function registerRecordIpc(recordStore) {
-  ipcMain.handle("records:load", async (event) => {
-    assertAllowedSender(event);
-    return recordStore.load();
+function registerRecordIpc(recordStore, options = {}) {
+  const targetIpcMain = options.ipcMain ?? ipcMain;
+  const isRendererUrlAllowed = options.isAllowedRendererUrl ?? isAllowedRendererUrl;
+  const logger = options.logger;
+
+  targetIpcMain.handle("records:load", async (event) => {
+    assertAllowedSender(event, isRendererUrlAllowed);
+    try {
+      return await recordStore.load();
+    } catch (error) {
+      logRuntimeEvent(logger, "records.load.failure", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   });
 
-  ipcMain.handle("records:save", async (event, records) => {
-    assertAllowedSender(event);
+  targetIpcMain.handle("records:save", async (event, records) => {
+    assertAllowedSender(event, isRendererUrlAllowed);
 
     if (!isValidWrongQuestionRecordArray(records)) {
+      logRuntimeEvent(logger, "records.save.failure", { reason: "invalid_records_payload" });
       throw new Error("Invalid records payload");
     }
 
-    return recordStore.save(records);
+    try {
+      const result = await recordStore.save(records);
+      if (result?.ok === false) {
+        logRuntimeEvent(logger, "records.save.failure", {
+          reason: result.reason,
+        });
+      }
+      return result;
+    } catch (error) {
+      logRuntimeEvent(logger, "records.save.failure", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   });
 
-  ipcMain.handle("records:clear", async (event) => {
-    assertAllowedSender(event);
-    return recordStore.clear();
+  targetIpcMain.handle("records:clear", async (event) => {
+    assertAllowedSender(event, isRendererUrlAllowed);
+    try {
+      const result = await recordStore.clear();
+      if (result?.ok === false) {
+        logRuntimeEvent(logger, "records.clear.failure", {
+          reason: result.reason,
+        });
+      }
+      return result;
+    } catch (error) {
+      logRuntimeEvent(logger, "records.clear.failure", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
+    }
   });
 }
 
 function createAiRuntime(options = {}) {
   const hasOption = (key) => Object.prototype.hasOwnProperty.call(options, key);
+  const configStore = options.configStore;
+  const logger = options.logger;
+  let storedConfig = null;
+  if (!hasOption("apiKey") && configStore?.load) {
+    try {
+      storedConfig = configStore.load();
+      logRuntimeEvent(logger, "ai.config.load", {
+        configured: Boolean(storedConfig?.apiKey),
+        persisted: Boolean(storedConfig?.persisted),
+        provider: storedConfig?.provider,
+        model: storedConfig?.model,
+        canPersistSecret: Boolean(configStore?.canPersistSecret),
+      });
+    } catch (error) {
+      logRuntimeEvent(logger, "ai.config.load.failure", {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
   const envEnabled = process.env.EVOCRAFT_AI_ENABLED === "1";
   const initialApiKey = hasOption("apiKey")
     ? options.apiKey
+    : storedConfig?.apiKey
+      ? storedConfig.apiKey
     : envEnabled
       ? process.env.DASHSCOPE_API_KEY ?? ""
       : "";
@@ -153,17 +223,25 @@ function createAiRuntime(options = {}) {
     apiKey: initialApiKey,
     model: hasOption("model")
       ? options.model
-      : process.env.EVOCRAFT_AI_MODEL ?? process.env.DASHSCOPE_MODEL ?? defaultAiModel,
+      : storedConfig?.model ??
+        process.env.EVOCRAFT_AI_MODEL ??
+        process.env.DASHSCOPE_MODEL ??
+        defaultAiModel,
     provider: hasOption("provider")
       ? options.provider
-      : process.env.EVOCRAFT_AI_PROVIDER ?? defaultAiProvider,
+      : storedConfig?.provider ?? process.env.EVOCRAFT_AI_PROVIDER ?? defaultAiProvider,
   });
+  let configMeta = {
+    persisted: Boolean(storedConfig?.persisted),
+    canPersistSecret: Boolean(configStore?.canPersistSecret),
+    updatedAt: storedConfig?.updatedAt || undefined,
+  };
   const endpoint = options.endpoint;
   const fetchImpl = hasOption("fetchImpl") ? options.fetchImpl : globalThis.fetch;
   let adapter = createConfiguredQwenAdapter(config, { endpoint, fetchImpl });
   const runtime = {
     get status() {
-      return createAiRuntimeStatus(config);
+      return createAiRuntimeStatus(config, configMeta);
     },
     get adapter() {
       return adapter;
@@ -184,6 +262,30 @@ function createAiRuntime(options = {}) {
       }
 
       config = nextConfig;
+      adapter = createConfiguredQwenAdapter(config, { endpoint, fetchImpl });
+      const saveResult = configStore?.save ? configStore.save(nextConfig) : null;
+      configMeta = {
+        persisted: Boolean(saveResult?.ok),
+        canPersistSecret: Boolean(configStore?.canPersistSecret),
+        updatedAt: saveResult?.ok ? saveResult.updatedAt : undefined,
+      };
+      return {
+        ok: true,
+        status: runtime.status,
+      };
+    },
+    clearConfig() {
+      configStore?.clear?.();
+      config = normalizeAiRuntimeConfig({
+        provider: defaultAiProvider,
+        apiKey: "",
+        model: defaultAiModel,
+      });
+      configMeta = {
+        persisted: false,
+        canPersistSecret: Boolean(configStore?.canPersistSecret),
+        updatedAt: undefined,
+      };
       adapter = createConfiguredQwenAdapter(config, { endpoint, fetchImpl });
       return {
         ok: true,
@@ -216,21 +318,26 @@ function normalizeString(value, fallback) {
   return typeof value === "string" ? value.trim() : fallback;
 }
 
-function createAiRuntimeStatus(config) {
+function createAiRuntimeStatus(config, meta = {}) {
   const configured = Boolean(config.apiKey);
-  return {
+  const status = {
     enabled: configured,
     configured,
     provider: config.provider,
     model: config.model,
     mode: configured ? "real" : "mock",
     message: configured ? "" : missingAiConfigurationMessage,
+    persisted: configured ? Boolean(meta.persisted) : false,
+    canPersistSecret: Boolean(meta.canPersistSecret),
   };
+  if (configured && meta.updatedAt) status.updatedAt = meta.updatedAt;
+  return status;
 }
 
 function registerAiIpc(runtime, options = {}) {
   const targetIpcMain = options.ipcMain ?? ipcMain;
   const isRendererUrlAllowed = options.isAllowedRendererUrl ?? isAllowedRendererUrl;
+  const logger = options.logger;
   let externalAiAuthorized = Boolean(options.externalAiAuthorized);
 
   targetIpcMain.handle("ai:runtime-status", (event) => {
@@ -250,7 +357,34 @@ function registerAiIpc(runtime, options = {}) {
     }
 
     externalAiAuthorized = false;
-    return runtime.configure(input);
+    logRuntimeEvent(logger, "ai.config.save", {
+      provider: input?.provider,
+      model: input?.model,
+      apiKey: input?.apiKey,
+    });
+    const result = runtime.configure(input);
+    logRuntimeEvent(logger, result.ok ? "ai.config.save.success" : "ai.config.save.failure", {
+      ok: result.ok,
+      status: result.status,
+      message: result.message,
+    });
+    return result;
+  });
+
+  targetIpcMain.handle("ai:clear-config", (event) => {
+    assertAllowedSender(event, isRendererUrlAllowed);
+
+    externalAiAuthorized = false;
+    const result =
+      typeof runtime.clearConfig === "function"
+        ? runtime.clearConfig()
+        : {
+            ok: false,
+            message: "真实 AI 配置桥接不可用。",
+            status: runtime.status,
+          };
+    logRuntimeEvent(logger, result.ok ? "ai.config.clear" : "ai.config.clear.failure", result);
+    return result;
   });
 
   targetIpcMain.handle("ai:set-external-authorization", (event, acknowledged) => {
@@ -261,6 +395,7 @@ function registerAiIpc(runtime, options = {}) {
     }
 
     externalAiAuthorized = acknowledged;
+    logRuntimeEvent(logger, "ai.authorization.update", { acknowledged });
     return { ok: true };
   });
 
@@ -275,7 +410,7 @@ function registerAiIpc(runtime, options = {}) {
       return createExternalAiNotAuthorizedFailure();
     }
 
-    return runtime.adapter.detectRegions(input);
+    return logAdapterCall(logger, "ai.detectRegions", input, () => runtime.adapter.detectRegions(input));
   });
 
   targetIpcMain.handle("ai:recognize-question", async (event, input) => {
@@ -289,8 +424,61 @@ function registerAiIpc(runtime, options = {}) {
       return createExternalAiNotAuthorizedFailure();
     }
 
-    return runtime.adapter.recognizeQuestion(input);
+    return logAdapterCall(logger, "ai.recognize", input, () => runtime.adapter.recognizeQuestion(input));
   });
+}
+
+async function logAdapterCall(logger, eventPrefix, input, callAdapter) {
+  const startedAt = Date.now();
+  logRuntimeEvent(logger, `${eventPrefix}.start`, { input });
+
+  try {
+    const result = await callAdapter();
+    const elapsedMs = Date.now() - startedAt;
+    logRuntimeEvent(logger, result.ok ? `${eventPrefix}.success` : `${eventPrefix}.failure`, {
+      elapsedMs,
+      ...summarizeAdapterResult(result),
+    });
+    return result;
+  } catch (error) {
+    logRuntimeEvent(logger, `${eventPrefix}.failure`, {
+      elapsedMs: Date.now() - startedAt,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    throw error;
+  }
+}
+
+function summarizeAdapterResult(result) {
+  if (!result || typeof result !== "object") return { resultType: typeof result };
+  if (!result.ok) {
+    return {
+      ok: false,
+      reason: result.reason,
+      message: result.message,
+      retryable: result.retryable,
+    };
+  }
+
+  if (Array.isArray(result.candidates)) {
+    return { ok: true, candidateCount: result.candidates.length };
+  }
+
+  if (result.draft) {
+    return {
+      ok: true,
+      subject: result.draft.subject,
+      hasTitle: Boolean(result.draft.title),
+      reviewItemCount: Array.isArray(result.draft.reviewItems) ? result.draft.reviewItems.length : 0,
+    };
+  }
+
+  return { ok: true };
+}
+
+function logRuntimeEvent(logger, event, details) {
+  if (!logger || typeof logger.log !== "function") return;
+  logger.log(event, details);
 }
 
 function createRealAiDisabledFailure() {
@@ -361,11 +549,19 @@ function getWebSocketOrigin(url) {
   return parsedUrl.origin;
 }
 
+function getDesktopIconPath() {
+  return join(__dirname, "../build-resources/icon.icns");
+}
+
 module.exports = {
   assertAllowedSender,
+  createAiConfigStore,
   createAiRuntime,
   createRendererContentSecurityPolicy,
+  createRuntimeLogger,
+  getDesktopIconPath,
   isAllowedRendererUrl,
   registerAiIpc,
   registerFileIpc,
+  registerRecordIpc,
 };

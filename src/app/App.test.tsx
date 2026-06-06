@@ -18,6 +18,7 @@ type TestDesktopApi = EvoCraftDesktopApi & {
     apiKey: string;
     model: string;
   }) => Promise<{ ok: boolean; status?: unknown; message?: string }>;
+  clearAiRuntimeConfig?: () => Promise<{ ok: boolean; status?: unknown; message?: string }>;
 };
 
 afterEach(() => {
@@ -216,11 +217,15 @@ describe("App", () => {
 
     expect(screen.getByText("当前选择：候选 2")).toBeInTheDocument();
 
+    await user.click(screen.getByRole("button", { name: "从画布删除候选 1" }));
+
+    expect(screen.queryByRole("button", { name: "删除候选 1" })).not.toBeInTheDocument();
+    expect(screen.getByText("当前选择：候选 2")).toBeInTheDocument();
+
     await user.click(screen.getByRole("button", { name: "删除候选 2" }));
 
     expect(screen.getByText("当前选择：候选 3")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "删除候选 1" }));
     await user.click(screen.getByRole("button", { name: "删除候选 3" }));
 
     expect(screen.getByText("候选框已清空")).toBeInTheDocument();
@@ -366,6 +371,8 @@ describe("App", () => {
         model: "qwen-vl-ocr-latest",
         mode: "mock",
         message: "请在设置里填写 API Key 和 LLM 名称后启用真实 AI。",
+        persisted: false,
+        canPersistSecret: true,
       }),
       configureAiRuntime: vi.fn(),
     });
@@ -379,6 +386,50 @@ describe("App", () => {
     expect(screen.getByLabelText("API Key")).toBeInTheDocument();
     expect(screen.getByLabelText("LLM 名称")).toHaveValue("qwen-vl-ocr-latest");
     expect(screen.getByText("当前使用本地 mock 识别")).toBeInTheDocument();
+    expect(screen.getByText("API Key 未保存")).toBeInTheDocument();
+  });
+
+  it("shows persisted AI key status and clears the saved key", async () => {
+    const desktopApi = installDesktopBridge({
+      getAiRuntimeStatus: vi.fn().mockResolvedValue({
+        enabled: true,
+        configured: true,
+        provider: "qwen",
+        model: "qwen-vl-ocr-latest",
+        mode: "real",
+        message: "",
+        persisted: true,
+        canPersistSecret: true,
+        updatedAt: "2026-06-06T13:30:00.000Z",
+      }),
+      clearAiRuntimeConfig: vi.fn().mockResolvedValue({
+        ok: true,
+        status: {
+          enabled: false,
+          configured: false,
+          provider: "qwen",
+          model: "qwen-vl-ocr-latest",
+          mode: "mock",
+          message: "请在设置里填写 API Key 和 LLM 名称后启用真实 AI。",
+          persisted: false,
+          canPersistSecret: true,
+        },
+      }),
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "设置" }));
+
+    expect(await screen.findByText("API Key 已保存")).toBeInTheDocument();
+    expect(screen.getByText("本机加密保存")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "清除 key" }));
+
+    await waitFor(() => {
+      expect(desktopApi.clearAiRuntimeConfig).toHaveBeenCalledTimes(1);
+    });
+    expect(screen.getByText("API Key 未保存")).toBeInTheDocument();
   });
 
   it("marks real AI configuration as desktop-only when the configuration bridge is unavailable", async () => {
@@ -412,6 +463,9 @@ describe("App", () => {
           model: "qwen-vl-max",
           mode: "real",
           message: "",
+          persisted: true,
+          canPersistSecret: true,
+          updatedAt: "2026-06-06T13:30:00.000Z",
         },
       }),
       detectRegions: vi.fn(),
@@ -435,6 +489,7 @@ describe("App", () => {
     });
     expect(screen.queryByDisplayValue("dashscope-secret-key")).not.toBeInTheDocument();
     expect(screen.getByText("真实 AI 已配置")).toBeInTheDocument();
+    expect(screen.getByText("API Key 已保存")).toBeInTheDocument();
     expect(screen.getByText("LLM 名称：qwen-vl-max")).toBeInTheDocument();
 
     await user.click(screen.getByRole("button", { name: "错题收集" }));
@@ -532,7 +587,7 @@ describe("App", () => {
     expect(screen.getByRole("heading", { name: "选择题目区域" })).toBeInTheDocument();
   });
 
-  it("sends the selected subject to desktop real AI recognition", async () => {
+  it("sends auto subject to first desktop real AI recognition and confirms subject in review", async () => {
     const desktopApi = installDesktopBridge({
       selectImage: vi.fn().mockResolvedValue("/Users/zha/Desktop/question.png"),
       readImageAsDataUrl: vi.fn().mockResolvedValue("data:image/png;base64,desktop-image"),
@@ -559,8 +614,7 @@ describe("App", () => {
 
     await user.click(screen.getByRole("button", { name: "错题收集" }));
     await screen.findByText("真实 AI 测试模式");
-    await user.click(screen.getByRole("radio", { name: "数学" }));
-    expect(screen.getByRole("radio", { name: "数学" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.queryByRole("radiogroup", { name: "选择学科" })).not.toBeInTheDocument();
     await user.click(screen.getByRole("button", { name: "从电脑选择图片" }));
     await waitFor(() => {
       expect(screen.getByText("question.png")).toBeInTheDocument();
@@ -574,11 +628,12 @@ describe("App", () => {
     await waitFor(() => {
       expect(desktopApi.recognizeQuestion).toHaveBeenCalledWith(
         expect.objectContaining({
-          subject: "math",
+          subject: "auto",
         }),
       );
     });
     expect(screen.getByRole("heading", { name: "识别复核" })).toBeInTheDocument();
+    expect(screen.getByLabelText("科目")).toHaveValue("math");
   });
 
   it("blocks rerun detection after a delayed real AI runtime flip until authorization is acknowledged", async () => {

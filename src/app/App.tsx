@@ -15,9 +15,11 @@ import {
   createManualRegion,
   createRecordFromDraft,
   formatTime,
+  isSubject,
   type RegionCandidate,
   type Subject,
   type WrongQuestionDraft,
+  type WrongQuestionRecord,
 } from "../domain/wrongQuestion";
 import {
   createInitialWrongQuestionState,
@@ -32,7 +34,7 @@ import { mockAiAdapter } from "../services/mockAiAdapter";
 import { createLocalStorageRecordStore, type RecordStore } from "../services/storage";
 
 interface ReviewForm {
-  subject: Subject;
+  subject: Subject | "";
   title: string;
   questionText: string;
   studentAnswer: string;
@@ -51,7 +53,7 @@ interface RegionDragState {
 }
 
 const emptyReviewForm: ReviewForm = {
-  subject: "math",
+  subject: "",
   title: "",
   questionText: "",
   studentAnswer: "",
@@ -64,13 +66,6 @@ const missingDesktopAiBridgeMessage = "真实 AI 桥接能力不可用，已回�
 const missingDesktopAiConfigurationBridgeMessage =
   "真实 AI 配置只能在桌面应用窗口中保存。";
 const defaultAiModel = "qwen-vl-ocr-latest";
-const subjectOptions: Array<{ value: "auto" | Subject; label: string }> = [
-  { value: "auto", label: "自动" },
-  ...Object.entries(SUBJECTS).map(([value, label]) => ({
-    value: value as Subject,
-    label,
-  })),
-];
 
 interface AppProps {
   recordStore?: RecordStore;
@@ -204,6 +199,9 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
       provider: status.provider,
       model: status.model || defaultAiModel,
       configured: status.configured,
+      persisted: status.persisted,
+      canPersistSecret: status.canPersistSecret,
+      updatedAt: status.updatedAt,
     });
     setAiConfigForm((current) => ({
       ...current,
@@ -245,6 +243,34 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
       setAiConfigFeedback("配置已保存。");
     } catch {
       setAiConfigFeedback("真实 AI 配置保存失败，请重试。");
+    }
+  }
+
+  async function clearAiConfiguration() {
+    const clearAiRuntimeConfig = desktopBridge?.clearAiRuntimeConfig;
+
+    if (!clearAiRuntimeConfig) {
+      setAiConfigFeedback(missingDesktopAiConfigurationBridgeMessage);
+      return;
+    }
+
+    try {
+      const result = await clearAiRuntimeConfig();
+      if (!result.ok) {
+        setAiConfigFeedback(result.message);
+        if (result.status) applyAiRuntimeStatus(result.status);
+        return;
+      }
+
+      dispatch({ type: "EXTERNAL_AI_ACKNOWLEDGED", acknowledged: false });
+      applyAiRuntimeStatus(result.status);
+      setAiConfigForm((current) => ({
+        apiKey: "",
+        model: result.status.model || current.model || defaultAiModel,
+      }));
+      setAiConfigFeedback("API Key 已清除。");
+    } catch {
+      setAiConfigFeedback("真实 AI 配置清除失败，请重试。");
     }
   }
 
@@ -402,7 +428,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
     );
 
     const result = await aiAdapter.recognizeQuestion({
-      subject: state.selectedSubject,
+      subject: "auto",
       imageUri: state.uploadedImageUri,
       selectedRegion,
       selectedRegionImageUri,
@@ -418,8 +444,15 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
 
   async function saveRecord() {
     if (!state.draft || !isRecordStoreHydrated) return;
+    if (!isSubject(reviewForm.subject)) {
+      dispatch({ type: "SAVE_FAILED", message: "请先确认科目。" });
+      return;
+    }
 
-    const record = createRecordFromDraft(state.draft, reviewForm);
+    const record = createRecordFromDraft(state.draft, {
+      ...reviewForm,
+      subject: reviewForm.subject,
+    });
     const nextRecords = [record, ...state.records.filter((item) => item.id !== record.id)];
     const saveResult = await recordStore.save(nextRecords);
 
@@ -587,28 +620,6 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                   {state.uploadError}
                 </p>
 
-                <div className="subject-block" aria-labelledby="subject-title">
-                  <h2 id="subject-title">
-                    选择学科 <span>可由 AI 自动识别</span>
-                  </h2>
-                  <div className="segmented-control" role="radiogroup" aria-label="选择学科">
-                    {subjectOptions.map((option) => (
-                      <button
-                        aria-checked={state.selectedSubject === option.value}
-                        className={state.selectedSubject === option.value ? "is-selected" : ""}
-                        key={option.value}
-                        onClick={() =>
-                          dispatch({ type: "SUBJECT_SELECTED", subject: option.value })
-                        }
-                        role="radio"
-                        type="button"
-                      >
-                        {option.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
                 <label className="privacy-consent">
                   <input
                     checked={state.privacyAcknowledged}
@@ -689,7 +700,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                 <div className="section-heading">
                   <div>
                     <h2 id="ai-config-title">真实 AI 配置</h2>
-                    <p>API key 仅用于当前桌面会话，不写入错题记录。</p>
+                    <p>API key 由桌面主进程加密保存，不写入错题记录或网页存储。</p>
                   </div>
                   <span
                     className={`status-chip ${state.aiRuntimeMode === "real" ? "ai" : "review"}`}
@@ -706,6 +717,20 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                   <div>
                     <span>LLM 名称</span>
                     <strong>LLM 名称：{state.aiModel}</strong>
+                  </div>
+                  <div>
+                    <span>API Key</span>
+                    <strong>{state.aiConfigPersisted ? "API Key 已保存" : "API Key 未保存"}</strong>
+                    <small>
+                      {state.aiConfigPersisted && state.aiConfigCanPersistSecret
+                        ? "本机加密保存"
+                        : state.aiConfigured
+                          ? "仅本次会话可用"
+                          : "未配置真实 AI"}
+                    </small>
+                    {state.aiConfigUpdatedAt ? (
+                      <small>更新时间：{formatTime(state.aiConfigUpdatedAt)}</small>
+                    ) : null}
                   </div>
                 </div>
 
@@ -753,6 +778,14 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                     type="submit"
                   >
                     保存配置
+                  </button>
+                  <button
+                    className="button-secondary"
+                    disabled={!canConfigureAiRuntime || !state.aiConfigured}
+                    onClick={clearAiConfiguration}
+                    type="button"
+                  >
+                    清除 key
                   </button>
                   <p className="form-error" role="alert">
                     {aiConfigFeedback}
@@ -841,19 +874,22 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                         tabIndex={0}
                       >
                         <span>区域{region.label}</span>
+                        <button
+                          aria-label={`从画布删除${region.label}`}
+                          className="region-frame-delete"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            deleteRegion(region.id);
+                          }}
+                          onPointerDown={(event) => {
+                            event.stopPropagation();
+                          }}
+                          type="button"
+                        >
+                          删除
+                        </button>
                         {region.id === state.selectedRegionId && (
                           <>
-                            <button
-                              aria-label={`从画布删除${region.label}`}
-                              className="region-frame-delete"
-                              onClick={(event) => {
-                                event.stopPropagation();
-                                deleteRegion(region.id);
-                              }}
-                              type="button"
-                            >
-                              删除
-                            </button>
                             <i
                               aria-hidden="true"
                               data-handle="se"
@@ -949,7 +985,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
             onBack={() => goToScreen("upload")}
             onFormChange={setReviewForm}
             onSave={saveRecord}
-            saveDisabled={!isRecordStoreHydrated}
+            saveDisabled={!isRecordStoreHydrated || !isSubject(reviewForm.subject)}
             saveError={state.saveError}
           />
         )}
@@ -1189,8 +1225,14 @@ function ReviewScreen({
             <span>科目</span>
             <select
               value={form.subject}
-              onChange={(event) => updateForm("subject", event.target.value as Subject)}
+              onChange={(event) =>
+                updateForm(
+                  "subject",
+                  isSubject(event.target.value) ? event.target.value : "",
+                )
+              }
             >
+              <option value="">待确认科目</option>
               <option value="chinese">语文</option>
               <option value="math">数学</option>
               <option value="english">英语</option>
@@ -1247,7 +1289,7 @@ function ReviewScreen({
   );
 }
 
-function RecordList({ compact = false, records }: { compact?: boolean; records: WrongQuestionDraft[] }) {
+function RecordList({ compact = false, records }: { compact?: boolean; records: WrongQuestionRecord[] }) {
   if (!records.length) {
     return (
       <div className="record-list">
@@ -1312,7 +1354,7 @@ function SidePanel({ recordCount, screen }: { recordCount: number; screen: Scree
 
 function createReviewForm(draft: WrongQuestionDraft): ReviewForm {
   return {
-    subject: draft.subject,
+    subject: isSubject(draft.subject) ? draft.subject : "",
     title: draft.title,
     questionText: draft.questionText,
     studentAnswer: draft.studentAnswer,

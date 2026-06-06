@@ -111,7 +111,9 @@ type AiRuntimeStatus = {
 
 ## 7. 隐私与安全
 
-- API key 仅用于当前桌面会话，不写入仓库、错题记录或本地评测产物。
+- 2026-06-06 起，API key 从会话内持有升级为 Electron main process 本机加密持久化；使用 `safeStorage` 时保存 encrypted secret，renderer 仍不能读回 key 明文。
+- 如果 `safeStorage` 不可用，API key 不明文持久化，只保留本次会话配置。
+- API key 不写入仓库、错题记录、网页存储或本地评测产物。
 - Renderer 不读取已保存 key，不在状态栏、错误信息或测试快照中回显 key。
 - Web preview 没有 Electron preload bridge 时不得把 key 当作可保存配置接收；用户在浏览器预览里不能提交真实 provider 凭据。
 - Main process 的 `ai:*` IPC 继续校验 trusted renderer URL。

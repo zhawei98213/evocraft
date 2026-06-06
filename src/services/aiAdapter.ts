@@ -27,6 +27,9 @@ export interface AiRuntimeStatus {
   model: string;
   mode: "mock" | "real";
   message: string;
+  persisted?: boolean;
+  canPersistSecret?: boolean;
+  updatedAt?: string;
 }
 
 export interface AiRuntimeConfigurationInput {

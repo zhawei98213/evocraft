@@ -21,6 +21,7 @@ export interface EvoCraftDesktopApi {
   configureAiRuntime?(
     input: AiRuntimeConfigurationInput,
   ): Promise<AiRuntimeConfigurationResult>;
+  clearAiRuntimeConfig?(): Promise<AiRuntimeConfigurationResult>;
   setExternalAiAuthorization?(acknowledged: boolean): Promise<{ ok: true }>;
   detectRegions?(input: DetectRegionsInput): Promise<DetectRegionsSuccess | AiAdapterFailure>;
   recognizeQuestion?(

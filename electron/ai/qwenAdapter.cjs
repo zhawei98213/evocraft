@@ -243,14 +243,6 @@ function createQwenAdapter({
 
       const now = new Date().toISOString();
       const subject = resolveDraftSubject(input.subject, parsed.subject);
-      if (!subject) {
-        return {
-          ok: false,
-          reason: "provider_response_invalid",
-          message: "真实 AI 未返回有效科目，请手动选择科目后重试。",
-          retryable: true,
-        };
-      }
 
       return {
         ok: true,
@@ -464,7 +456,7 @@ function resolveDraftSubject(inputSubject, parsedSubject) {
     return parsedSubject;
   }
 
-  return null;
+  return "unknown";
 }
 
 function asFiniteNumber(value) {

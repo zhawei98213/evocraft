@@ -76,6 +76,16 @@ describe("wrongQuestion domain", () => {
     expect(result.selectedRecordId).toBe("wq-second");
   });
 
+  it("requires a confirmed subject before saving a draft as a record", () => {
+    const draft = {
+      ...createMockRecognition(),
+      subject: "unknown" as const,
+    };
+
+    expect(() => createRecordFromDraft(draft)).toThrow("请先确认科目。");
+    expect(createRecordFromDraft(draft, { subject: "math" }).subject).toBe("math");
+  });
+
   it("uses the v1 storage key", () => {
     expect(STORAGE_KEY).toBe("evocraft.wrongQuestion.records.v1");
   });

@@ -5,7 +5,7 @@ import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const require = createRequire(import.meta.url);
-const { createRendererContentSecurityPolicy } = require("../electron/main.cjs");
+const { createRendererContentSecurityPolicy, getDesktopIconPath } = require("../electron/main.cjs");
 const { isTrustedRendererUrl } = require("../electron/security/rendererTrust.cjs");
 
 assert.ok(existsSync("electron/main.cjs"), "electron/main.cjs should exist");
@@ -21,6 +21,7 @@ assert.ok(pkg.devDependencies.electron, "electron should be a dev dependency");
 assert.ok(pkg.devDependencies["electron-builder"], "electron-builder should be a dev dependency");
 assert.equal(pkg.build.mac.icon, "build-resources/icon.icns");
 assert.ok(existsSync("build-resources/icon.icns"), "macOS app icon should exist");
+assert.equal(getDesktopIconPath(), join(process.cwd(), "build-resources", "icon.icns"));
 
 const main = readFileSync("electron/main.cjs", "utf8");
 assert.match(main, /nodeIntegration:\s*false/);
@@ -31,9 +32,9 @@ assert.match(main, /setWindowOpenHandler/);
 assert.match(main, /will-navigate/);
 assert.match(main, /targetIpcMain\.handle\("dialog:select-image"/);
 assert.match(main, /targetIpcMain\.handle\("file:read-image-data-url"/);
-assert.match(main, /ipcMain\.handle\("records:load"/);
-assert.match(main, /ipcMain\.handle\("records:save"/);
-assert.match(main, /ipcMain\.handle\("records:clear"/);
+assert.match(main, /targetIpcMain\.handle\("records:load"/);
+assert.match(main, /targetIpcMain\.handle\("records:save"/);
+assert.match(main, /targetIpcMain\.handle\("records:clear"/);
 assert.match(main, /targetIpcMain\.handle\("ai:runtime-status"/);
 assert.match(main, /targetIpcMain\.handle\("ai:configure"/);
 assert.match(main, /targetIpcMain\.handle\("ai:set-external-authorization"/);

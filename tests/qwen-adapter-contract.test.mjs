@@ -448,8 +448,12 @@ const autoSubjectWithoutProviderSubjectResult = await createQwenAdapter({
   selectedRegion: placeholderRegion,
   selectedRegionImageUri: "data:image/png;base64,cmVnaW9u",
 });
-assert.equal(autoSubjectWithoutProviderSubjectResult.ok, false);
-assert.equal(autoSubjectWithoutProviderSubjectResult.reason, "provider_response_invalid");
+assert.equal(autoSubjectWithoutProviderSubjectResult.ok, true);
+assert.equal(autoSubjectWithoutProviderSubjectResult.draft.subject, "unknown");
+assert.deepEqual(autoSubjectWithoutProviderSubjectResult.draft.reviewItems[0], {
+  label: "科目",
+  status: "需复核",
+});
 
 const autoSubjectResult = await createQwenAdapter({
   apiKey: "test-key",

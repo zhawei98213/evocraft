@@ -1,8 +1,12 @@
 import assert from "node:assert/strict";
+import { mkdtemp, readFile, rm } from "node:fs/promises";
 import { createRequire } from "node:module";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 const require = createRequire(import.meta.url);
-const { createAiRuntime, registerAiIpc } = require("../electron/main.cjs");
+const { createAiConfigStore, createAiRuntime, createRuntimeLogger, registerAiIpc, registerRecordIpc } =
+  require("../electron/main.cjs");
 
 function createFakeIpcMain() {
   const handlers = new Map();
@@ -17,6 +21,11 @@ function createFakeIpcMain() {
 const trustedEvent = { senderFrame: { url: "app://trusted" } };
 const untrustedEvent = { senderFrame: { url: "https://evil.test/" } };
 const trustOnlyAppUrl = (url) => url === trustedEvent.senderFrame.url;
+const fakeSafeStorage = {
+  isEncryptionAvailable: () => true,
+  encryptString: (value) => Buffer.from(`sealed:${value}`, "utf8"),
+  decryptString: (value) => value.toString("utf8").replace(/^sealed:/, ""),
+};
 
 async function callHandler(handler, event, input) {
   return handler(event, input);
@@ -47,11 +56,12 @@ async function callHandler(handler, event, input) {
     { ipcMain: fakeIpcMain, isAllowedRendererUrl: trustOnlyAppUrl },
   );
 
-  assert.equal(fakeIpcMain.handlers.size, 5);
+  assert.equal(fakeIpcMain.handlers.size, 6);
 
   for (const channel of [
     "ai:runtime-status",
     "ai:configure",
+    "ai:clear-config",
     "ai:set-external-authorization",
     "ai:detect-regions",
     "ai:recognize-question",
@@ -248,6 +258,8 @@ async function callHandler(handler, event, input) {
     model: "qwen-vl-ocr-latest",
     mode: "mock",
     message: "请在设置里填写 API Key 和 LLM 名称后启用真实 AI。",
+    persisted: false,
+    canPersistSecret: false,
   });
 
   const configured = await fakeIpcMain.handlers.get("ai:configure")(trustedEvent, {
@@ -262,6 +274,8 @@ async function callHandler(handler, event, input) {
     model: "qwen-vl-max",
     mode: "real",
     message: "",
+    persisted: false,
+    canPersistSecret: false,
   });
   assert.equal(Object.hasOwn(configured.status, "apiKey"), false);
 
@@ -276,4 +290,202 @@ async function callHandler(handler, event, input) {
   assert.match(providerCalls[0].init.headers.Authorization, /^Bearer dashscope-secret-key$/);
   assert.match(providerCalls[0].init.body, /qwen-vl-max/);
   assert.doesNotMatch(JSON.stringify(configured.status), /dashscope-secret-key/);
+}
+
+await runTempDirTest("persists and clears AI config without storing the plain API key", async (userDataDir) => {
+  const store = createAiConfigStore(userDataDir, { safeStorage: fakeSafeStorage });
+  const runtime = createAiRuntime({
+    configStore: store,
+    fetchImpl: async () => {
+      throw new Error("provider should not be called in config persistence test");
+    },
+  });
+  const fakeIpcMain = createFakeIpcMain();
+
+  registerAiIpc(runtime, { ipcMain: fakeIpcMain, isAllowedRendererUrl: trustOnlyAppUrl });
+
+  assert.equal(fakeIpcMain.handlers.get("ai:runtime-status")(trustedEvent).configured, false);
+
+  const configured = await fakeIpcMain.handlers.get("ai:configure")(trustedEvent, {
+    apiKey: "dashscope-secret-key",
+    model: "qwen-vl-ocr-latest",
+  });
+
+  assert.equal(configured.ok, true);
+  assert.equal(configured.status.configured, true);
+  assert.equal(configured.status.persisted, true);
+  assert.equal(configured.status.canPersistSecret, true);
+
+  const stored = await readFile(join(userDataDir, "ai-runtime", "config.json"), "utf8");
+  assert.doesNotMatch(stored, /dashscope-secret-key/);
+  assert.match(stored, /qwen-vl-ocr-latest/);
+
+  const restoreMessages = [];
+  const restoredRuntime = createAiRuntime({
+    configStore: createAiConfigStore(userDataDir, { safeStorage: fakeSafeStorage }),
+    logger: createRuntimeLogger({
+      write: (message) => restoreMessages.push(message),
+      now: () => "2026-06-06T13:30:00.000Z",
+    }),
+    fetchImpl: async () => {
+      throw new Error("provider should not be called while checking restored status");
+    },
+  });
+
+  assert.deepEqual(restoredRuntime.status, {
+    enabled: true,
+    configured: true,
+    provider: "qwen",
+    model: "qwen-vl-ocr-latest",
+    mode: "real",
+    message: "",
+    persisted: true,
+    canPersistSecret: true,
+    updatedAt: restoredRuntime.status.updatedAt,
+  });
+  assert.equal(typeof restoredRuntime.status.updatedAt, "string");
+  assert.doesNotMatch(JSON.stringify(restoredRuntime.status), /dashscope-secret-key/);
+  assert.match(restoreMessages.join("\n"), /"event":"ai.config.load"/);
+  assert.doesNotMatch(restoreMessages.join("\n"), /dashscope-secret-key/);
+
+  assert.deepEqual(await fakeIpcMain.handlers.get("ai:clear-config")(trustedEvent), {
+    ok: true,
+    status: {
+      enabled: false,
+      configured: false,
+      provider: "qwen",
+      model: "qwen-vl-ocr-latest",
+      mode: "mock",
+      message: "请在设置里填写 API Key 和 LLM 名称后启用真实 AI。",
+      persisted: false,
+      canPersistSecret: true,
+    },
+  });
+});
+
+{
+  const messages = [];
+  const logger = createRuntimeLogger({
+    write: (message) => messages.push(message),
+    now: () => "2026-06-06T13:30:00.000Z",
+  });
+  const fakeIpcMain = createFakeIpcMain();
+  const selectedRegion = {
+    id: "candidate-1",
+    label: "候选 1",
+    x: 0.1,
+    y: 0.2,
+    width: 0.7,
+    height: 0.3,
+    unit: "ratio",
+    source: "ai_candidate",
+    confidence: 0.91,
+  };
+
+  registerAiIpc(
+    {
+      status: {
+        enabled: true,
+        configured: true,
+        provider: "qwen",
+        model: "qwen-vl-ocr-latest",
+        mode: "real",
+        message: "",
+      },
+      adapter: {
+        detectRegions(input) {
+          return { ok: true, candidates: [selectedRegion], echoedInput: input };
+        },
+        recognizeQuestion(input) {
+          return {
+            ok: true,
+            draft: {
+              id: "draft-1",
+              subject: "math",
+              selectedRegion,
+              selectedRegionImageUri: input.selectedRegionImageUri,
+            },
+          };
+        },
+      },
+    },
+    { ipcMain: fakeIpcMain, isAllowedRendererUrl: trustOnlyAppUrl, logger },
+  );
+
+  await fakeIpcMain.handlers.get("ai:set-external-authorization")(trustedEvent, true);
+  await fakeIpcMain.handlers.get("ai:detect-regions")(trustedEvent, {
+    imageUri: "data:image/png;base64,original-image-payload",
+    apiKey: "dashscope-secret-key",
+    authorization: "Authorization: Bearer dashscope-secret-key",
+  });
+  await fakeIpcMain.handlers.get("ai:recognize-question")(trustedEvent, {
+    subject: "math",
+    imageUri: "data:image/png;base64,original-image-payload",
+    selectedRegion,
+    selectedRegionImageUri: "data:image/png;base64,region-image-payload",
+  });
+
+  const serializedLogs = messages.join("\n");
+  assert.match(serializedLogs, /"event":"ai.detectRegions.start"/);
+  assert.match(serializedLogs, /"event":"ai.detectRegions.success"/);
+  assert.match(serializedLogs, /"event":"ai.recognize.success"/);
+  assert.doesNotMatch(serializedLogs, /dashscope-secret-key/);
+  assert.doesNotMatch(serializedLogs, /original-image-payload/);
+  assert.doesNotMatch(serializedLogs, /region-image-payload/);
+  assert.match(serializedLogs, /\[redacted/);
+}
+
+{
+  const messages = [];
+  const logger = createRuntimeLogger({
+    write: (message) => messages.push(message),
+    now: () => "2026-06-06T13:30:00.000Z",
+  });
+  const fakeIpcMain = createFakeIpcMain();
+
+  registerRecordIpc(
+    {
+      load() {
+        throw new Error("disk unavailable");
+      },
+      save() {
+        return { ok: false, reason: "storage_write_failed" };
+      },
+      clear() {
+        return { ok: false, reason: "storage_clear_failed" };
+      },
+    },
+    { ipcMain: fakeIpcMain, isAllowedRendererUrl: trustOnlyAppUrl, logger },
+  );
+
+  await assert.rejects(
+    fakeIpcMain.handlers.get("records:load")(trustedEvent),
+    /disk unavailable/,
+  );
+  assert.deepEqual(await fakeIpcMain.handlers.get("records:save")(trustedEvent, []), {
+    ok: false,
+    reason: "storage_write_failed",
+  });
+  assert.deepEqual(await fakeIpcMain.handlers.get("records:clear")(trustedEvent), {
+    ok: false,
+    reason: "storage_clear_failed",
+  });
+
+  const serializedLogs = messages.join("\n");
+  assert.match(serializedLogs, /"event":"records.load.failure"/);
+  assert.match(serializedLogs, /"event":"records.save.failure"/);
+  assert.match(serializedLogs, /"event":"records.clear.failure"/);
+}
+
+async function runTempDirTest(name, testFn) {
+  const userDataDir = await mkdtemp(join(tmpdir(), "evocraft-ai-ipc-"));
+
+  try {
+    await testFn(userDataDir);
+  } catch (error) {
+    error.message = `${name}: ${error.message}`;
+    throw error;
+  } finally {
+    await rm(userDataDir, { recursive: true, force: true });
+  }
 }

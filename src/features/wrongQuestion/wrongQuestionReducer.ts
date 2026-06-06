@@ -24,6 +24,9 @@ export interface WrongQuestionState {
   aiProvider: string;
   aiModel: string;
   aiConfigured: boolean;
+  aiConfigPersisted: boolean;
+  aiConfigCanPersistSecret: boolean;
+  aiConfigUpdatedAt: string;
   externalAiAcknowledged: boolean;
   uploadedImageUri: string;
   uploadedFileName: string;
@@ -56,6 +59,9 @@ export type WrongQuestionAction =
       provider?: string;
       model?: string;
       configured?: boolean;
+      persisted?: boolean;
+      canPersistSecret?: boolean;
+      updatedAt?: string;
     }
   | { type: "EXTERNAL_AI_ACKNOWLEDGED"; acknowledged: boolean }
   | { type: "START_REGION_SELECTION" }
@@ -80,6 +86,9 @@ export function createInitialWrongQuestionState(records: WrongQuestionRecord[]):
     aiProvider: "qwen",
     aiModel: "qwen-vl-ocr-latest",
     aiConfigured: false,
+    aiConfigPersisted: false,
+    aiConfigCanPersistSecret: false,
+    aiConfigUpdatedAt: "",
     externalAiAcknowledged: false,
     uploadedImageUri: "",
     uploadedFileName: "",
@@ -168,6 +177,9 @@ export function wrongQuestionReducer(
         aiProvider: action.provider ?? state.aiProvider,
         aiModel: action.model ?? state.aiModel,
         aiConfigured: action.configured ?? action.mode === "real",
+        aiConfigPersisted: action.persisted ?? false,
+        aiConfigCanPersistSecret: action.canPersistSecret ?? state.aiConfigCanPersistSecret,
+        aiConfigUpdatedAt: action.updatedAt ?? "",
         externalAiAcknowledged: action.mode === "mock" ? false : state.externalAiAcknowledged,
       };
 

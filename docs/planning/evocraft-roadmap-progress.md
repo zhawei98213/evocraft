@@ -84,6 +84,50 @@
 
 ## 当前进度
 
+### 2026-06-06：桌面真实 AI 基础流程修复
+
+本轮任务是什么：
+
+- 查看当前进度并继续执行 `docs/superpowers/plans/2026-06-06-desktop-ai-flow-ux-redesign.md` 的基础修复部分。
+- 优先处理 redacted 后台日志、科目后置、候选框就地删除、API key 本机加密持久化/可清除、图标链路静态验收和网页预览 guard。
+
+已完成什么：
+
+- 新增 Electron main-process runtime logger，覆盖 `ai.config.load/save/clear`、外部 AI 授权同步、`detectRegions`、`recognizeQuestion` 和 records load/save/clear failure；日志会脱敏 API key、Authorization header 和图片 data URL，不输出 raw provider JSON。
+- 新增 Electron AI 配置存储模块，通过 `safeStorage` 加密保存 API key，启动时恢复 runtime，设置页显示已保存/未保存状态、当前 LLM 和更新时间，并支持“清除 key”；`safeStorage` 不可用时不明文持久化。
+- 上传页移除前置科目选择；首次真实 AI 识别固定发送 `subject: "auto"`；复核页展示科目选择，provider 缺失科目时进入 `unknown`/待确认状态，保存前必须选择语文/数学/英语。
+- 候选框支持画布内直接删除，删除按钮阻止事件冒泡，不触发选中、拖动或缩放；列表删除入口保留。
+- 桌面图标链路补强：`BrowserWindow` 使用 `build-resources/icon.icns` helper，Electron config 测试覆盖 icon path，现有 favicon、public logo、React 品牌位和 mac builder icon 资源存在。
+- 修正设置页旧文案，把“仅用于当前桌面会话”改为“桌面主进程加密保存，不写入错题记录或网页存储”。
+- 更新实施计划、详细设计、旧应用内 AI 配置设计和项目记忆，记录基础修复已完成，Product Design 重设计仍待下一步。
+- 浏览器渲染验证通过：网页预览设置页禁用 API key/LLM/保存按钮并显示桌面专用提示；上传页不再出现 `选择学科` radiogroup。
+
+卡在哪里：
+
+- 基础修复无卡点。
+- 尚未用真实 DashScope API key 在 Electron 桌面窗口跑 provider 实测，也未做 dev Electron Dock/app switcher 图标人工截图验收；Product Design 三方向重设计仍未开始。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `sed -n ... docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md docs/ideas/2026-05-10-evocraft-seed-capsule.md`
+- `sed -n ... docs/superpowers/plans/2026-06-06-desktop-ai-flow-ux-redesign.md docs/superpowers/specs/2026-06-06-desktop-ai-flow-ux-redesign-design.md`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run test:react -- src/app/App.test.tsx src/features/wrongQuestion/wrongQuestionReducer.test.ts`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" node tests/electron-ai-ipc.test.mjs`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run test:qwen-adapter`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run test:electron-config`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run test:electron-store`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm test`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run build`
+- `git diff --check`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run dev`
+- Browser in-app DOM checks for settings/upload pages at `http://127.0.0.1:5173/`
+
+下一步的计划：
+
+- 用 Electron 桌面窗口和真实 provider 配置复核真实 AI 候选框点击、确认识别、后台日志和图标显示。
+- 进入 Product Design workflow，基于 `docs/design/2026-06-06-product-design-redesign-brief.md` 先产出 3 个视觉/交互方向，再决定是否改 React UI。
+
 ### 2026-06-06：桌面真实 AI 流程问题计划与文档同步
 
 本轮任务是什么：

@@ -8,6 +8,7 @@ export const SUBJECTS = {
 } as const;
 
 export type Subject = keyof typeof SUBJECTS;
+export type DraftSubject = Subject | "unknown";
 export type RegionSource = "ai_candidate" | "manual";
 export type RegionUnit = "ratio";
 export type AiTask = "region_detection" | "ocr" | "structure" | "cleanup";
@@ -41,7 +42,7 @@ export interface WrongQuestionDraft {
   appId: typeof APP_ID;
   createdAt: string;
   updatedAt: string;
-  subject: Subject;
+  subject: DraftSubject;
   title: string;
   questionText: string;
   originalImageUri: string;
@@ -62,6 +63,7 @@ export interface WrongQuestionDraft {
 
 export interface WrongQuestionRecord extends WrongQuestionDraft {
   id: string;
+  subject: Subject;
   recognitionStatus: "reviewed";
   cleanupStatus: "reviewed";
 }
@@ -341,6 +343,10 @@ export function createRecordFromDraft(
   overrides: CreateRecordOverrides = {},
 ): WrongQuestionRecord {
   const now = overrides.now || new Date().toISOString();
+  const confirmedSubject = overrides.subject ?? (isSubject(draft.subject) ? draft.subject : null);
+  if (!confirmedSubject) {
+    throw new Error("请先确认科目。");
+  }
 
   return {
     ...draft,
@@ -348,7 +354,7 @@ export function createRecordFromDraft(
     createdAt: overrides.createdAt || now,
     updatedAt: now,
     title: overrides.title ?? draft.title,
-    subject: overrides.subject ?? draft.subject,
+    subject: confirmedSubject,
     questionText: overrides.questionText ?? draft.questionText,
     studentAnswer: overrides.studentAnswer ?? draft.studentAnswer,
     correctAnswer: overrides.correctAnswer ?? draft.correctAnswer,
@@ -356,6 +362,10 @@ export function createRecordFromDraft(
     recognitionStatus: "reviewed",
     cleanupStatus: "reviewed",
   };
+}
+
+export function isSubject(value: unknown): value is Subject {
+  return value === "chinese" || value === "math" || value === "english";
 }
 
 export function formatTime(value: string) {
