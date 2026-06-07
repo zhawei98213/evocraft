@@ -31,6 +31,11 @@ import type { AiAdapter, AiRuntimeConfigurationResult, AiRuntimeStatus } from ".
 import { createDesktopAiAdapter } from "../services/desktopAiAdapter";
 import { getDesktopBridge, type EvoCraftDesktopApi } from "../services/desktopBridge";
 import { createDesktopRecordStore } from "../services/desktopRecordStore";
+import {
+  getNextImageRotationDegrees,
+  rotateImageDataUrl,
+  type ImageRotationDirection,
+} from "../services/imageTransforms";
 import { mockAiAdapter } from "../services/mockAiAdapter";
 import { createLocalStorageRecordStore, type RecordStore } from "../services/storage";
 
@@ -344,6 +349,24 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
     }
   }
 
+  async function rotateUploadedImage(direction: ImageRotationDirection) {
+    if (!state.uploadedImageUri) return;
+
+    try {
+      const rotatedImageUri = await rotateImageDataUrl(state.uploadedImageUri, direction);
+      dispatch({
+        type: "IMAGE_ROTATED",
+        imageUri: rotatedImageUri,
+        rotationDegrees: getNextImageRotationDegrees(state.uploadedImageRotationDegrees, direction),
+      });
+    } catch {
+      dispatch({
+        type: "UPLOAD_BLOCKED",
+        message: "图片旋转失败，请重新选择图片或继续使用当前方向。",
+      });
+    }
+  }
+
   async function startRegionSelection() {
     if (!state.uploadedImageUri || !state.privacyAcknowledged) {
       dispatch({ type: "START_REGION_SELECTION" });
@@ -621,6 +644,28 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                       <span>{state.uploadedFileMeta}</span>
                     </div>
                   </div>
+                )}
+                {state.uploadedImageUri && (
+                  <section className="image-orientation-controls" aria-label="照片方向调整">
+                    <div>
+                      <strong>照片方向</strong>
+                      <span>{formatImageRotation(state.uploadedImageRotationDegrees)}</span>
+                    </div>
+                    <button
+                      className="button-secondary"
+                      onClick={() => rotateUploadedImage("left")}
+                      type="button"
+                    >
+                      左转照片
+                    </button>
+                    <button
+                      className="button-secondary"
+                      onClick={() => rotateUploadedImage("right")}
+                      type="button"
+                    >
+                      右转照片
+                    </button>
+                  </section>
                 )}
                 <p className="form-error" role="alert">
                   {state.uploadError}
@@ -1574,6 +1619,13 @@ function getDetailImageUri(
   if (mode === "original") return record.originalImageUri;
   if (mode === "region") return record.selectedRegionImageUri;
   return record.cleanedQuestionImageUri;
+}
+
+function formatImageRotation(rotationDegrees: number) {
+  if (rotationDegrees === 0) return "当前方向：原始方向";
+  if (rotationDegrees === 90) return "当前方向：右转 90度";
+  if (rotationDegrees === 180) return "当前方向：旋转 180度";
+  return "当前方向：左转 90度";
 }
 
 function getRedactedDiagnostics(state: WrongQuestionState) {

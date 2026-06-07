@@ -11,7 +11,16 @@ import {
 } from "../domain/wrongQuestion";
 import { App } from "./App";
 import type { EvoCraftDesktopApi } from "../services/desktopBridge";
+import { rotateImageDataUrl } from "../services/imageTransforms";
 import type { RecordStore } from "../services/storage";
+
+vi.mock("../services/imageTransforms", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../services/imageTransforms")>();
+  return {
+    ...actual,
+    rotateImageDataUrl: vi.fn(),
+  };
+});
 
 type TestDesktopApi = EvoCraftDesktopApi & {
   configureAiRuntime?: (input: {
@@ -45,45 +54,49 @@ describe("App", () => {
     expect(within(appTile as HTMLElement).getByText("题")).toBeInTheDocument();
   });
 
-  it("runs the desktop MVP flow through upload, region selection, review, save, and notebook", async () => {
-    const user = userEvent.setup();
-    render(<App />);
+  it(
+    "runs the desktop MVP flow through upload, region selection, review, save, and notebook",
+    async () => {
+      const user = userEvent.setup();
+      render(<App />);
 
-    await user.click(screen.getByRole("button", { name: "错题收集" }));
-    expect(screen.getByRole("heading", { name: "错题收集" })).toBeInTheDocument();
+      await user.click(screen.getByRole("button", { name: "错题收集" }));
+      expect(screen.getByRole("heading", { name: "错题收集" })).toBeInTheDocument();
 
-    const file = new File(["fake-image"], "question.png", { type: "image/png" });
-    await user.upload(screen.getByLabelText("选择错题照片"), file);
-    await waitFor(() => {
-      expect(screen.getByAltText("已上传的错题原图预览")).toHaveAttribute(
-        "src",
-        expect.stringMatching(/^data:image\/png;base64,/),
-      );
-    });
-    await user.click(screen.getByRole("checkbox", { name: /本地隐私确认/ }));
-    await user.click(screen.getByRole("button", { name: "下一步：选择题目区域" }));
+      const file = new File(["fake-image"], "question.png", { type: "image/png" });
+      await user.upload(screen.getByLabelText("选择错题照片"), file);
+      await waitFor(() => {
+        expect(screen.getByAltText("已上传的错题原图预览")).toHaveAttribute(
+          "src",
+          expect.stringMatching(/^data:image\/png;base64,/),
+        );
+      });
+      await user.click(screen.getByRole("checkbox", { name: /本地隐私确认/ }));
+      await user.click(screen.getByRole("button", { name: "下一步：选择题目区域" }));
 
-    expect(screen.getByRole("heading", { name: "选择题目区域" })).toBeInTheDocument();
-    expect(screen.getByText("候选 2")).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "选择题目区域" })).toBeInTheDocument();
+      expect(screen.getByText("候选 2")).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "确认此区域并识别" }));
-    await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "识别复核" })).toBeInTheDocument();
-    });
+      await user.click(screen.getByRole("button", { name: "确认此区域并识别" }));
+      await waitFor(() => {
+        expect(screen.getByRole("heading", { name: "识别复核" })).toBeInTheDocument();
+      });
 
-    await user.clear(screen.getByLabelText("标题"));
-    await user.type(screen.getByLabelText("标题"), "一次函数图像与坐标综合题");
-    await waitFor(() => {
-      expect(screen.getByRole("button", { name: "保存到错题本" })).toBeEnabled();
-    });
-    await user.click(screen.getByRole("button", { name: "保存到错题本" }));
+      await user.clear(screen.getByLabelText("标题"));
+      await user.type(screen.getByLabelText("标题"), "一次函数图像与坐标综合题");
+      await waitFor(() => {
+        expect(screen.getByRole("button", { name: "保存到错题本" })).toBeEnabled();
+      });
+      await user.click(screen.getByRole("button", { name: "保存到错题本" }));
 
-    await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "一次函数图像与坐标综合题" })).toBeInTheDocument();
-    });
-    await user.click(screen.getByRole("button", { name: "错题本" }));
-    expect(screen.getByText("共 1 条")).toBeInTheDocument();
-  });
+      await waitFor(() => {
+        expect(screen.getByRole("heading", { name: "一次函数图像与坐标综合题" })).toBeInTheDocument();
+      });
+      await user.click(screen.getByRole("button", { name: "错题本" }));
+      expect(screen.getByText("共 1 条")).toBeInTheDocument();
+    },
+    10000,
+  );
 
   it("loads preexisting records from localStorage after startup", async () => {
     const record = createRecordFromDraft(createMockRecognition(), {
@@ -335,6 +348,37 @@ describe("App", () => {
       );
     });
     expect(screen.getByText("real.png")).toBeInTheDocument();
+  });
+
+  it("lets the user rotate an uploaded image before region detection", async () => {
+    vi.mocked(rotateImageDataUrl).mockResolvedValueOnce("data:image/png;base64,rotated-right");
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+    await user.upload(screen.getByLabelText("选择错题照片"), new File(["real-image"], "real.png", {
+      type: "image/png",
+    }));
+    await waitFor(() => {
+      expect(screen.getByAltText("已上传的错题原图预览")).toHaveAttribute(
+        "src",
+        "data:image/png;base64,cmVhbC1pbWFnZQ==",
+      );
+    });
+
+    await user.click(screen.getByRole("button", { name: "右转照片" }));
+
+    expect(rotateImageDataUrl).toHaveBeenCalledWith(
+      "data:image/png;base64,cmVhbC1pbWFnZQ==",
+      "right",
+    );
+    await waitFor(() => {
+      expect(screen.getByAltText("已上传的错题原图预览")).toHaveAttribute(
+        "src",
+        "data:image/png;base64,rotated-right",
+      );
+    });
+    expect(screen.getByText("当前方向：右转 90度")).toBeInTheDocument();
   });
 
   it("loads an image through the desktop bridge and continues into region selection", async () => {

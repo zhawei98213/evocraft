@@ -726,6 +726,34 @@ body[data-screen="settings"] .ai-review-panel {
   overflow-wrap: anywhere;
 }
 
+.image-orientation-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-md);
+  background: var(--surface-blue);
+  padding: 12px;
+}
+
+.image-orientation-controls strong,
+.image-orientation-controls span {
+  display: block;
+}
+
+.image-orientation-controls strong {
+  color: var(--charcoal);
+  font-size: 14px;
+}
+
+.image-orientation-controls span {
+  margin-top: 3px;
+  color: var(--steel);
+  font-size: 12px;
+}
+
 .form-error {
   min-height: 20px;
   margin: 10px 0 0;
@@ -1931,6 +1959,10 @@ textarea {
   .record-open,
   .records-list .record-open {
     grid-template-columns: 72px 1fr;
+  }
+
+  .image-orientation-controls {
+    grid-template-columns: 1fr;
   }
 
   .upload-preview .button-secondary,

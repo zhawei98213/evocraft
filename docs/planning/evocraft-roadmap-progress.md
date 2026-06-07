@@ -84,6 +84,50 @@
 
 ## 当前进度
 
+### 2026-06-07：上传照片方向调整
+
+本轮任务是什么：
+
+- 用户提供一张真实样本照片，并指出照片上传后应能手动旋转，否则图片颠倒会影响识别。
+- 按产品缺口处理：更新 PRD、想法胶囊和项目记忆，并在 React 桌面主干里增加上传后左转/右转图片能力。
+
+已完成什么：
+
+- 确认用户样本的 EXIF orientation 为 `6`，说明真实照片确实可能需要顺时针旋转 90 度后再识别；样本只用于本地理解，没有复制入库。
+- 新增设计文档 `docs/superpowers/specs/2026-06-07-upload-image-rotation-design.md` 和实施计划 `docs/superpowers/plans/2026-06-07-upload-image-rotation.md`。
+- 将 MVP PRD 更新为 v1.11，新增 WQ-FR-030：上传后必须允许用户左转/右转照片，后续选区、自动找题、确认区域截图和识别使用调整后的图片。
+- 按 TDD 新增 reducer 测试和 App 测试，先确认 RED，再实现 GREEN。
+- 新增 `src/services/imageTransforms.ts`，用本地 canvas 把当前上传图片旋转成新的 data URL；无 canvas 或失败时保留当前图片。
+- 复查时发现 helper 失败语义不够清晰：图片解码失败会静默返回原图但 UI 仍可能更新方向状态；已补 `src/services/imageTransforms.test.ts` 并改为失败时 reject，让 App 保留当前图并展示可恢复提示。
+- 更新 `wrongQuestionReducer`，新增 `uploadedImageRotationDegrees` 和 `IMAGE_ROTATED`；旋转后清空旧候选框、选中区域和草稿，替换新图时角度归零。
+- 更新上传页 UI：图片预览后显示照片方向、左转照片、右转照片；旋转后的 `uploadedImageUri` 继续作为后续识别链路输入。
+- 重新生成 `docs/design/desktop-trunk/screens/` 桌面主干截图，其中上传页截图包含上传后的照片方向控件。
+- Browser in-app 验证桌面 1280x720 和移动 390x844 基础渲染均无横向溢出；补充 Chrome/CDP 移动上传验证确认上传 PNG 后旋转控件可见，点击“右转照片”后显示“当前方向：右转 90度”，390px 视口横向溢出为 0。
+
+卡在哪里：
+
+- 无。全量测试首次复查时，App 长流程回归在 Vitest 并发环境下超过 5 秒默认 timeout；该测试本身单独运行约 3 秒通过，已显式标为 10 秒长流程测试并重跑全量通过。
+
+执行的是什么命令：
+
+- `python3 - <<'PY' ... Image.open(...).getexif().get(274) ...`
+- `sed -n ... docs/prd/2026-05-16-prd-writing-standards.md docs/prd/2026-05-10-wrong-question-capture-mvp-prd.md`
+- `rg -n "uploadedImageUri|IMAGE_SELECTED|START_REGION_SELECTION|createSelectedRegionImage|UploadDropzoneContent" src/...`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run test:react -- src/features/wrongQuestion/wrongQuestionReducer.test.ts`（RED 后 GREEN；当前 14 个测试通过）
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run test:react -- src/app/App.test.tsx`（RED 后 GREEN；当前 27 个测试通过）
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run test:react -- src/services/imageTransforms.test.ts`（RED 后 GREEN；当前 1 个测试通过）
+- `git diff --check`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm test`（最终 6 个 test files / 56 个测试通过）
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run build`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" node docs/design/desktop-trunk/capture-react-ui.mjs`
+- Browser in-app：`http://127.0.0.1:5173/` 桌面 1280x720、移动 390x844 DOM / screenshot / console / overflow 检查。
+- Chrome/CDP 一次性移动上传验证：390x844 上传 PNG、点击“右转照片”、读取方向状态和横向溢出。
+
+下一步的计划：
+
+- 提交并推送本轮上传照片方向调整到 `codex/qwen-sample-evaluation`。
+- 后续继续真实 provider 验证时，仍需补齐本地 ignored `ai-eval/samples/manifest.local.json`、`ai-eval/samples/private/` 脱敏样本和 `DASHSCOPE_API_KEY`，或在 Electron 桌面窗口中配置真实 AI。
+
 ### 2026-06-07：流程控制塔 UI 骨架落地
 
 本轮任务是什么：

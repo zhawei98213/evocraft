@@ -10,7 +10,7 @@
 - [应用集合架构](planning/evocraft-app-collection-architecture.md)：EvoCraft 作为 AI 学习助手应用集合的顶层结构。
 - [想法胶囊](ideas/2026-05-10-evocraft-seed-capsule.md)：原始想法碎片和产品方向。
 - [PRD 编写规范 v1.1](prd/2026-05-16-prd-writing-standards.md)：后续 PRD 新建、重大更新、需求评审和规范反向提炼的统一标准。
-- [MVP PRD v1.10](prd/2026-05-10-wrong-question-capture-mvp-prd.md)：用于生成 UI 图和指导开发的错题收集 MVP 产品需求文档。
+- [MVP PRD v1.11](prd/2026-05-10-wrong-question-capture-mvp-prd.md)：用于生成 UI 图和指导开发的错题收集 MVP 产品需求文档。
 - [已实现 MVP UI 设计图](design/implemented-mvp/2026-05-16-implemented-mvp-ui-design.md)：由当前静态 Web 实现自动跑通主流程后保存的 UI 基线截图。
 - [MVP 技术路线决策](planning/2026-05-16-mvp-technical-route-decision.md)：基于 PRD v1.5、已实现 UI 基线和桌面优先方向确认 React/Vite/TypeScript、AI adapter、Electron 桌面壳和后端的推进顺序。
 - [桌面优先技术选型设计](superpowers/specs/2026-05-16-desktop-first-technical-selection-design.md)：确认下一阶段采用 React/Vite/TypeScript 工程主干、provider-agnostic AI adapter 和 Electron 桌面壳。
@@ -25,6 +25,8 @@
 - [Product Design 重设计 Brief](design/2026-06-06-product-design-redesign-brief.md)：后续使用 Product Design workflow 重设计 EvoCraft 桌面错题收集界面前的 brief。
 - [Product Design 三方向](design/2026-06-07-product-design-directions.md)：记录流程控制塔、双栏复核工坊和资料库中枢三个桌面重设计方向，以及后续选型建议。
 - [流程控制塔 UI 改造计划](superpowers/plans/2026-06-07-flow-control-tower-ui.md)：把方向 A 作为整体 UI 骨架，并吸收方向 B 复核分栏和方向 C 资料库行列表达的 React 实施计划。
+- [上传照片方向调整设计](superpowers/specs/2026-06-07-upload-image-rotation-design.md)：根据真实样本补充上传后本地左转/右转照片方向的 UI、数据流和测试边界。
+- [上传照片方向调整实施计划](superpowers/plans/2026-06-07-upload-image-rotation.md)：把上传后旋转图片能力拆成测试、helper、reducer、UI、文档和验证步骤。
 - [Qwen 脱敏样本评测设计](superpowers/specs/2026-05-31-qwen-sample-evaluation-design.md)：确认第一轮 10-15 张本地脱敏样本评测的样本规范、manifest 合同、隐私边界、结果 redaction 和决策规则。
 - [Qwen 脱敏样本评测实施计划](superpowers/plans/2026-05-31-qwen-sample-evaluation.md)：把样本评测拆成 preflight、manifest validation、redacted summary reporter、本地样本运行和评估决策任务。
 - [Qwen 脱敏样本评测 Agent Run Ledger](superpowers/agent-runs/2026-05-31-qwen-sample-evaluation/README.md)：记录后续 subagent-driven 执行中每个 agent 的任务边界、进度、命令和 review。

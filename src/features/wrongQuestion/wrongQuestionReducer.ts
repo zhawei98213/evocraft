@@ -31,6 +31,7 @@ export interface WrongQuestionState {
   uploadedImageUri: string;
   uploadedFileName: string;
   uploadedFileMeta: string;
+  uploadedImageRotationDegrees: number;
   uploadError: string;
   regionCandidates: RegionCandidate[];
   selectedRegionId: string | null;
@@ -48,6 +49,7 @@ export type WrongQuestionAction =
   | { type: "GO_TO_SCREEN"; screen: Screen }
   | { type: "RECORDS_LOADED"; records: WrongQuestionRecord[] }
   | { type: "IMAGE_SELECTED"; imageUri: string; fileName: string; fileMeta: string }
+  | { type: "IMAGE_ROTATED"; imageUri: string; rotationDegrees: number }
   | { type: "UPLOAD_FAILED"; message: string }
   | { type: "UPLOAD_BLOCKED"; message: string }
   | { type: "SUBJECT_SELECTED"; subject: "auto" | Subject }
@@ -95,6 +97,7 @@ export function createInitialWrongQuestionState(records: WrongQuestionRecord[]):
     uploadedImageUri: "",
     uploadedFileName: "",
     uploadedFileMeta: "",
+    uploadedImageRotationDegrees: 0,
     uploadError: "",
     regionCandidates: [],
     selectedRegionId: null,
@@ -133,6 +136,7 @@ export function wrongQuestionReducer(
         uploadedImageUri: action.imageUri,
         uploadedFileName: action.fileName,
         uploadedFileMeta: action.fileMeta,
+        uploadedImageRotationDegrees: 0,
         uploadError: "",
         regionError: "",
         regionCandidates: [],
@@ -146,7 +150,20 @@ export function wrongQuestionReducer(
         uploadedImageUri: "",
         uploadedFileName: "",
         uploadedFileMeta: "",
+        uploadedImageRotationDegrees: 0,
         uploadError: action.message,
+        regionCandidates: [],
+        selectedRegionId: null,
+        draft: null,
+      };
+
+    case "IMAGE_ROTATED":
+      return {
+        ...state,
+        uploadedImageUri: action.imageUri,
+        uploadedImageRotationDegrees: action.rotationDegrees,
+        uploadError: "",
+        regionError: "",
         regionCandidates: [],
         selectedRegionId: null,
         draft: null,

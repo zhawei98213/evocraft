@@ -260,4 +260,42 @@ describe("wrongQuestionReducer", () => {
     expect(blocked.uploadedImageUri).toBe("data:image/png;base64,original");
     expect(blocked.uploadedFileName).toBe("question.png");
   });
+
+  it("resets stale region work when the uploaded image is rotated", () => {
+    const withImage = wrongQuestionReducer(createInitialWrongQuestionState([]), {
+      type: "IMAGE_SELECTED",
+      imageUri: "data:image/png;base64,original",
+      fileName: "question.png",
+      fileMeta: "1.2 MB",
+    });
+    const selecting = wrongQuestionReducer(withImage, {
+      type: "REGION_CANDIDATES_READY",
+      candidates: createMockRegionCandidates(),
+    });
+    const withDraft = wrongQuestionReducer(selecting, {
+      type: "DRAFT_READY",
+      draft: createMockRecognition(),
+    });
+
+    const rotated = wrongQuestionReducer(withDraft, {
+      type: "IMAGE_ROTATED",
+      imageUri: "data:image/png;base64,rotated",
+      rotationDegrees: 90,
+    });
+
+    expect(rotated.uploadedImageUri).toBe("data:image/png;base64,rotated");
+    expect(rotated.uploadedImageRotationDegrees).toBe(90);
+    expect(rotated.regionCandidates).toEqual([]);
+    expect(rotated.selectedRegionId).toBeNull();
+    expect(rotated.draft).toBeNull();
+
+    const replaced = wrongQuestionReducer(rotated, {
+      type: "IMAGE_SELECTED",
+      imageUri: "data:image/png;base64,next",
+      fileName: "next.png",
+      fileMeta: "1 KB",
+    });
+
+    expect(replaced.uploadedImageRotationDegrees).toBe(0);
+  });
 });
