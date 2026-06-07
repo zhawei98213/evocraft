@@ -2,7 +2,7 @@
 
 日期：2026-06-06
 
-状态：基础修复已实施，Product Design 三方向已产出，等待选择主方向
+状态：基础修复已实施，Product Design 方向已选定并进入 React UI 改造
 
 相关文档：
 
@@ -23,7 +23,7 @@
 4. 应用图标可能回退，需要重新验收图标链路。
 5. API key 输入一次后应该保存，同时允许后续更改。
 
-这些问题不只是局部 UI bug。它们影响真实 AI 调用可观测性、科目判断责任边界、选区交互、桌面品牌资产和本地凭据策略，所以本轮先同步 PRD、设计、计划和进度，再进入实现。2026-06-06 基础修复已进入代码：日志、科目后置、候选框就地删除、API key 本机加密持久化和图标静态链路已完成。2026-06-07 Product Design 已产出流程控制塔、双栏复核工坊和资料库中枢三个方向，等待选择主方向后再进入原型或 React UI 改造。
+这些问题不只是局部 UI bug。它们影响真实 AI 调用可观测性、科目判断责任边界、选区交互、桌面品牌资产和本地凭据策略，所以本轮先同步 PRD、设计、计划和进度，再进入实现。2026-06-06 基础修复已进入代码：日志、科目后置、候选框就地删除、API key 本机加密持久化和图标静态链路已完成。2026-06-07 Product Design 已产出流程控制塔、双栏复核工坊和资料库中枢三个方向；用户已选择流程控制塔作为整体 UI 骨架，并吸收双栏复核工坊的复核分栏和资料库中枢的错题本行列表达。
 
 ## 2. 范围
 
@@ -197,7 +197,13 @@ type SavedRecordSubject = "chinese" | "math" | "english";
 - 选区画布和候选列表的关系，避免用户不知道该点击哪里。
 - 设置页的凭据安全表达和更改路径。
 
-Product Design workflow 已基于 `docs/design/2026-06-06-product-design-redesign-brief.md` 完成三方向 ideation，方向文档位于 `docs/design/2026-06-07-product-design-directions.md`。下一步必须先选择主方向，再做原型或 React UI 改造。
+Product Design workflow 已基于 `docs/design/2026-06-06-product-design-redesign-brief.md` 完成三方向 ideation，方向文档位于 `docs/design/2026-06-07-product-design-directions.md`。已选落地组合为：
+
+- 方向 A：作为上传、授权、选区、复核、保存和错题本之间的整体阶段骨架。
+- 方向 B：作为复核页的原始证据、清晰复核面和结构化题目信息分栏。
+- 方向 C：作为错题本的 summary strip、行列表格、状态 chips 和记录打开/复核操作表达。
+
+本次 UI 改造不改变 PRD v1.10 的需求边界、AI provider 契约、隐私授权边界或本地数据形态。
 
 ## 7. 测试策略
 

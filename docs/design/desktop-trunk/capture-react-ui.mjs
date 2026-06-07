@@ -63,7 +63,7 @@ try {
   await clickByText(cdp, "button", "错题收集");
   await waitForExpression(cdp, "document.body.dataset.screen === 'upload'", "upload screen");
   await setFileInput(cdp, "input[aria-label='选择错题照片']", sampleImagePath);
-  await waitForExpression(cdp, "document.querySelector('.upload-preview img')", "upload preview");
+  await waitForExpression(cdp, "document.querySelector('.upload-dropzone-preview')", "upload preview");
   await click(cdp, ".privacy-consent input");
   await waitForExpression(cdp, "!document.querySelector('.start-button').disabled", "start enabled");
   await capture(cdp, "02-upload-privacy.png");

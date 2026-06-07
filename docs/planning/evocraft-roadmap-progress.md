@@ -84,6 +84,47 @@
 
 ## 当前进度
 
+### 2026-06-07：流程控制塔 UI 骨架落地
+
+本轮任务是什么：
+
+- 执行用户选择：选方向 A 作为整体 UI 骨架，同时吸收方向 B 的复核分栏和方向 C 的资料库行列表达。
+- 在不扩大 MVP PRD v1.10 需求边界的前提下，把 Product Design 方向落到现有 React 桌面主干。
+
+已完成什么：
+
+- 新增实施计划 `docs/superpowers/plans/2026-06-07-flow-control-tower-ui.md`，记录 TDD 切片、文件范围、验证方式和最终证据。
+- 按 TDD 先补 `src/app/App.test.tsx` 断言：阶段导航/AI 状态 rail、复核页原始证据/清晰复核面/题目信息分栏、错题本资料库表格与打开记录行为。
+- 在 `src/app/App.tsx` 中新增 `FlowStageTracker`，让上传、选区、复核、详情和错题本共享 5 步流程骨架。
+- 将右侧通用面板改为 AI 处理状态 rail，展示本地 mock/真实 AI、授权状态、当前阶段、当前区域和已脱敏诊断摘要，不展示 API key、raw provider JSON 或完整图片 data URL。
+- 将复核页改为方向 B 的复核结构：原始证据、清晰复核面和题目信息 inspector；视觉验收时发现三栏在默认桌面壳内被右侧 AI rail 挤压，已改成默认两列证据对照 + inspector 下一行，大屏恢复三栏。
+- 将错题本改为方向 C 的资料库表达：summary strip、`错题资料库` 表格、干净题面缩略图、科目/保存时间/status chips、打开/复核操作。
+- 增加 `RECORD_SELECTED` 和详情图像模式 action，让资料库行内“打开”可以进入对应详情，并支持干净题面/确认区域/原图切换。
+- 更新 Product Design 方向文档、brief、详细设计、原实施计划、文档索引、项目记忆和想法胶囊；本轮未更新 PRD，因为需求范围、AI/隐私契约和本地数据形态未变。
+- 重新生成 `docs/design/desktop-trunk/screens/` 六张 React 桌面主干截图，作为本轮视觉回归证据。
+
+卡在哪里：
+
+- 无。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `sed -n ... docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/design/2026-06-07-product-design-directions.md`
+- `rg -n "Product Design|desktop-ai-flow|product-design-directions|flow-control|流程控制|资料库|双栏" docs/...`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run test:react -- src/app/App.test.tsx`（RED 后 GREEN；最终 1 个 test file / 26 个测试通过）
+- `git diff --check`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm test`（5 个 test files / 53 个测试通过）
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run build`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" node docs/design/desktop-trunk/capture-react-ui.mjs`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run dev -- --host 127.0.0.1`
+- Browser in-app checks at `http://127.0.0.1:5174/` for desktop 1280x720 and mobile 390x844 upload rendering; both showed stage tracker and AI rail with horizontal overflow 0.
+
+下一步的计划：
+
+- 继续真实 provider 验证时，先准备本机 Electron 桌面真实 AI 配置，或补齐本地 ignored `ai-eval/samples/manifest.local.json`、`ai-eval/samples/private/` 脱敏样本和 `DASHSCOPE_API_KEY`。
+- 若下一轮继续 UI polish，优先基于本轮截图复查选区画布空间、复核 inspector 首屏位置和资料库多记录密度。
+
 ### 2026-06-07：Product Design 三方向探索
 
 本轮任务是什么：

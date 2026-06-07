@@ -25,6 +25,7 @@ import {
   createInitialWrongQuestionState,
   wrongQuestionReducer,
   type Screen,
+  type WrongQuestionState,
 } from "../features/wrongQuestion/wrongQuestionReducer";
 import type { AiAdapter, AiRuntimeConfigurationResult, AiRuntimeStatus } from "../services/aiAdapter";
 import { createDesktopAiAdapter } from "../services/desktopAiAdapter";
@@ -188,6 +189,10 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
 
   function goToScreen(screen: Screen) {
     dispatch({ type: "GO_TO_SCREEN", screen });
+  }
+
+  function openRecord(recordId: string) {
+    dispatch({ type: "RECORD_SELECTED", recordId });
   }
 
   function applyAiRuntimeStatus(status: AiRuntimeStatus) {
@@ -569,6 +574,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                 使用指南
               </button>
             </header>
+            <FlowStageTracker screen={state.screen} />
 
             <div className="upload-layout">
               <div className="upload-card">
@@ -817,6 +823,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                 </button>
               </div>
             </header>
+            <FlowStageTracker screen={state.screen} />
 
             <div className="region-layout">
               <section className="region-canvas-card" aria-labelledby="region-canvas-title">
@@ -987,6 +994,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
             onSave={saveRecord}
             saveDisabled={!isRecordStoreHydrated || !isSubject(reviewForm.subject)}
             saveError={state.saveError}
+            screen={state.screen}
           />
         )}
 
@@ -1006,6 +1014,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                 </button>
               </div>
             </header>
+            <FlowStageTracker screen={state.screen} />
 
             <div className="records-layout">
               <section className="records-overview" aria-label="错题本概览">
@@ -1019,6 +1028,16 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                   <strong>干净题面</strong>
                   <small>原图仍保留用于复核</small>
                 </article>
+                <article>
+                  <span>待复核</span>
+                  <strong>{getPendingReviewCount(state.records)}</strong>
+                  <small>道错题</small>
+                </article>
+                <article>
+                  <span>本周新增</span>
+                  <strong>{state.records.length}</strong>
+                  <small>道错题</small>
+                </article>
               </section>
 
               <section className="records-panel" aria-labelledby="records-list-title">
@@ -1031,7 +1050,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                     新增错题
                   </button>
                 </div>
-                <RecordList records={state.records} />
+                <RecordList records={state.records} onOpenRecord={openRecord} showActions />
               </section>
             </div>
           </section>
@@ -1052,6 +1071,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                 </button>
               </div>
             </header>
+            <FlowStageTracker screen={state.screen} />
 
             <div className="detail-layout">
               <article className="saved-question-card">
@@ -1062,7 +1082,30 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                   </div>
                   <span className="status-chip clean">干净题面</span>
                 </div>
-                <img src={selectedRecord.cleanedQuestionImageUri} alt="已保存错题题面" />
+                <div className="detail-image-tabs" role="tablist" aria-label="题面来源">
+                  {[
+                    ["clean", "干净题面"],
+                    ["region", "确认区域"],
+                    ["original", "原图"],
+                  ].map(([mode, label]) => (
+                    <button
+                      aria-selected={state.detailImageMode === mode}
+                      className={state.detailImageMode === mode ? "is-selected" : ""}
+                      key={mode}
+                      onClick={() =>
+                        dispatch({
+                          type: "DETAIL_IMAGE_MODE_CHANGED",
+                          mode: mode as WrongQuestionState["detailImageMode"],
+                        })
+                      }
+                      role="tab"
+                      type="button"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+                <img src={getDetailImageUri(selectedRecord, state.detailImageMode)} alt="已保存错题题面" />
                 <div className="question-text">{selectedRecord.questionText}</div>
               </article>
 
@@ -1081,6 +1124,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                 <div className="status-row">
                   <span className="status-chip clean">去痕完成</span>
                   <span className="status-chip ai">已人工修正</span>
+                  <span className="status-chip review">{getRecordProviderLabel(selectedRecord)}</span>
                 </div>
               </aside>
             </div>
@@ -1089,7 +1133,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
       </main>
 
       <aside className="ai-review-panel" aria-label="AI 复核面板">
-        <SidePanel screen={state.screen} recordCount={state.records.length} />
+        <SidePanel selectedRegion={selectedRegion} state={state} />
       </aside>
     </div>
   );
@@ -1146,6 +1190,41 @@ function RailButton({
   );
 }
 
+const flowStages = [
+  { label: "上传照片", screens: ["upload"] },
+  { label: "授权与找题", screens: ["upload"] },
+  { label: "选择区域", screens: ["select-region"] },
+  { label: "识别复核", screens: ["review"] },
+  { label: "保存", screens: ["detail", "records"] },
+] as const;
+
+function FlowStageTracker({ screen }: { screen: Screen }) {
+  const currentIndex = getFlowStageIndex(screen);
+
+  return (
+    <nav aria-label="错题收集流程" className="flow-stage-tracker">
+      {flowStages.map((stage, index) => {
+        const isComplete = index < currentIndex;
+        const isCurrent = index === currentIndex;
+        return (
+          <div
+            className={`flow-stage ${isComplete ? "is-complete" : ""} ${
+              isCurrent ? "is-current" : ""
+            }`}
+            key={stage.label}
+          >
+            <span>{index + 1}</span>
+            <strong>
+              {isCurrent ? `${index + 1} / ${flowStages.length} ` : ""}
+              {stage.label}
+            </strong>
+          </div>
+        );
+      })}
+    </nav>
+  );
+}
+
 function ReviewScreen({
   draft,
   form,
@@ -1154,6 +1233,7 @@ function ReviewScreen({
   onSave,
   saveDisabled = false,
   saveError,
+  screen,
 }: {
   draft: WrongQuestionDraft;
   form: ReviewForm;
@@ -1162,6 +1242,7 @@ function ReviewScreen({
   onSave: () => void;
   saveDisabled?: boolean;
   saveError: string;
+  screen: Screen;
 }) {
   function updateForm<K extends keyof ReviewForm>(key: K, value: ReviewForm[K]) {
     onFormChange({ ...form, [key]: value });
@@ -1183,47 +1264,59 @@ function ReviewScreen({
           </button>
         </div>
       </header>
+      <FlowStageTracker screen={screen} />
 
-      <div className="review-grid">
-        <article className="image-panel selected-region-panel">
+      <div className="review-workshop">
+        <article className="review-evidence-panel">
           <header>
             <div>
-              <h2>确认区域</h2>
-              <p>本次只识别这道题</p>
+              <h2>原始证据</h2>
+              <p>保留确认区域和整张原图，方便复核 AI 是否漏掉题干或图形。</p>
             </div>
             <span className="status-chip ai">已确认</span>
           </header>
-          <img src={draft.selectedRegionImageUri} alt="已确认的题目区域" />
-        </article>
-
-        <article className="image-panel source-image-panel">
-          <header>
+          <div className="evidence-stack">
             <div>
-              <h2>原图</h2>
-              <p>含手写与批改痕迹</p>
+              <strong>确认区域</strong>
+              <img src={draft.selectedRegionImageUri} alt="已确认的题目区域" />
             </div>
-            <span className="status-chip review">含手写与批改</span>
-          </header>
-          <img src={draft.originalImageUri} alt="错题原图" />
+            <div>
+              <strong>原图溯源</strong>
+              <img src={draft.originalImageUri} alt="错题原图" />
+            </div>
+          </div>
         </article>
 
-        <article className="image-panel clean-question-panel">
+        <article className="review-clean-panel">
           <header>
             <div>
-              <h2>干净题面</h2>
+              <h2>清晰复核面</h2>
               <p>去除作答痕迹，默认用于复习</p>
             </div>
             <span className="status-chip clean">去痕后</span>
           </header>
           <img src={draft.cleanedQuestionImageUri} alt="AI 生成的干净题面" />
+          <footer>
+            <button className="button-secondary" type="button">
+              复制文字
+            </button>
+            <button className="button-secondary" type="button">
+              复制图形
+            </button>
+          </footer>
         </article>
-      </div>
 
-      <form className="editor-form">
-        <div className="form-row two">
+        <form className="editor-form review-inspector">
+          <div className="section-heading compact">
+            <div>
+              <h2>题目信息</h2>
+              <p>确认 AI 建议并补全可复习字段。</p>
+            </div>
+          </div>
           <label>
             <span>科目</span>
             <select
+              aria-label="科目"
               value={form.subject}
               onChange={(event) =>
                 updateForm(
@@ -1237,6 +1330,9 @@ function ReviewScreen({
               <option value="math">数学</option>
               <option value="english">英语</option>
             </select>
+            <small className="field-note">
+              {isSubject(draft.subject) ? `AI 建议：${SUBJECTS[draft.subject]}` : "AI 未能确认科目"}
+            </small>
           </label>
           <label>
             <span>标题</span>
@@ -1246,20 +1342,18 @@ function ReviewScreen({
               onChange={(event) => updateForm("title", event.target.value)}
             />
           </label>
-        </div>
-        <label>
-          <span>题目文字</span>
-          <textarea
-            rows={6}
-            value={form.questionText}
-            onChange={(event) => updateForm("questionText", event.target.value)}
-          ></textarea>
-        </label>
-        <div className="form-row two">
           <label>
-            <span>学生答案</span>
+            <span>题目文字</span>
             <textarea
-              rows={3}
+              rows={7}
+              value={form.questionText}
+              onChange={(event) => updateForm("questionText", event.target.value)}
+            ></textarea>
+          </label>
+          <label>
+            <span>学生答案痕迹</span>
+            <textarea
+              rows={2}
               value={form.studentAnswer}
               onChange={(event) => updateForm("studentAnswer", event.target.value)}
             ></textarea>
@@ -1267,29 +1361,39 @@ function ReviewScreen({
           <label>
             <span>正确答案</span>
             <textarea
-              rows={3}
+              rows={2}
               value={form.correctAnswer}
               onChange={(event) => updateForm("correctAnswer", event.target.value)}
             ></textarea>
           </label>
-        </div>
-        <label>
-          <span>备注</span>
-          <textarea
-            rows={3}
-            value={form.notes}
-            onChange={(event) => updateForm("notes", event.target.value)}
-          ></textarea>
-        </label>
-        <p className="form-error" role="alert">
-          {saveError}
-        </p>
-      </form>
+          <label>
+            <span>备注</span>
+            <textarea
+              rows={2}
+              value={form.notes}
+              onChange={(event) => updateForm("notes", event.target.value)}
+            ></textarea>
+          </label>
+          <p className="form-error" role="alert">
+            {saveError}
+          </p>
+        </form>
+      </div>
     </section>
   );
 }
 
-function RecordList({ compact = false, records }: { compact?: boolean; records: WrongQuestionRecord[] }) {
+function RecordList({
+  compact = false,
+  onOpenRecord,
+  records,
+  showActions = false,
+}: {
+  compact?: boolean;
+  onOpenRecord?: (recordId: string) => void;
+  records: WrongQuestionRecord[];
+  showActions?: boolean;
+}) {
   if (!records.length) {
     return (
       <div className="record-list">
@@ -1301,11 +1405,75 @@ function RecordList({ compact = false, records }: { compact?: boolean; records: 
     );
   }
 
+  if (!compact && showActions) {
+    return (
+      <table aria-label="错题资料库" className="records-table">
+        <thead>
+          <tr>
+            <th>题目预览</th>
+            <th>标题</th>
+            <th>科目</th>
+            <th>保存时间</th>
+            <th>状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {records.map((record) => (
+            <tr key={record.id}>
+              <td>
+                <button
+                  className="record-preview-button"
+                  onClick={() => onOpenRecord?.(record.id)}
+                  type="button"
+                >
+                  <img src={record.cleanedQuestionImageUri} alt="" />
+                  <span className="sr-only">{record.title} 打开</span>
+                </button>
+              </td>
+              <td>
+                <strong>{record.title}</strong>
+                <small>默认复习：干净题面</small>
+              </td>
+              <td>{SUBJECTS[record.subject]}</td>
+              <td>{formatTime(record.createdAt)}</td>
+              <td>
+                <div className="record-status-chips">
+                  <span className="status-chip clean">已确认区域</span>
+                  <span className="status-chip ai">科目已确认</span>
+                  <span className="status-chip review">{getRecordProviderLabel(record)}</span>
+                </div>
+              </td>
+              <td>
+                <div className="record-row-actions">
+                  <button
+                    className="button-ghost"
+                    onClick={() => onOpenRecord?.(record.id)}
+                    type="button"
+                  >
+                    打开
+                  </button>
+                  <button className="button-ghost" type="button">
+                    复核
+                  </button>
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    );
+  }
+
   return (
     <div className={`record-list ${compact ? "compact" : "records-list"}`}>
       {records.map((record) => (
         <div className={`record-row ${compact ? "is-compact" : ""}`} key={record.id}>
-          <button className="record-open" type="button">
+          <button
+            className="record-open"
+            onClick={() => onOpenRecord?.(record.id)}
+            type="button"
+          >
             <img src={record.cleanedQuestionImageUri} alt="" />
             <span>
               <strong>{record.title}</strong>
@@ -1321,35 +1489,119 @@ function RecordList({ compact = false, records }: { compact?: boolean; records: 
   );
 }
 
-function SidePanel({ recordCount, screen }: { recordCount: number; screen: Screen }) {
-  const title =
-    screen === "upload"
-      ? "AI 处理流程"
-      : screen === "select-region"
-        ? "选题区域状态"
-        : screen === "review"
-          ? "AI 识别与去痕状态"
-          : screen === "records"
-            ? "错题本"
-            : "今日学习状态";
+function SidePanel({
+  selectedRegion,
+  state,
+}: {
+  selectedRegion: RegionCandidate | null;
+  state: WrongQuestionState;
+}) {
+  const diagnostics = getRedactedDiagnostics(state);
 
   return (
     <section className="side-block">
-      <h2>{title}</h2>
+      <h2>AI 处理状态</h2>
       <div className="metric-card">
-        <strong>{recordCount}</strong>
+        <strong>{state.records.length}</strong>
         <span>已整理错题</span>
       </div>
-      <div className="review-checklist">
+      <div className="status-summary">
         <div>
-          <span className="dot done"></span> 本地优先，不上传真实照片
+          <span>AI 模式</span>
+          <strong>{state.aiRuntimeMode === "real" ? "真实 AI" : "本地 mock"}</strong>
         </div>
         <div>
-          <span className="dot wait"></span> 后续可接入 AI 分析
+          <span>授权状态</span>
+          <strong>{state.externalAiAcknowledged ? "已授权" : "独立授权"}</strong>
+        </div>
+        <div>
+          <span>当前阶段</span>
+          <strong>{getCurrentFlowStageLabel(state.screen)}</strong>
+        </div>
+        <div>
+          <span>当前区域</span>
+          <strong>{selectedRegion ? `已选${selectedRegion.label}` : "未选择"}</strong>
         </div>
       </div>
+      <section className="diagnostics-block" aria-labelledby="diagnostics-title">
+        <h3 id="diagnostics-title">诊断信息（已脱敏）</h3>
+        <div className="review-checklist">
+          {diagnostics.map((item) => (
+            <div key={item.label}>
+              <span className={`dot ${item.status}`}></span> {item.label}
+              <em>{item.value}</em>
+            </div>
+          ))}
+        </div>
+      </section>
+      {state.uploadError || state.regionError || state.saveError ? (
+        <p className="side-error">
+          {state.uploadError || state.regionError || state.saveError}
+        </p>
+      ) : (
+        <p className="storage-status is-success">当前流程可继续，敏感信息不会显示在诊断区。</p>
+      )}
     </section>
   );
+}
+
+function getFlowStageIndex(screen: Screen) {
+  if (screen === "select-region") return 2;
+  if (screen === "review") return 3;
+  if (screen === "detail" || screen === "records") return 4;
+  return 0;
+}
+
+function getCurrentFlowStageLabel(screen: Screen) {
+  return flowStages[getFlowStageIndex(screen)]?.label ?? "上传照片";
+}
+
+function getPendingReviewCount(records: WrongQuestionRecord[]) {
+  return records.filter(
+    (record) => record.recognitionStatus !== "reviewed" || record.cleanupStatus !== "reviewed",
+  ).length;
+}
+
+function getRecordProviderLabel(record: WrongQuestionRecord) {
+  const provider = record.modelTraces[0]?.provider ?? "mock";
+  return provider === "mock" ? "mock" : "真实 AI";
+}
+
+function getDetailImageUri(
+  record: WrongQuestionRecord,
+  mode: WrongQuestionState["detailImageMode"],
+) {
+  if (mode === "original") return record.originalImageUri;
+  if (mode === "region") return record.selectedRegionImageUri;
+  return record.cleanedQuestionImageUri;
+}
+
+function getRedactedDiagnostics(state: WrongQuestionState) {
+  const hasRegions = state.regionCandidates.length > 0;
+  const hasDraft = Boolean(state.draft);
+
+  return [
+    {
+      label: "配置状态",
+      status: state.aiConfigured ? "done" : "wait",
+      value: state.aiConfigured ? "已配置" : "未配置",
+    },
+    {
+      label: "授权状态",
+      status: state.externalAiAcknowledged || state.aiRuntimeMode === "mock" ? "done" : "warn",
+      value: state.aiRuntimeMode === "mock" ? "本地" : state.externalAiAcknowledged ? "已授权" : "待确认",
+    },
+    {
+      label: "detectRegions",
+      status: hasRegions ? "done" : state.screen === "select-region" ? "warn" : "wait",
+      value: hasRegions ? `${state.regionCandidates.length} 个候选` : "未运行",
+    },
+    {
+      label: "recognizeQuestion",
+      status: hasDraft ? "done" : state.screen === "review" ? "warn" : "wait",
+      value: hasDraft ? "草稿已生成" : "未运行",
+    },
+  ] as const;
 }
 
 function createReviewForm(draft: WrongQuestionDraft): ReviewForm {

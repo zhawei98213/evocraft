@@ -73,6 +73,8 @@ export type WrongQuestionAction =
   | { type: "REGION_UPDATED"; region: RegionCandidate }
   | { type: "REGION_ZOOM_CHANGED"; zoom: number }
   | { type: "DRAFT_READY"; draft: WrongQuestionDraft }
+  | { type: "RECORD_SELECTED"; recordId: string }
+  | { type: "DETAIL_IMAGE_MODE_CHANGED"; mode: WrongQuestionState["detailImageMode"] }
   | { type: "RECORD_SAVED"; record: WrongQuestionRecord }
   | { type: "SAVE_FAILED"; message: string };
 
@@ -290,6 +292,20 @@ export function wrongQuestionReducer(
         screen: "review",
         draft: action.draft,
         saveError: "",
+      };
+
+    case "RECORD_SELECTED":
+      return {
+        ...state,
+        screen: "detail",
+        selectedRecordId: action.recordId,
+        detailImageMode: "clean",
+      };
+
+    case "DETAIL_IMAGE_MODE_CHANGED":
+      return {
+        ...state,
+        detailImageMode: action.mode,
       };
 
     case "RECORD_SAVED":

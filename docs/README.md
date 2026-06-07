@@ -24,6 +24,7 @@
 - [桌面真实 AI 流程诊断与交互重设计实施计划](superpowers/plans/2026-06-06-desktop-ai-flow-ux-redesign.md)：把 2026-06-06 真实桌面试用反馈拆成可执行修复和验证任务。
 - [Product Design 重设计 Brief](design/2026-06-06-product-design-redesign-brief.md)：后续使用 Product Design workflow 重设计 EvoCraft 桌面错题收集界面前的 brief。
 - [Product Design 三方向](design/2026-06-07-product-design-directions.md)：记录流程控制塔、双栏复核工坊和资料库中枢三个桌面重设计方向，以及后续选型建议。
+- [流程控制塔 UI 改造计划](superpowers/plans/2026-06-07-flow-control-tower-ui.md)：把方向 A 作为整体 UI 骨架，并吸收方向 B 复核分栏和方向 C 资料库行列表达的 React 实施计划。
 - [Qwen 脱敏样本评测设计](superpowers/specs/2026-05-31-qwen-sample-evaluation-design.md)：确认第一轮 10-15 张本地脱敏样本评测的样本规范、manifest 合同、隐私边界、结果 redaction 和决策规则。
 - [Qwen 脱敏样本评测实施计划](superpowers/plans/2026-05-31-qwen-sample-evaluation.md)：把样本评测拆成 preflight、manifest validation、redacted summary reporter、本地样本运行和评估决策任务。
 - [Qwen 脱敏样本评测 Agent Run Ledger](superpowers/agent-runs/2026-05-31-qwen-sample-evaluation/README.md)：记录后续 subagent-driven 执行中每个 agent 的任务边界、进度、命令和 review。

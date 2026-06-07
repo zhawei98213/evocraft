@@ -237,6 +237,88 @@ describe("App", () => {
     expect(screen.getByRole("button", { name: "确认此区域并识别" })).toBeEnabled();
   });
 
+  it("shows the selected flow-control tower skeleton during region selection", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+    await user.upload(screen.getByLabelText("选择错题照片"), new File(["fake-image"], "question.png", {
+      type: "image/png",
+    }));
+    await waitFor(() => {
+      expect(screen.getByAltText("已上传的错题原图预览")).toHaveAttribute(
+        "src",
+        expect.stringMatching(/^data:image\/png;base64,/),
+      );
+    });
+    await user.click(screen.getByRole("checkbox", { name: /本地隐私确认/ }));
+    await user.click(screen.getByRole("button", { name: "下一步：选择题目区域" }));
+
+    expect(screen.getByRole("navigation", { name: "错题收集流程" })).toBeInTheDocument();
+    expect(screen.getByText("授权与找题")).toBeInTheDocument();
+    expect(screen.getByText("3 / 5 选择区域")).toBeInTheDocument();
+    expect(screen.getByText("AI 处理状态")).toBeInTheDocument();
+    expect(screen.getByText("诊断信息（已脱敏）")).toBeInTheDocument();
+  });
+
+  it("uses a split review workshop with AI subject suggestion", async () => {
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+    await user.upload(screen.getByLabelText("选择错题照片"), new File(["fake-image"], "question.png", {
+      type: "image/png",
+    }));
+    await waitFor(() => {
+      expect(screen.getByAltText("已上传的错题原图预览")).toHaveAttribute(
+        "src",
+        expect.stringMatching(/^data:image\/png;base64,/),
+      );
+    });
+    await user.click(screen.getByRole("checkbox", { name: /本地隐私确认/ }));
+    await user.click(screen.getByRole("button", { name: "下一步：选择题目区域" }));
+    await user.click(screen.getByRole("button", { name: "确认此区域并识别" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "识别复核" })).toBeInTheDocument();
+    });
+    expect(screen.getByText("原始证据")).toBeInTheDocument();
+    expect(screen.getByText("清晰复核面")).toBeInTheDocument();
+    expect(screen.getByText("题目信息")).toBeInTheDocument();
+    expect(screen.getByText("AI 建议：数学")).toBeInTheDocument();
+  });
+
+  it("presents saved questions as a row-based learning library and opens a record", async () => {
+    const firstRecord = createRecordFromDraft(createMockRecognition(), {
+      id: "wq-first",
+      now: "2026-05-17T08:00:00.000Z",
+      title: "一次函数图像与坐标综合题",
+    });
+    const secondRecord = createRecordFromDraft(createMockRecognition({ subject: "english" }), {
+      id: "wq-second",
+      now: "2026-05-18T08:00:00.000Z",
+      title: "完形填空语境判断题",
+      subject: "english",
+    });
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify([firstRecord, secondRecord]));
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题本" }));
+
+    await waitFor(() => {
+      expect(screen.getByRole("table", { name: "错题资料库" })).toBeInTheDocument();
+    });
+    expect(screen.getByText("待复核")).toBeInTheDocument();
+    expect(screen.getByText("本周新增")).toBeInTheDocument();
+    expect(screen.getAllByText("已确认区域").length).toBeGreaterThan(0);
+
+    const englishRow = screen.getByRole("row", { name: /完形填空语境判断题/ });
+    await user.click(within(englishRow).getByRole("button", { name: "打开" }));
+
+    expect(screen.getByRole("heading", { name: "完形填空语境判断题" })).toBeInTheDocument();
+  });
+
   it("previews the real browser-selected image in the upload area", async () => {
     const user = userEvent.setup();
     render(<App />);

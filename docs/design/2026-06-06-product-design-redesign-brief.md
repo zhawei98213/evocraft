@@ -2,7 +2,7 @@
 
 日期：2026-06-06
 
-状态：已进入 Product Design workflow，三方向已产出
+状态：已完成 Product Design ideation，方向 A 已选为整体 UI 骨架
 
 ## Product Design 预检
 
@@ -44,4 +44,4 @@
 
 ## Product Design 下一步
 
-基础流程 bug 修复完成后，已按 Product Design 规则进入 ideation，并产出三个视觉/交互方向，记录在 `docs/design/2026-06-07-product-design-directions.md`。下一步应先选择主方向，再进入原型或代码改造。
+基础流程 bug 修复完成后，已按 Product Design 规则进入 ideation，并产出三个视觉/交互方向，记录在 `docs/design/2026-06-07-product-design-directions.md`。用户已选择方向 A 作为整体 UI 骨架，同时吸收方向 B 的复核分栏和方向 C 的资料库行列表达；代码改造计划记录在 `docs/superpowers/plans/2026-06-07-flow-control-tower-ui.md`。
