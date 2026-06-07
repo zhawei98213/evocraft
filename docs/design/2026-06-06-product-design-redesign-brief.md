@@ -2,7 +2,7 @@
 
 日期：2026-06-06
 
-状态：待 Product Design workflow 播放确认
+状态：已进入 Product Design workflow，三方向已产出
 
 ## Product Design 预检
 
@@ -44,4 +44,4 @@
 
 ## Product Design 下一步
 
-在基础流程 bug 修复完成后，先向用户播放这个 brief，确认后进入 Product Design ideation。按 Product Design 规则，先提供三个视觉/交互方向，用户选定后再进入原型或代码改造。
+基础流程 bug 修复完成后，已按 Product Design 规则进入 ideation，并产出三个视觉/交互方向，记录在 `docs/design/2026-06-07-product-design-directions.md`。下一步应先选择主方向，再进入原型或代码改造。

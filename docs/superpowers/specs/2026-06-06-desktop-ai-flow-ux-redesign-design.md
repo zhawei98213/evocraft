@@ -2,13 +2,14 @@
 
 日期：2026-06-06
 
-状态：基础修复已实施，Product Design 重设计待执行
+状态：基础修复已实施，Product Design 三方向已产出，等待选择主方向
 
 相关文档：
 
 - MVP PRD：`docs/prd/2026-05-10-wrong-question-capture-mvp-prd.md`
 - 实施计划：`docs/superpowers/plans/2026-06-06-desktop-ai-flow-ux-redesign.md`
 - Product Design brief：`docs/design/2026-06-06-product-design-redesign-brief.md`
+- Product Design 三方向：`docs/design/2026-06-07-product-design-directions.md`
 - 项目记忆：`docs/planning/evocraft-project-memory.md`
 - 路线图与进度：`docs/planning/evocraft-roadmap-progress.md`
 
@@ -22,7 +23,7 @@
 4. 应用图标可能回退，需要重新验收图标链路。
 5. API key 输入一次后应该保存，同时允许后续更改。
 
-这些问题不只是局部 UI bug。它们影响真实 AI 调用可观测性、科目判断责任边界、选区交互、桌面品牌资产和本地凭据策略，所以本轮先同步 PRD、设计、计划和进度，再进入实现。2026-06-06 基础修复已进入代码：日志、科目后置、候选框就地删除、API key 本机加密持久化和图标静态链路已完成；Product Design 重设计仍作为下一步单独执行。
+这些问题不只是局部 UI bug。它们影响真实 AI 调用可观测性、科目判断责任边界、选区交互、桌面品牌资产和本地凭据策略，所以本轮先同步 PRD、设计、计划和进度，再进入实现。2026-06-06 基础修复已进入代码：日志、科目后置、候选框就地删除、API key 本机加密持久化和图标静态链路已完成。2026-06-07 Product Design 已产出流程控制塔、双栏复核工坊和资料库中枢三个方向，等待选择主方向后再进入原型或 React UI 改造。
 
 ## 2. 范围
 
@@ -196,7 +197,7 @@ type SavedRecordSubject = "chinese" | "math" | "english";
 - 选区画布和候选列表的关系，避免用户不知道该点击哪里。
 - 设置页的凭据安全表达和更改路径。
 
-Product Design workflow 必须先播放并确认 `docs/design/2026-06-06-product-design-redesign-brief.md`，再做 ideation/prototype。
+Product Design workflow 已基于 `docs/design/2026-06-06-product-design-redesign-brief.md` 完成三方向 ideation，方向文档位于 `docs/design/2026-06-07-product-design-directions.md`。下一步必须先选择主方向，再做原型或 React UI 改造。
 
 ## 7. 测试策略
 

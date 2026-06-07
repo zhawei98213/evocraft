@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-06-06
+最后更新：2026-06-07
 
 ## 路线图
 
@@ -83,6 +83,51 @@
 如果没有卡点，写 `无`。命令不需要粘贴完整输出，但要保留足够复现的命令名称或关键命令。
 
 ## 当前进度
+
+### 2026-06-07：Product Design 三方向探索
+
+本轮任务是什么：
+
+- 查看当前进度并继续执行 `docs/superpowers/plans/2026-06-06-desktop-ai-flow-ux-redesign.md` 中的 Product Design 重设计部分。
+- 在不改 React 代码的前提下，基于项目内 Product Design brief、桌面主干截图、logo 资产和当前真实 AI 流程修复结果，产出 3 个视觉/交互方向。
+
+已完成什么：
+
+- 确认当前分支 `codex/qwen-sample-evaluation` 工作树起始状态干净，最近提交为 `Make real AI repairable during desktop trial flows`。
+- 读取项目记忆、路线图进度、想法胶囊、Product Design brief、详细设计、实施计划、桌面主干截图和当前 React 样式/结构。
+- 运行 Product Design user-context preflight，确认没有已保存 Product Design 用户上下文；本轮以仓库内截图和代码为视觉来源。
+- 复查真实 Qwen 评测/桌面 provider 实测前置条件：当前 shell 缺少 `DASHSCOPE_API_KEY`，本地 `ai-eval/samples/manifest.local.json` 缺失，`ai-eval/samples/private/` 样本数为 `0`；因此不强行跑真实 provider。
+- 使用 Product Design ideation 生成 3 个方向预览：流程控制塔、双栏复核工坊、资料库中枢，并复制到 `docs/design/product-design-directions/`。
+- 新增 `docs/design/2026-06-07-product-design-directions.md`，记录三方向的核心判断、适用问题、页面结构、风险、预览图和推荐推进顺序。
+- 更新 `docs/superpowers/plans/2026-06-06-desktop-ai-flow-ux-redesign.md`，将 Product Design Task 7 标为三方向已产出，等待选择主方向。
+- 更新 `docs/superpowers/specs/2026-06-06-desktop-ai-flow-ux-redesign-design.md`、`docs/README.md`、项目记忆和想法胶囊，保持设计产出和长期记忆一致。
+- 验证通过：`git diff --check` 无输出，`npm test` 通过 5 个 test files / 50 个测试，`npm run build` 成功。
+
+卡在哪里：
+
+- 真实 Electron 桌面 provider 全链路仍不能在本轮自动完成：缺少本机 `DASHSCOPE_API_KEY`，且没有本地脱敏样本 manifest/private 样本。
+- React UI 尚未改造；需要先选择主方向，当前推荐以“流程控制塔”为整体骨架，并吸收“双栏复核工坊”的复核结构和“资料库中枢”的错题本结构。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `git log --oneline --decorate -5`
+- `sed -n ... docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md docs/ideas/2026-05-10-evocraft-seed-capsule.md`
+- `sed -n ... docs/superpowers/plans/2026-06-06-desktop-ai-flow-ux-redesign.md docs/superpowers/specs/2026-06-06-desktop-ai-flow-ux-redesign-design.md docs/design/2026-06-06-product-design-redesign-brief.md`
+- `python3 /Users/zha/.codex/plugins/cache/openai-curated-remote/product-design/0.1.43/skills/user-context/scripts/user_context_preflight.py`
+- `test -n "$DASHSCOPE_API_KEY"` / `test -f ai-eval/samples/manifest.local.json` / `find ai-eval/samples/private -maxdepth 1 -type f`
+- `find docs/design/desktop-trunk docs/design/implemented-mvp -maxdepth 3 -type f`
+- `rg -n "settings|AI|api|Runtime|external|subject|candidate|region|review|records|notebook|error|授权|设置|科目|候选|删除" src/app/App.tsx src/app/styles.css`
+- Product Design ImageGen 三方向生成。
+- `cp /Users/zha/.codex/generated_images/... docs/design/product-design-directions/...`
+- `git diff --check`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm test`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run build`
+
+下一步的计划：
+
+- 选择主方向后，先写小步 React UI 改造计划；不要一次性重做全站。
+- 如果继续真实 provider 验证，需要先在本机准备 Electron 桌面真实 AI 配置，或补齐本地 ignored `ai-eval/samples/manifest.local.json`、`ai-eval/samples/private/` 脱敏样本和 `DASHSCOPE_API_KEY`。
 
 ### 2026-06-06：桌面真实 AI 基础流程修复
 

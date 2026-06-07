@@ -2,7 +2,7 @@
 
 日期：2026-06-06
 
-状态：基础修复已完成，Product Design 重设计待执行
+状态：基础修复已完成，Product Design 三方向已产出，等待选择主方向
 
 目标：解决真实 AI 连接后的题目区域点击无反应、缺少后台日志、科目前置流程不合理、候选框不能就地删除、图标疑似回退、API key 不持久化，并在修复后用 Product Design workflow 重新设计整体界面和交互。
 
@@ -18,7 +18,7 @@
 - [x] 确认工作树状态，避免覆盖用户未提交改动。
 - [x] 读取本计划、详细设计、当前 PRD、项目记忆和进度记录。
 - [x] 本轮未使用 subagent-driven，因此不创建 agent run ledger。
-- [x] 本轮执行基础流程修复；Product Design 重设计保留为下一步。
+- [x] 基础流程修复已完成；2026-06-07 已进入 Product Design 重设计探索。
 
 ## Task 1：补真实 AI 诊断日志
 
@@ -91,12 +91,20 @@
 
 ## Task 7：Product Design 重设计
 
-- [ ] 先播放并确认 `docs/design/2026-06-06-product-design-redesign-brief.md`。
-- [ ] 使用 Product Design get-context gate；当前已知 saved Product Design context 不存在，应以当前产品代码、现有截图、logo 资产和设计基线作为视觉来源。
-- [ ] 先做 3 个视觉/交互方向，不直接进入代码重做。
+- [x] 先播放并确认 `docs/design/2026-06-06-product-design-redesign-brief.md`。
+- [x] 使用 Product Design get-context gate；当前已知 saved Product Design context 不存在，应以当前产品代码、现有截图、logo 资产和设计基线作为视觉来源。
+- [x] 先做 3 个视觉/交互方向，不直接进入代码重做。
 - [ ] 选择方向后，再进入可运行原型或现有 React UI 改造。
-- [ ] 设计必须覆盖上传、设置、选区、复核、错题本、详情、mock/real/未授权/失败状态。
-- [ ] 产物必须保存到项目内，例如 `docs/design/`、`docs/superpowers/specs/` 或实现代码路径。
+- [x] 设计必须覆盖上传、设置、选区、复核、错题本、详情、mock/real/未授权/失败状态。
+- [x] 产物必须保存到项目内，例如 `docs/design/`、`docs/superpowers/specs/` 或实现代码路径。
+
+产出：
+
+- `docs/design/2026-06-07-product-design-directions.md`
+- `docs/design/product-design-directions/2026-06-07-option-a-flow-control-tower.png`
+- `docs/design/product-design-directions/2026-06-07-option-b-review-workshop.png`
+- `docs/design/product-design-directions/2026-06-07-option-c-library-hub.png`
+- 三个方向：流程控制塔、双栏复核工坊、资料库中枢。
 
 ## Task 8：验证和收尾
 
@@ -111,6 +119,6 @@
   - [x] `npm run build`
   - [x] `git diff --check`
 - [x] 运行敏感信息检查，确认 API key、`.env`、private samples、raw provider output 未入库；仅命中历史占位命令和测试 fixture。
-- [ ] 更新 `docs/planning/evocraft-roadmap-progress.md`，记录实际执行命令、完成项和卡点。
-- [ ] 更新 PRD、项目记忆、想法胶囊和文档索引中因实现而变化的状态。
+- [x] 更新 `docs/planning/evocraft-roadmap-progress.md`，记录实际执行命令、完成项和卡点。
+- [x] 更新项目记忆、想法胶囊和文档索引中因设计探索而变化的状态；本轮未改变 PRD 需求边界，不更新 PRD。
 - [ ] 按 Lore Commit Protocol 提交并推送到 `git@github.com:zhawei98213/evocraft.git`。

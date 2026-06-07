@@ -1,6 +1,6 @@
 # EvoCraft 项目记忆
 
-最后更新：2026-06-06
+最后更新：2026-06-07
 
 ## 一句话产品意图
 
@@ -21,7 +21,7 @@ EvoCraft 是面向上海孩子的 AI 学习助手应用集合。第一阶段从�
 
 阶段：`1 - 错题收集应用 MVP`
 
-当前目标：MVP 收集闭环已完成；桌面优先迁移第一阶段已闭环，当前有 `React + Vite + TypeScript` 工程主干、typed wrong-question domain、provider-agnostic mock AI adapter contract、storage port、React UI 迁移、截图验证、最小 `Electron` 桌面壳、Electron 本地记录存储、Qwen 评测/adapter spike、main-process real AI IPC、应用内真实 AI 测试模式、外部 AI 授权提示，以及通过 final re-review 的 main-process 授权、eval data URL 和一次性文件读取边界。2026-06-02 已确认真实 AI 配置方式要从隐藏环境变量迁移到应用内设置页：用户显式填写 API key 和 LLM 名称，Electron main process 持有配置，配置成功后仍需单独外部 AI 授权；网页预览没有 Electron preload bridge 时必须禁用配置输入并提示改用桌面应用窗口。2026-06-03 使用用户提供的真实数学错题图片跑通真实 Qwen 流程后，已修复科目选择未写入请求、Qwen 自动找题固定框、0-1000 坐标归一化、默认候选选择和空标题兜底问题。2026-06-06 根据真实桌面试用反馈，基础修复已完成：补充 redacted main-process 日志，科目从上传页前置选择后移到识别后建议和复核确认，候选框支持画布内直接删除，API key 改为 Electron `safeStorage` 本机加密持久化且可更改/清除，并补强桌面图标静态配置链路；Product Design 重设计仍是下一步。当前仍处于 Qwen 10-15 张脱敏样本评测准备阶段，Task 0 预检、Task 1 manifest validation/dry-run 和 Task 2 redacted summary reporter 已完成；Task 3 本地样本运行在 2026-06-01 复查后仍被阻塞：缺少本地 ignored `ai-eval/samples/manifest.local.json`、缺少 `ai-eval/samples/private/` 脱敏样本文件，且评测 CLI 仍缺少本地 `DASHSCOPE_API_KEY`；因此还不能形成 Qwen 效果决策。
+当前目标：MVP 收集闭环已完成；桌面优先迁移第一阶段已闭环，当前有 `React + Vite + TypeScript` 工程主干、typed wrong-question domain、provider-agnostic mock AI adapter contract、storage port、React UI 迁移、截图验证、最小 `Electron` 桌面壳、Electron 本地记录存储、Qwen 评测/adapter spike、main-process real AI IPC、应用内真实 AI 测试模式、外部 AI 授权提示，以及通过 final re-review 的 main-process 授权、eval data URL 和一次性文件读取边界。2026-06-02 已确认真实 AI 配置方式要从隐藏环境变量迁移到应用内设置页：用户显式填写 API key 和 LLM 名称，Electron main process 持有配置，配置成功后仍需单独外部 AI 授权；网页预览没有 Electron preload bridge 时必须禁用配置输入并提示改用桌面应用窗口。2026-06-03 使用用户提供的真实数学错题图片跑通真实 Qwen 流程后，已修复科目选择未写入请求、Qwen 自动找题固定框、0-1000 坐标归一化、默认候选选择和空标题兜底问题。2026-06-06 根据真实桌面试用反馈，基础修复已完成：补充 redacted main-process 日志，科目从上传页前置选择后移到识别后建议和复核确认，候选框支持画布内直接删除，API key 改为 Electron `safeStorage` 本机加密持久化且可更改/清除，并补强桌面图标静态配置链路。2026-06-07 Product Design 重设计已产出三方向：流程控制塔、双栏复核工坊、资料库中枢；当前等待选择主方向后再进入原型或 React UI 改造。当前仍处于 Qwen 10-15 张脱敏样本评测准备阶段，Task 0 预检、Task 1 manifest validation/dry-run 和 Task 2 redacted summary reporter 已完成；Task 3 本地样本运行在 2026-06-07 复查后仍被阻塞：缺少本地 ignored `ai-eval/samples/manifest.local.json`、缺少 `ai-eval/samples/private/` 脱敏样本文件，且评测 CLI 仍缺少本地 `DASHSCOPE_API_KEY`；因此还不能形成 Qwen 效果决策。
 
 当前 MVP 边界：只完成 EvoCraft 应用集合中第一个应用“错题收集”的核心闭环，也就是“从一张可能包含多道题的上传图片中，确认一道题区域并收集成错题记录”。本轮已把隐私确认、本地删除/清空和失败恢复纳入 MVP 收尾范围。保留应用集合的顶层结构，但暂不实现整卷批量拆题、其他学习应用、完整游戏化经济或复杂多应用平台能力。
 
@@ -78,6 +78,7 @@ EvoCraft 是面向上海孩子的 AI 学习助手应用集合。第一阶段从�
 - 真实 AI 的配置、授权、自动找题、识别和失败路径必须输出 redacted main-process 诊断日志，供 `npm run electron:dev` 后台排查；日志不得包含 API key、完整图片 data URL、raw provider response 或完整 OCR 内容。
 - 候选框删除必须能在画布框上直接完成，列表删除入口可以保留但不能作为唯一删除路径；删除按钮点击不能触发选中、拖拽或缩放。
 - EvoCraft 图标链路必须覆盖应用内品牌位、renderer favicon、Electron dev 窗口和 packaged macOS app icon；疑似回退时先审计路径和视觉资产。
+- Product Design 重设计选型先看三条互补方向：流程控制塔用于上传/授权/选区/识别状态主骨架，双栏复核工坊用于复核页原始证据和干净题面对照，资料库中枢用于错题本长期学习资料库。当前推荐先以流程控制塔作为整体骨架，再吸收另外两条的局部结构。
 - 桌面图片读取必须遵循最小权限：renderer 不能用 arbitrary path 请求 main 读取本地图片，只能读取本次系统文件选择对话框明确返回且尚未消费的一次性路径。
 - 本机 AI 评测可以读取本地脱敏样本，但进入云端 provider adapter 前必须转成可发送的 `data:image/...;base64,...` 输入；共享 adapter 需要拒绝 `file://` 等本地路径 URL，避免把本地文件引用当作云端可访问资源。
 - Qwen 脱敏样本评测必须先跑 10-15 张小样本，不直接扩大到 50 张；评测提交物只能是 redacted aggregate summary，真实图片、`manifest.local.json`、raw JSONL、完整 OCR/provider 响应和 API key 均不得入库。
