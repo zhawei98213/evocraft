@@ -12,6 +12,7 @@
     "desktop:build": "npm run build && electron-builder --dir",
     "desktop:open": "npm run desktop:build && open -n release/mac/EvoCraft.app",
     "preview": "vite preview --host 127.0.0.1",
+    "codex:handoff": "node scripts/create-session-handoff.mjs",
     "test": "node tests/static-mvp.test.mjs && node tests/logo-assets.test.mjs && node tests/ai-eval-config.test.mjs && node tests/ai-eval-summary.test.mjs && vitest run",
     "test:ai-eval-config": "node tests/ai-eval-config.test.mjs",
     "test:ai-eval-summary": "node tests/ai-eval-summary.test.mjs",

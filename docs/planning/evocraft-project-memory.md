@@ -1,6 +1,6 @@
 # EvoCraft 项目记忆
 
-最后更新：2026-06-07
+最后更新：2026-06-08
 
 ## 一句话产品意图
 
@@ -21,7 +21,7 @@ EvoCraft 是面向上海孩子的 AI 学习助手应用集合。第一阶段从�
 
 阶段：`1 - 错题收集应用 MVP`
 
-当前目标：MVP 收集闭环已完成；桌面优先迁移第一阶段已闭环，当前有 `React + Vite + TypeScript` 工程主干、typed wrong-question domain、provider-agnostic mock AI adapter contract、storage port、React UI 迁移、截图验证、最小 `Electron` 桌面壳、Electron 本地记录存储、Qwen 评测/adapter spike、main-process real AI IPC、应用内真实 AI 测试模式、外部 AI 授权提示，以及通过 final re-review 的 main-process 授权、eval data URL 和一次性文件读取边界。2026-06-02 已确认真实 AI 配置方式要从隐藏环境变量迁移到应用内设置页：用户显式填写 API key 和 LLM 名称，Electron main process 持有配置，配置成功后仍需单独外部 AI 授权；网页预览没有 Electron preload bridge 时必须禁用配置输入并提示改用桌面应用窗口。2026-06-03 使用用户提供的真实数学错题图片跑通真实 Qwen 流程后，已修复科目选择未写入请求、Qwen 自动找题固定框、0-1000 坐标归一化、默认候选选择和空标题兜底问题。2026-06-06 根据真实桌面试用反馈，基础修复已完成：补充 redacted main-process 日志，科目从上传页前置选择后移到识别后建议和复核确认，候选框支持画布内直接删除，API key 改为 Electron `safeStorage` 本机加密持久化且可更改/清除，并补强桌面图标静态配置链路。2026-06-07 Product Design 重设计已产出三方向，并已选定方向 A“流程控制塔”作为整体 UI 骨架，同时吸收方向 B“双栏复核工坊”的复核分栏和方向 C“资料库中枢”的错题本行列表达。2026-06-07 用户提供真实横向/倒向样本后，MVP PRD 已升为 v1.11：上传后必须允许用户在本地左转/右转照片方向，后续选区、自动找题和识别使用调整后的图片。当前仍处于 Qwen 10-15 张脱敏样本评测准备阶段，Task 0 预检、Task 1 manifest validation/dry-run 和 Task 2 redacted summary reporter 已完成；Task 3 本地样本运行在 2026-06-07 复查后仍被阻塞：缺少本地 ignored `ai-eval/samples/manifest.local.json`、缺少 `ai-eval/samples/private/` 脱敏样本文件，且评测 CLI 仍缺少本地 `DASHSCOPE_API_KEY`；因此还不能形成 Qwen 效果决策。
+当前目标：MVP 收集闭环已完成；桌面优先迁移第一阶段已闭环，当前有 `React + Vite + TypeScript` 工程主干、typed wrong-question domain、provider-agnostic mock AI adapter contract、storage port、React UI 迁移、截图验证、最小 `Electron` 桌面壳、Electron 本地记录存储、Qwen 评测/adapter spike、main-process real AI IPC、应用内真实 AI 测试模式、外部 AI 授权提示，以及通过 final re-review 的 main-process 授权、eval data URL 和一次性文件读取边界。2026-06-02 已确认真实 AI 配置方式要从隐藏环境变量迁移到应用内设置页：用户显式填写 API key 和 LLM 名称，Electron main process 持有配置，配置成功后仍需单独外部 AI 授权；网页预览没有 Electron preload bridge 时必须禁用配置输入并提示改用桌面应用窗口。2026-06-03 使用用户提供的真实数学错题图片跑通真实 Qwen 流程后，已修复科目选择未写入请求、Qwen 自动找题固定框、0-1000 坐标归一化、默认候选选择和空标题兜底问题。2026-06-06 根据真实桌面试用反馈，基础修复已完成：补充 redacted main-process 日志，科目从上传页前置选择后移到识别后建议和复核确认，候选框支持画布内直接删除，API key 改为 Electron `safeStorage` 本机加密持久化且可更改/清除，并补强桌面图标静态配置链路。2026-06-07 Product Design 重设计已产出三方向，并已选定方向 A“流程控制塔”作为整体 UI 骨架，同时吸收方向 B“双栏复核工坊”的复核分栏和方向 C“资料库中枢”的错题本行列表达。2026-06-07 用户提供真实横向/倒向样本后，MVP PRD 已升为 v1.11：上传后必须允许用户在本地左转/右转照片方向，后续选区、自动找题和识别使用调整后的图片。2026-06-08 已新增 Codex 会话连续性与续跑协议，并提供 `npm run codex:handoff` 生成本地 handoff，降低长线程 compact 失败和新窗口续跑带来的上下文丢失风险。当前仍处于 Qwen 10-15 张脱敏样本评测准备阶段，Task 0 预检、Task 1 manifest validation/dry-run 和 Task 2 redacted summary reporter 已完成；Task 3 本地样本运行在 2026-06-07 复查后仍被阻塞：缺少本地 ignored `ai-eval/samples/manifest.local.json`、缺少 `ai-eval/samples/private/` 脱敏样本文件，且评测 CLI 仍缺少本地 `DASHSCOPE_API_KEY`；因此还不能形成 Qwen 效果决策。
 
 当前 MVP 边界：只完成 EvoCraft 应用集合中第一个应用“错题收集”的核心闭环，也就是“从一张可能包含多道题的上传图片中，确认一道题区域并收集成错题记录”。本轮已把隐私确认、本地删除/清空和失败恢复纳入 MVP 收尾范围。保留应用集合的顶层结构，但暂不实现整卷批量拆题、其他学习应用、完整游戏化经济或复杂多应用平台能力。
 
@@ -37,6 +37,7 @@ EvoCraft 是面向上海孩子的 AI 学习助手应用集合。第一阶段从�
 - 任何新 PRD、PRD 重要更新或明确产品想法，都必须同步更新想法胶囊；想法胶囊记录提炼后的观点，不复制 PRD 原文。
 - 每次有实质进度变化时，必须更新 `docs/planning/evocraft-roadmap-progress.md`，并记录本轮任务、已完成、卡点、执行命令、下一步计划。
 - 聊天上下文不能作为唯一记忆；长期状态必须写入仓库文档并提交到远端。
+- Codex 长线程或远端上下文压缩失败时，不把聊天作为恢复来源；先运行 `npm run codex:handoff` 生成 `.omx/context/current-session-handoff.md`，新窗口按 `AGENTS.md`、`docs/README.md`、项目记忆、路线图进度、handoff 和 `git status` 的顺序续跑。
 - 第一版设计目标：桌面优先，同时在结构上为平板和手机预留空间。
 - AI 识别结果必须允许用户编辑，因为 OCR、手写识别、图形识别都可能出错。
 - 原图或题目截图必须作为错题记录的一部分保留。

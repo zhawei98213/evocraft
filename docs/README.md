@@ -7,6 +7,7 @@
 - [项目记忆](planning/evocraft-project-memory.md)：稳定产品背景、已确认决策、开放问题、记忆更新规则。
 - [路线图与进度](planning/evocraft-roadmap-progress.md)：长期路线、当前阶段、进度记录。
 - [设计文档体系](planning/2026-05-23-design-documentation-system.md)：定义 PRD、详细设计、实施计划、agent run ledger 和验证归档的组织方式与执行 gate。
+- [Codex 会话连续性与续跑协议](planning/2026-06-08-codex-session-continuity.md)：处理长线程 compact 失败、新窗口续跑和 `npm run codex:handoff` 的项目规则。
 - [应用集合架构](planning/evocraft-app-collection-architecture.md)：EvoCraft 作为 AI 学习助手应用集合的顶层结构。
 - [想法胶囊](ideas/2026-05-10-evocraft-seed-capsule.md)：原始想法碎片和产品方向。
 - [PRD 编写规范 v1.1](prd/2026-05-16-prd-writing-standards.md)：后续 PRD 新建、重大更新、需求评审和规范反向提炼的统一标准。
@@ -27,6 +28,8 @@
 - [流程控制塔 UI 改造计划](superpowers/plans/2026-06-07-flow-control-tower-ui.md)：把方向 A 作为整体 UI 骨架，并吸收方向 B 复核分栏和方向 C 资料库行列表达的 React 实施计划。
 - [上传照片方向调整设计](superpowers/specs/2026-06-07-upload-image-rotation-design.md)：根据真实样本补充上传后本地左转/右转照片方向的 UI、数据流和测试边界。
 - [上传照片方向调整实施计划](superpowers/plans/2026-06-07-upload-image-rotation.md)：把上传后旋转图片能力拆成测试、helper、reducer、UI、文档和验证步骤。
+- [Codex 会话连续性优化设计](superpowers/specs/2026-06-08-codex-session-continuity-design.md)：把上下文压缩失败转成项目内可恢复流程的详细设计。
+- [Codex 会话连续性实施计划](superpowers/plans/2026-06-08-codex-session-continuity.md)：新增 handoff 协议、脚本、npm 命令和记忆同步的执行计划。
 - [Qwen 脱敏样本评测设计](superpowers/specs/2026-05-31-qwen-sample-evaluation-design.md)：确认第一轮 10-15 张本地脱敏样本评测的样本规范、manifest 合同、隐私边界、结果 redaction 和决策规则。
 - [Qwen 脱敏样本评测实施计划](superpowers/plans/2026-05-31-qwen-sample-evaluation.md)：把样本评测拆成 preflight、manifest validation、redacted summary reporter、本地样本运行和评估决策任务。
 - [Qwen 脱敏样本评测 Agent Run Ledger](superpowers/agent-runs/2026-05-31-qwen-sample-evaluation/README.md)：记录后续 subagent-driven 执行中每个 agent 的任务边界、进度、命令和 review。

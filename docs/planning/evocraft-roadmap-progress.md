@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-06-07
+最后更新：2026-06-08
 
 ## 路线图
 
@@ -83,6 +83,48 @@
 如果没有卡点，写 `无`。命令不需要粘贴完整输出，但要保留足够复现的命令名称或关键命令。
 
 ## 当前进度
+
+### 2026-06-08：Codex 会话连续性与续跑优化
+
+本轮任务是什么：
+
+- 用户经常遇到 Codex 自动上下文压缩失败，被迫在项目里新开窗口；本轮结合 EvoCraft 现有“项目记忆先行”机制，落地一个可执行的续跑方案。
+
+已完成什么：
+
+- 新增 `docs/planning/2026-06-08-codex-session-continuity.md`，定义长线程、compact 报错和新窗口续跑时的固定读取顺序。
+- 新增 `docs/superpowers/specs/2026-06-08-codex-session-continuity-design.md` 和 `docs/superpowers/plans/2026-06-08-codex-session-continuity.md`，保存本轮技能 workflow 的设计和执行计划。
+- 新增 `scripts/create-session-handoff.mjs`，自动汇总当前分支、git 状态、最近提交和最新路线图进度，并做基本敏感信息 redaction。
+- 在 `package.json` 增加 `npm run codex:handoff`，默认生成 `.omx/context/current-session-handoff.md` 供新窗口读取。
+- 更新 `docs/README.md`、项目记忆和想法胶囊，让续跑机制进入长期项目规则。
+
+卡在哪里：
+
+- 本轮会话连续性优化无卡点。
+- 全量 `npm test` 被本轮开始前已存在的未提交 RED 测试阻塞：`src/app/App.test.tsx` 新增断言要求移除“使用指南”和显示“选项”字段，但对应实现属于另一个未完成的 2026-06-07“完整识别与后台调试日志”任务，不在本轮范围。
+
+执行的是什么命令：
+
+- `sed -n ... /Users/zha/.codex/superpowers/skills/brainstorming/SKILL.md`
+- `sed -n ... /Users/zha/.codex/superpowers/skills/writing-plans/SKILL.md`
+- `git status --short --branch`
+- `sed -n ... docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md docs/ideas/2026-05-10-evocraft-seed-capsule.md docs/README.md`
+- `rg --files`
+- `sed -n ... docs/planning/2026-05-23-design-documentation-system.md package.json .gitignore`
+- `npm run codex:handoff`（通过，生成 `.omx/context/current-session-handoff.md`）
+- `node scripts/create-session-handoff.mjs --stdout`（通过）
+- `git diff --check`（通过）
+- `npm test`（失败，原因见本条“卡在哪里”）
+- `npm run build`（通过）
+- `git diff -- src/app/App.test.tsx`
+- `git diff -- tests/electron-ai-ipc.test.mjs`
+- `git diff -- tests/qwen-adapter-contract.test.mjs`
+- `node --check scripts/create-session-handoff.mjs`（通过）
+
+下一步的计划：
+
+- 提交并推送本轮会话连续性优化；保留既有未提交功能改动不纳入本轮提交。
+- 下一轮若继续 2026-06-07 完整识别任务，应实现 `answerOptions`、移除上传页“使用指南”，并让相关 RED 测试转绿。
 
 ### 2026-06-07：上传照片方向调整
 
