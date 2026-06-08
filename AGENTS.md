@@ -46,6 +46,39 @@ Required behavior:
 
 技能产物不能只存在于对话、临时目录、浏览器状态、外部工具或本地 scratch 中。凡是会影响后续产品、设计、技术决策、实现、测试、验证或交接的结果，都必须在同一次变更中进入 `/Users/zha/Documents/CodeSpaces/evo-craft`，并随目标提交一起保存。
 
+## Iron Rule: Codex Session Continuity / Codex 会话连续性铁律
+
+Codex chat context is disposable runtime state. EvoCraft project state must survive long threads, remote compact failures, stream disconnects, and new-window continuation.
+
+Codex 聊天上下文只是临时运行态。EvoCraft 的项目状态必须能跨长线程、远端 compact 失败、stream disconnect 和新窗口续跑而保留。
+
+Canonical continuity protocol:
+
+- `docs/planning/2026-06-08-codex-session-continuity.md`
+
+Required behavior:
+
+- When a task phase ends, before switching Codex windows, after seeing `Error running remote compact task` / stream disconnect errors, or when a thread has become long enough that recovery would depend on chat history, run:
+
+```bash
+npm run codex:handoff
+```
+
+- The generated handoff lives at `.omx/context/current-session-handoff.md`. It is runtime state and must stay out of git.
+- Before starting or resuming meaningful work in a new window, read in this order:
+  1. `AGENTS.md`
+  2. `docs/README.md`
+  3. `docs/planning/evocraft-project-memory.md`
+  4. `docs/planning/evocraft-roadmap-progress.md`
+  5. `.omx/context/current-session-handoff.md` if it exists
+  6. `git status --short --branch`
+- If the handoff conflicts with tracked project docs or current git state, trust tracked docs and current git state.
+- Do not rely on chat-only summaries for task state, decisions, blockers, verification, or handoffs.
+- Before generating handoff for a task that changed product direction, process, design, code behavior, or verification status, update the relevant tracked docs first.
+- Never write API keys, Authorization headers, tokens, raw provider responses, original children learning images, image data URLs, or complete sensitive OCR text into handoff files.
+
+当线程变长或 compact 失败时，不要让人类重新复述上下文。先把长期事实写入仓库文档，再用 `npm run codex:handoff` 生成本地续跑快照，新窗口按固定顺序读取后继续。
+
 ## Iron Rule: Detailed Design Docs Before Execution / 详细设计文档先行铁律
 
 Before starting any substantial implementation plan, especially any `subagent-driven` execution, the project must have durable detailed design documentation.

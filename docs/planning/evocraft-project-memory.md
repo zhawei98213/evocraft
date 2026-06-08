@@ -37,7 +37,7 @@ EvoCraft 是面向上海孩子的 AI 学习助手应用集合。第一阶段从�
 - 任何新 PRD、PRD 重要更新或明确产品想法，都必须同步更新想法胶囊；想法胶囊记录提炼后的观点，不复制 PRD 原文。
 - 每次有实质进度变化时，必须更新 `docs/planning/evocraft-roadmap-progress.md`，并记录本轮任务、已完成、卡点、执行命令、下一步计划。
 - 聊天上下文不能作为唯一记忆；长期状态必须写入仓库文档并提交到远端。
-- Codex 长线程或远端上下文压缩失败时，不把聊天作为恢复来源；先运行 `npm run codex:handoff` 生成 `.omx/context/current-session-handoff.md`，新窗口按 `AGENTS.md`、`docs/README.md`、项目记忆、路线图进度、handoff 和 `git status` 的顺序续跑。
+- Codex 长线程或远端上下文压缩失败时，不把聊天作为恢复来源；先运行 `npm run codex:handoff` 生成 `.omx/context/current-session-handoff.md`，新窗口按 `AGENTS.md`、`docs/README.md`、项目记忆、路线图进度、handoff 和 `git status` 的顺序续跑。2026-06-08 起，这一机制已纳入根目录 `AGENTS.md` 的 Codex 会话连续性铁律，后续 agent 必须执行。
 - 第一版设计目标：桌面优先，同时在结构上为平板和手机预留空间。
 - AI 识别结果必须允许用户编辑，因为 OCR、手写识别、图形识别都可能出错。
 - 原图或题目截图必须作为错题记录的一部分保留。

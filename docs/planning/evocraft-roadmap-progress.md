@@ -84,6 +84,38 @@
 
 ## 当前进度
 
+### 2026-06-08：Codex 会话连续性规则纳入 AGENTS.md
+
+本轮任务是什么：
+
+- 用户要求把已落地的 Codex 会话连续性方案纳入 `AGENTS.md`，保证后续 agent 一致执行。
+
+已完成什么：
+
+- 在根目录 `AGENTS.md` 新增 `Iron Rule: Codex Session Continuity / Codex 会话连续性铁律`。
+- 明确后续 agent 在长线程、compact 报错、stream disconnect、新窗口续跑或阶段结束时运行 `npm run codex:handoff`。
+- 明确新窗口启动读取顺序：`AGENTS.md`、`docs/README.md`、项目记忆、路线图进度、`.omx/context/current-session-handoff.md` 和 `git status --short --branch`。
+- 明确 `.omx/context/current-session-handoff.md` 是运行态，不入 git；handoff 不得包含 API key、Authorization、token、raw provider response、原始儿童学习图片、图片 data URL 或完整敏感 OCR。
+- 更新 `docs/planning/2026-06-08-codex-session-continuity.md` 和项目记忆，记录该协议已经进入 `AGENTS.md` 执行面。
+
+卡在哪里：
+
+- 无。本工作树仍保留上一轮未完成的 2026-06-07 完整识别 RED 测试和文档，未纳入本轮改动。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `sed -n ... AGENTS.md`
+- `sed -n ... docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md docs/ideas/2026-05-10-evocraft-seed-capsule.md`
+- `npm run codex:handoff`（通过，刷新 `.omx/context/current-session-handoff.md`）
+- `git diff --check`（通过）
+- `npm run build`（通过）
+- `npm test`（失败，仍是既有 2 个 RED 测试：上传页“使用指南”未移除、复核页“选项”字段未实现）
+
+下一步的计划：
+
+- 提交并推送本轮 `AGENTS.md` 规则同步；继续保留既有未提交 RED 测试不纳入本轮提交。
+
 ### 2026-06-08：Codex 会话连续性与续跑优化
 
 本轮任务是什么：
