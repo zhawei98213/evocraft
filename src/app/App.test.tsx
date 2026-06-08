@@ -337,6 +337,7 @@ describe("App", () => {
     render(<App />);
 
     await user.click(screen.getByRole("button", { name: "错题收集" }));
+    expect(screen.queryByRole("button", { name: "使用指南" })).not.toBeInTheDocument();
     await user.upload(screen.getByLabelText("选择错题照片"), new File(["real-image"], "real.png", {
       type: "image/png",
     }));
@@ -760,6 +761,69 @@ describe("App", () => {
     });
     expect(screen.getByRole("heading", { name: "识别复核" })).toBeInTheDocument();
     expect(screen.getByLabelText("科目")).toHaveValue("math");
+  });
+
+  it("shows recognized multiple-choice options in review and saved detail", async () => {
+    const desktopApi = installDesktopBridge({
+      selectImage: vi.fn().mockResolvedValue("/Users/zha/Desktop/question.png"),
+      readImageAsDataUrl: vi.fn().mockResolvedValue("data:image/png;base64,desktop-image"),
+      getAiRuntimeStatus: vi.fn().mockResolvedValue({
+        enabled: true,
+        configured: true,
+        provider: "qwen",
+        model: "qwen-vl-ocr-latest",
+        mode: "real",
+        message: "",
+      }),
+      detectRegions: vi.fn().mockResolvedValue({
+        ok: true,
+        candidates: createMockRegionCandidates(),
+      }),
+      recognizeQuestion: vi.fn().mockResolvedValue({
+        ok: true,
+        draft: {
+          ...createMockRecognition({ subject: "english" }),
+          title: "English choice question",
+          questionText: "Where are you making a cake?",
+          answerOptions: [
+            { label: "A", text: "do; make" },
+            { label: "B", text: "are; making" },
+            { label: "C", text: "are; make" },
+            { label: "D", text: "do; making" },
+          ],
+        },
+      }),
+    });
+
+    const user = userEvent.setup();
+    render(<App />);
+
+    await user.click(screen.getByRole("button", { name: "错题收集" }));
+    await screen.findByText("真实 AI 测试模式");
+    await user.click(screen.getByRole("button", { name: "从电脑选择图片" }));
+    await waitFor(() => {
+      expect(screen.getByText("question.png")).toBeInTheDocument();
+    });
+    await user.click(screen.getByRole("checkbox", { name: /本地隐私确认/ }));
+    await user.click(screen.getByRole("checkbox", { name: /真实 AI 测试模式/ }));
+    await user.click(screen.getByRole("button", { name: "下一步：选择题目区域" }));
+    await screen.findByRole("heading", { name: "选择题目区域" });
+    await user.click(screen.getByRole("button", { name: "确认此区域并识别" }));
+
+    await waitFor(() => {
+      expect(desktopApi.recognizeQuestion).toHaveBeenCalled();
+    });
+    expect(screen.getByRole("heading", { name: "识别复核" })).toBeInTheDocument();
+    expect(screen.getByLabelText("选项")).toHaveValue(
+      "A. do; make\nB. are; making\nC. are; make\nD. do; making",
+    );
+
+    await user.click(screen.getByRole("button", { name: "保存到错题本" }));
+    await waitFor(() => {
+      expect(screen.getByRole("heading", { name: "English choice question" })).toBeInTheDocument();
+    });
+    expect(screen.getByText("A. do; make")).toBeInTheDocument();
+    expect(screen.getByText("D. do; making")).toBeInTheDocument();
   });
 
   it("blocks rerun detection after a delayed real AI runtime flip until authorization is acknowledged", async () => {

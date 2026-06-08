@@ -37,6 +37,11 @@ export interface ReviewItem {
   status: string;
 }
 
+export interface AnswerOption {
+  label: string;
+  text: string;
+}
+
 export interface WrongQuestionDraft {
   id: string;
   appId: typeof APP_ID;
@@ -50,6 +55,7 @@ export interface WrongQuestionDraft {
   selectedRegionImageUri: string;
   cleanedQuestionImageUri: string;
   visualSnippetUri: string;
+  answerOptions: AnswerOption[];
   studentAnswer: string;
   correctAnswer: string;
   notes: string;
@@ -89,6 +95,7 @@ interface CreateRecordOverrides {
   title?: string;
   subject?: Subject;
   questionText?: string;
+  answerOptions?: AnswerOption[];
   studentAnswer?: string;
   correctAnswer?: string;
   notes?: string;
@@ -316,6 +323,7 @@ export function createMockRecognition({
     selectedRegionImageUri: selectedRegionImageUri || originalImageUri,
     cleanedQuestionImageUri: createCleanQuestionImage(subject),
     visualSnippetUri: createCleanQuestionImage(subject),
+    answerOptions: [],
     studentAnswer: "AI 识别到学生作答痕迹，已从干净题面中隐藏，请人工确认是否需要保留到备注。",
     correctAnswer: sample.answer,
     notes: "当前为本地 mock 识别结果；真实 AI/OCR 接入前不会上传儿童学习照片。",
@@ -356,6 +364,7 @@ export function createRecordFromDraft(
     title: overrides.title ?? draft.title,
     subject: confirmedSubject,
     questionText: overrides.questionText ?? draft.questionText,
+    answerOptions: cloneAnswerOptions(overrides.answerOptions ?? draft.answerOptions ?? []),
     studentAnswer: overrides.studentAnswer ?? draft.studentAnswer,
     correctAnswer: overrides.correctAnswer ?? draft.correctAnswer,
     notes: overrides.notes ?? draft.notes,
@@ -396,7 +405,12 @@ function cloneRecord(record: WrongQuestionRecord): WrongQuestionRecord {
   return {
     ...record,
     selectedRegion: { ...record.selectedRegion },
+    answerOptions: cloneAnswerOptions(record.answerOptions ?? []),
     modelTraces: record.modelTraces.map((trace) => ({ ...trace })),
     reviewItems: record.reviewItems.map((item) => ({ ...item })),
   };
+}
+
+function cloneAnswerOptions(answerOptions: AnswerOption[]): AnswerOption[] {
+  return answerOptions.map((option) => ({ ...option }));
 }

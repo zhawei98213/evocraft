@@ -6,6 +6,8 @@ import { createQwenAdapter, parseQwenJsonContent } from "../electron/ai/qwenAdap
 const explicitSubjectPrompt = buildRecognitionPrompt({ subject: "chinese" });
 assert.match(explicitSubjectPrompt, /用户选择的科目是 chinese/);
 assert.doesNotMatch(explicitSubjectPrompt, /自动判断，必须返回 subject/);
+assert.match(explicitSubjectPrompt, /answerOptions/);
+assert.match(explicitSubjectPrompt, /A\/B\/C\/D/);
 
 const autoSubjectPrompt = buildRecognitionPrompt({ subject: "auto" });
 assert.match(autoSubjectPrompt, /用户选择的科目是 自动判断/);
@@ -262,20 +264,52 @@ const adapter = createQwenAdapter({
   apiKey: "test-key",
   fetchImpl: async (url, init) => {
     calls.push({ url, init });
+    const callIndex = calls.length;
     return {
       ok: true,
       status: 200,
       async json() {
+        if (callIndex === 1) {
+          return {
+            choices: [
+              {
+                message: {
+                  content: JSON.stringify({
+                    rawQuestionText: "Where are you making a cake?",
+                    answerOptions: [
+                      { label: "A", text: "do; make" },
+                      { label: "B", text: "are; making" },
+                      { label: "C", text: "are; make" },
+                      { label: "D", text: "do; making" },
+                    ],
+                    studentAnswer: "学生圈了 B",
+                    correctAnswer: "",
+                    notes: "OCR 阶段只提取可见内容。",
+                  }),
+                },
+              },
+            ],
+            usage: { total_tokens: 64 },
+          };
+        }
+
         return {
           choices: [
             {
               message: {
                 content: JSON.stringify({
-                  title: "阅读理解",
-                  questionText: "请概括文章主要内容。",
-                  studentAnswer: "图片中可见学生作答，需复核。",
+                  subject: "english",
+                  title: "English choice question",
+                  questionText: "Where are you making a cake?",
+                  answerOptions: [
+                    { label: "A", text: "do; make" },
+                    { label: "B", text: "are; making" },
+                    { label: "C", text: "are; make" },
+                    { label: "D", text: "do; making" },
+                  ],
+                  studentAnswer: "学生圈了 B",
                   correctAnswer: "",
-                  notes: "未主动解题。",
+                  notes: "二阶段只整理题面，不解题。",
                   reviewItems: [{ label: "答案", status: "需复核" }],
                 }),
               },
@@ -296,22 +330,34 @@ const result = await adapter.recognizeQuestion({
 });
 
 assert.equal(result.ok, true);
-assert.equal(result.draft.title, "阅读理解");
-assert.equal(result.draft.questionText, "请概括文章主要内容。");
-assert.equal(result.draft.studentAnswer, "图片中可见学生作答，需复核。");
+assert.equal(result.draft.subject, "english");
+assert.equal(result.draft.title, "English choice question");
+assert.equal(result.draft.questionText, "Where are you making a cake?");
+assert.deepEqual(result.draft.answerOptions, [
+  { label: "A", text: "do; make" },
+  { label: "B", text: "are; making" },
+  { label: "C", text: "are; make" },
+  { label: "D", text: "do; making" },
+]);
+assert.equal(result.draft.studentAnswer, "学生圈了 B");
 assert.equal(result.draft.correctAnswer, "");
-assert.equal(result.draft.notes, "未主动解题。");
+assert.equal(result.draft.notes, "二阶段只整理题面，不解题。");
 assert.deepEqual(result.draft.reviewItems, [{ label: "答案", status: "需复核" }]);
 assert.equal(result.draft.modelTraces.every((trace) => trace.provider === "qwen"), true);
-assert.equal(result.draft.providerMeta.usage.total_tokens, 128);
+assert.equal(result.draft.providerMeta.ocrUsage.total_tokens, 64);
+assert.equal(result.draft.providerMeta.structureUsage.total_tokens, 128);
 
-assert.equal(calls.length, 1);
+assert.equal(calls.length, 2);
 assert.equal(calls[0].url, "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions");
 assert.match(calls[0].init.headers.Authorization, /^Bearer test-key$/);
 assert.match(calls[0].init.body, /qwen-vl-ocr-latest/);
 assert.match(calls[0].init.body, /"temperature":0/);
 assert.match(calls[0].init.body, /data:image\/png;base64,cmVnaW9u/);
 assert.doesNotMatch(calls[0].init.body, /data:image\/png;base64,b3JpZ2luYWw=/);
+assert.match(calls[1].init.body, /qwen-plus/);
+assert.match(calls[1].init.body, /Where are you making a cake/);
+assert.match(calls[1].init.body, /are; making/);
+assert.doesNotMatch(calls[1].init.body, /data:image\/png;base64/);
 
 const requestFailureResult = await createQwenAdapter({
   apiKey: "test-key",

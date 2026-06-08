@@ -286,9 +286,10 @@ async function callHandler(handler, event, input) {
   );
 
   assert.equal(result.ok, true);
-  assert.equal(providerCalls.length, 1);
+  assert.equal(providerCalls.length, 2);
   assert.match(providerCalls[0].init.headers.Authorization, /^Bearer dashscope-secret-key$/);
   assert.match(providerCalls[0].init.body, /qwen-vl-max/);
+  assert.match(providerCalls[1].init.body, /qwen-plus/);
   assert.doesNotMatch(JSON.stringify(configured.status), /dashscope-secret-key/);
 }
 
@@ -402,6 +403,17 @@ await runTempDirTest("persists and clears AI config without storing the plain AP
             draft: {
               id: "draft-1",
               subject: "math",
+              title: "English choice question",
+              questionText: "Where are you making a cake?",
+              answerOptions: [
+                { label: "A", text: "do; make" },
+                { label: "B", text: "are; making" },
+                { label: "C", text: "are; make" },
+                { label: "D", text: "do; making" },
+              ],
+              studentAnswer: "学生圈了 B",
+              correctAnswer: "",
+              notes: "二阶段整理完成。",
               selectedRegion,
               selectedRegionImageUri: input.selectedRegionImageUri,
             },
@@ -429,6 +441,9 @@ await runTempDirTest("persists and clears AI config without storing the plain AP
   assert.match(serializedLogs, /"event":"ai.detectRegions.start"/);
   assert.match(serializedLogs, /"event":"ai.detectRegions.success"/);
   assert.match(serializedLogs, /"event":"ai.recognize.success"/);
+  assert.match(serializedLogs, /Where are you making a cake/);
+  assert.match(serializedLogs, /are; making/);
+  assert.match(serializedLogs, /学生圈了 B/);
   assert.doesNotMatch(serializedLogs, /dashscope-secret-key/);
   assert.doesNotMatch(serializedLogs, /original-image-payload/);
   assert.doesNotMatch(serializedLogs, /region-image-payload/);

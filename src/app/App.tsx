@@ -16,6 +16,7 @@ import {
   createRecordFromDraft,
   formatTime,
   isSubject,
+  type AnswerOption,
   type RegionCandidate,
   type Subject,
   type WrongQuestionDraft,
@@ -43,6 +44,7 @@ interface ReviewForm {
   subject: Subject | "";
   title: string;
   questionText: string;
+  answerOptionsText: string;
   studentAnswer: string;
   correctAnswer: string;
   notes: string;
@@ -62,6 +64,7 @@ const emptyReviewForm: ReviewForm = {
   subject: "",
   title: "",
   questionText: "",
+  answerOptionsText: "",
   studentAnswer: "",
   correctAnswer: "",
   notes: "",
@@ -479,6 +482,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
 
     const record = createRecordFromDraft(state.draft, {
       ...reviewForm,
+      answerOptions: parseAnswerOptions(reviewForm.answerOptionsText),
       subject: reviewForm.subject,
     });
     const nextRecords = [record, ...state.records.filter((item) => item.id !== record.id)];
@@ -593,9 +597,6 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                 <h1 id="upload-title">错题收集</h1>
                 <p>上传错题照片，AI 帮你整理成干净题面</p>
               </div>
-              <button className="button-secondary" type="button">
-                使用指南
-              </button>
             </header>
             <FlowStageTracker screen={state.screen} />
 
@@ -1152,6 +1153,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                 </div>
                 <img src={getDetailImageUri(selectedRecord, state.detailImageMode)} alt="已保存错题题面" />
                 <div className="question-text">{selectedRecord.questionText}</div>
+                <AnswerOptionsList answerOptions={selectedRecord.answerOptions ?? []} />
               </article>
 
               <aside className="detail-info" aria-label="题目信息">
@@ -1396,6 +1398,16 @@ function ReviewScreen({
             ></textarea>
           </label>
           <label>
+            <span>选项</span>
+            <textarea
+              aria-label="选项"
+              rows={4}
+              value={form.answerOptionsText}
+              onChange={(event) => updateForm("answerOptionsText", event.target.value)}
+            ></textarea>
+            <small className="field-note">每行一个选项，例如 A. 选项内容。</small>
+          </label>
+          <label>
             <span>学生答案痕迹</span>
             <textarea
               rows={2}
@@ -1612,6 +1624,20 @@ function getRecordProviderLabel(record: WrongQuestionRecord) {
   return provider === "mock" ? "mock" : "真实 AI";
 }
 
+function AnswerOptionsList({ answerOptions }: { answerOptions: AnswerOption[] }) {
+  if (!answerOptions.length) return null;
+
+  return (
+    <ul className="answer-options-list" aria-label="选择题选项">
+      {answerOptions.map((option) => (
+        <li key={`${option.label}-${option.text}`}>
+          {formatAnswerOption(option)}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 function getDetailImageUri(
   record: WrongQuestionRecord,
   mode: WrongQuestionState["detailImageMode"],
@@ -1661,10 +1687,41 @@ function createReviewForm(draft: WrongQuestionDraft): ReviewForm {
     subject: isSubject(draft.subject) ? draft.subject : "",
     title: draft.title,
     questionText: draft.questionText,
+    answerOptionsText: formatAnswerOptions(draft.answerOptions ?? []),
     studentAnswer: draft.studentAnswer,
     correctAnswer: draft.correctAnswer,
     notes: draft.notes,
   };
+}
+
+function formatAnswerOptions(answerOptions: AnswerOption[]) {
+  return answerOptions.map(formatAnswerOption).join("\n");
+}
+
+function formatAnswerOption(option: AnswerOption) {
+  const label = option.label.trim();
+  const text = option.text.trim();
+  return label ? `${label}. ${text}` : text;
+}
+
+function parseAnswerOptions(value: string): AnswerOption[] {
+  return value
+    .split(/\r?\n/)
+    .map((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) return null;
+
+      const match = trimmed.match(/^([A-Za-z0-9一二三四五六七八九十]+)[.．、:：）)]\s*(.*)$/);
+      if (!match) {
+        return { label: "", text: trimmed };
+      }
+
+      return {
+        label: match[1].toUpperCase(),
+        text: match[2].trim(),
+      };
+    })
+    .filter((option): option is AnswerOption => Boolean(option && option.text));
 }
 
 function getDraggedRegion(dragState: RegionDragState, event: globalThis.PointerEvent): RegionCandidate {

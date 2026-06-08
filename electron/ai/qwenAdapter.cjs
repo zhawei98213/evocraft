@@ -1,10 +1,12 @@
 const {
+  buildQuestionStructurePrompt,
   buildRecognitionPrompt,
   buildRegionDetectionPrompt,
 } = require("./recognitionPrompt.cjs");
 
 const defaultEndpoint = "https://dashscope.aliyuncs.com/compatible-mode/v1/chat/completions";
 const defaultModel = "qwen-vl-ocr-latest";
+const defaultStructureModel = "qwen-plus";
 const validSubjects = new Set(["chinese", "math", "english"]);
 const validReviewStatuses = new Set(["可信", "需复核"]);
 
@@ -12,6 +14,7 @@ function createQwenAdapter({
   apiKey,
   endpoint = defaultEndpoint,
   model = defaultModel,
+  structureModel = defaultStructureModel,
   fetchImpl = globalThis.fetch,
 } = {}) {
   return {
@@ -167,40 +170,33 @@ function createQwenAdapter({
       }
 
       const startedAt = Date.now();
-      let response;
-
-      try {
-        response = await fetchImpl(endpoint, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            "Content-Type": "application/json",
+      const ocrResult = await requestQwenJson({
+        apiKey,
+        endpoint,
+        fetchImpl,
+        model,
+        messages: [
+          {
+            role: "system",
+            content: buildRecognitionPrompt({ subject: input.subject }),
           },
-          body: JSON.stringify({
-            model,
-            messages: [
+          {
+            role: "user",
+            content: [
               {
-                role: "system",
-                content: buildRecognitionPrompt({ subject: input.subject }),
+                type: "text",
+                text: "请只识别这张题目区域图片中的可见内容，并返回 JSON。",
               },
               {
-                role: "user",
-                content: [
-                  {
-                    type: "text",
-                    text: "请只识别这张题目区域图片中的可见内容，并返回 JSON。",
-                  },
-                  {
-                    type: "image_url",
-                    image_url: { url: input.selectedRegionImageUri },
-                  },
-                ],
+                type: "image_url",
+                image_url: { url: input.selectedRegionImageUri },
               },
             ],
-            temperature: 0,
-          }),
-        });
-      } catch {
+          },
+        ],
+      });
+
+      if (!ocrResult.ok && ocrResult.reason === "request_failed") {
         return {
           ok: false,
           reason: "provider_request_failed",
@@ -209,19 +205,7 @@ function createQwenAdapter({
         };
       }
 
-      if (!response?.ok) {
-        return {
-          ok: false,
-          reason: "provider_request_failed",
-          message: "真实 AI 服务请求失败，请稍后重试。",
-          retryable: true,
-        };
-      }
-
-      let payload;
-      try {
-        payload = await response.json();
-      } catch {
+      if (!ocrResult.ok && ocrResult.reason === "response_invalid") {
         return {
           ok: false,
           reason: "provider_response_invalid",
@@ -230,19 +214,43 @@ function createQwenAdapter({
         };
       }
 
-      const content = payload?.choices?.[0]?.message?.content;
-      const parsed = parseQwenJsonContent(content);
-      if (!parsed) {
-        return {
-          ok: false,
-          reason: "provider_response_invalid",
-          message: "真实 AI 返回格式异常，请重试或手动填写。",
-          retryable: true,
+      let structureResult = await requestQwenJson({
+        apiKey,
+        endpoint,
+        fetchImpl,
+        model: structureModel,
+        messages: [
+          {
+            role: "system",
+            content: buildQuestionStructurePrompt({ subject: input.subject }),
+          },
+          {
+            role: "user",
+            content: `请整理以下 OCR JSON，并只返回规范化 JSON：\n${JSON.stringify(ocrResult.parsed)}`,
+          },
+        ],
+      });
+
+      if (!structureResult.ok) {
+        structureResult = {
+          ok: true,
+          parsed: null,
+          payload: null,
+          fallback: true,
         };
       }
 
       const now = new Date().toISOString();
-      const subject = resolveDraftSubject(input.subject, parsed.subject);
+      const structured = structureResult.parsed;
+      const subject = resolveDraftSubject(input.subject, structured?.subject ?? ocrResult.parsed?.subject);
+      const answerOptions = mergeAnswerOptions(
+        normalizeAnswerOptions(structured?.answerOptions),
+        normalizeAnswerOptions(ocrResult.parsed?.answerOptions),
+      );
+      const reviewItems = normalizeReviewItems(
+        structured?.reviewItems ?? ocrResult.parsed?.reviewItems,
+        structureResult.fallback,
+      );
 
       return {
         ok: true,
@@ -252,34 +260,84 @@ function createQwenAdapter({
           createdAt: now,
           updatedAt: now,
           subject,
-          title: asNonBlankString(parsed.title, "识别草稿"),
-          questionText: asString(parsed.questionText, ""),
+          title: asNonBlankString(structured?.title ?? ocrResult.parsed?.title, "识别草稿"),
+          questionText: asString(
+            structured?.questionText ?? ocrResult.parsed?.questionText ?? ocrResult.parsed?.rawQuestionText,
+            "",
+          ),
           originalImageUri: input.imageUri,
           selectedRegion: input.selectedRegion,
           selectedRegionImageUri: input.selectedRegionImageUri,
           cleanedQuestionImageUri: input.selectedRegionImageUri,
           visualSnippetUri: input.selectedRegionImageUri,
-          studentAnswer: asString(parsed.studentAnswer, ""),
-          correctAnswer: asString(parsed.correctAnswer, ""),
-          notes: asString(parsed.notes, "真实 AI 识别草稿，请人工复核。"),
+          answerOptions,
+          studentAnswer: asString(structured?.studentAnswer ?? ocrResult.parsed?.studentAnswer, ""),
+          correctAnswer: asString(structured?.correctAnswer ?? ocrResult.parsed?.correctAnswer, ""),
+          notes: asString(
+            structured?.notes ?? ocrResult.parsed?.notes,
+            structureResult.fallback
+              ? "OCR 已完成，题面整理阶段失败，请人工复核。"
+              : "真实 AI 识别草稿，请人工复核。",
+          ),
           recognitionStatus: "needs_review",
-          recognitionConfidence: 0.7,
+          recognitionConfidence: structureResult.fallback ? 0.58 : 0.72,
           cleanupStatus: "needs_review",
           cleanupConfidence: 0.7,
           modelTraces: [
             { provider: "qwen", modelId: model, task: "ocr" },
-            { provider: "qwen", modelId: model, task: "structure" },
+            { provider: "qwen", modelId: structureModel, task: "structure" },
             { provider: "qwen", modelId: model, task: "cleanup" },
           ],
-          reviewItems: normalizeReviewItems(parsed.reviewItems),
+          reviewItems,
           providerMeta: {
-            usage: payload?.usage ?? null,
+            ocrUsage: ocrResult.payload?.usage ?? null,
+            structureUsage: structureResult.payload?.usage ?? null,
+            structureFallback: Boolean(structureResult.fallback),
             elapsedMs: Date.now() - startedAt,
           },
         },
       };
     },
   };
+}
+
+async function requestQwenJson({ apiKey, endpoint, fetchImpl, model, messages }) {
+  let response;
+  try {
+    response = await fetchImpl(endpoint, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature: 0,
+      }),
+    });
+  } catch {
+    return { ok: false, reason: "request_failed" };
+  }
+
+  if (!response?.ok) {
+    return { ok: false, reason: "request_failed" };
+  }
+
+  let payload;
+  try {
+    payload = await response.json();
+  } catch {
+    return { ok: false, reason: "response_invalid" };
+  }
+
+  const content = payload?.choices?.[0]?.message?.content;
+  const parsed = parseQwenJsonContent(content);
+  if (!parsed) {
+    return { ok: false, reason: "response_invalid" };
+  }
+
+  return { ok: true, parsed, payload };
 }
 
 function isProviderImageUri(imageUri) {
@@ -304,9 +362,14 @@ function parseQwenJsonContent(content) {
   }
 }
 
-function normalizeReviewItems(reviewItems) {
+function normalizeReviewItems(reviewItems, structureFallback = false) {
   if (!Array.isArray(reviewItems) || reviewItems.length === 0) {
-    return [{ label: "识别结果", status: "需复核" }];
+    return [
+      {
+        label: structureFallback ? "题面整理" : "识别结果",
+        status: "需复核",
+      },
+    ];
   }
 
   const normalized = reviewItems
@@ -329,6 +392,60 @@ function normalizeReviewItems(reviewItems) {
     .filter(Boolean);
 
   return normalized.length > 0 ? normalized : [{ label: "识别结果", status: "需复核" }];
+}
+
+function normalizeAnswerOptions(answerOptions) {
+  if (!Array.isArray(answerOptions)) {
+    return [];
+  }
+
+  return answerOptions
+    .map((option, index) => {
+      if (typeof option === "string") {
+        const trimmed = option.trim();
+        if (!trimmed) {
+          return null;
+        }
+
+        const parsed = parseOptionLine(option);
+        return parsed ?? { label: String.fromCharCode(65 + index), text: trimmed };
+      }
+
+      if (!option || typeof option !== "object") {
+        return null;
+      }
+
+      const rawText = asString(option.text ?? option.content ?? option.value, "").trim();
+      if (!rawText) {
+        return null;
+      }
+
+      const parsed = parseOptionLine(rawText);
+      const label = asString(option.label ?? option.option, "").trim() || parsed?.label || String.fromCharCode(65 + index);
+      const text = parsed && !option.label ? parsed.text : rawText;
+
+      return {
+        label: label.toUpperCase(),
+        text,
+      };
+    })
+    .filter((option) => option && option.text);
+}
+
+function parseOptionLine(value) {
+  const trimmed = asString(value, "").trim();
+  if (!trimmed) return null;
+
+  const match = trimmed.match(/^([A-Za-z0-9一二三四五六七八九十]+)[.．、:：）)]\s*(.*)$/);
+  if (!match || !match[2].trim()) return null;
+  return {
+    label: match[1].toUpperCase(),
+    text: match[2].trim(),
+  };
+}
+
+function mergeAnswerOptions(primary, fallback) {
+  return primary.length > 0 ? primary : fallback;
 }
 
 function normalizeRegionCandidates(parsed) {
@@ -448,12 +565,12 @@ function createFullImageRegionCandidate() {
 }
 
 function resolveDraftSubject(inputSubject, parsedSubject) {
-  if (validSubjects.has(inputSubject)) {
-    return inputSubject;
+  if (validSubjects.has(parsedSubject)) {
+    return parsedSubject;
   }
 
-  if (inputSubject === "auto" && validSubjects.has(parsedSubject)) {
-    return parsedSubject;
+  if (validSubjects.has(inputSubject)) {
+    return inputSubject;
   }
 
   return "unknown";

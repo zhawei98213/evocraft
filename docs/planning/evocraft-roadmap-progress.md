@@ -84,6 +84,47 @@
 
 ## 当前进度
 
+### 2026-06-08：完整识别与后台调试日志落地
+
+本轮任务是什么：
+
+- 查看当前进度并继续执行 2026-06-07 未完成的“完整识别与后台调试日志”任务。
+- 解决真实试用反馈中的上传页无用“使用指南”、选择题选项漏识别、缺少二阶段题面整理和后台完整识别内容日志。
+
+已完成什么：
+
+- 将 MVP PRD 升为 v1.12，补充选择题 `answerOptions`、Qwen OCR + 文本整理两阶段、规范化识别内容日志和上传页移除无用按钮的产品边界。
+- 新增并完成 `docs/superpowers/specs/2026-06-07-complete-recognition-debug-logs-design.md` 与 `docs/superpowers/plans/2026-06-07-complete-recognition-debug-logs.md`。
+- `WrongQuestionDraft` / `WrongQuestionRecord` 新增 `answerOptions`；旧记录缺少该字段时按空数组处理。
+- React 上传页移除“使用指南”；复核页新增可编辑“选项”字段；保存后详情页展示已保存选项。
+- Qwen adapter 改成两阶段：第一阶段用配置的视觉模型做 OCR，第二阶段默认 `qwen-plus` 只基于 OCR JSON 整理 subject、title、questionText、answerOptions 和 reviewItems；二阶段失败时保留 OCR 题干和选项。
+- Electron `ai.recognize.success` 日志输出规范化识别内容，继续脱敏 API key、Authorization、图片 data URL 和 raw provider response。
+- 更新文档索引、项目记忆、想法胶囊和桌面主干截图。
+- Browser in-app 检查桌面 1280x720 与移动 390x844 上传页，均无横向溢出且不再显示“使用指南”。
+
+卡在哪里：
+
+- 无。截图脚本第一次运行时等待 Chrome debugging target 超时；按 systematic debugging 检查后确认是临时 Chrome 调试进程/固定端口状态问题，清理诊断进程后原脚本重跑成功。
+
+执行的是什么命令：
+
+- `sed -n ... AGENTS.md docs/README.md docs/planning/evocraft-project-memory.md docs/planning/evocraft-roadmap-progress.md docs/ideas/2026-05-10-evocraft-seed-capsule.md .omx/context/current-session-handoff.md`
+- `git status --short --branch`
+- `sed -n ... /Users/zha/.codex/superpowers/skills/test-driven-development/SKILL.md`
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run test:react -- src/app/App.test.tsx`（RED 后 GREEN；最终 28 项通过）
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" node tests/qwen-adapter-contract.test.mjs`（RED 后 GREEN；通过）
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" node tests/electron-ai-ipc.test.mjs`（RED 后 GREEN；通过）
+- `git diff --check`（通过）
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm test`（6 个 test files / 57 项通过）
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run build`（通过）
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" node docs/design/desktop-trunk/capture-react-ui.mjs`（第一次 Chrome target 超时，清理临时调试进程后成功）
+- Browser in-app：`http://127.0.0.1:5173/` 桌面 1280x720、移动 390x844 DOM 检查。
+
+下一步的计划：
+
+- 按 Lore commit protocol 提交并推送本轮完整识别与后台调试日志改动。
+- 后续真实 provider 验证仍需补齐本地 ignored `ai-eval/samples/manifest.local.json`、`ai-eval/samples/private/` 脱敏样本和 `DASHSCOPE_API_KEY`，或在 Electron 桌面窗口中配置真实 AI。
+
 ### 2026-06-08：Codex 会话连续性规则纳入 AGENTS.md
 
 本轮任务是什么：

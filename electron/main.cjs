@@ -470,6 +470,15 @@ function summarizeAdapterResult(result) {
       subject: result.draft.subject,
       hasTitle: Boolean(result.draft.title),
       reviewItemCount: Array.isArray(result.draft.reviewItems) ? result.draft.reviewItems.length : 0,
+      recognizedContent: {
+        subject: result.draft.subject,
+        title: result.draft.title,
+        questionText: result.draft.questionText,
+        answerOptions: Array.isArray(result.draft.answerOptions) ? result.draft.answerOptions : [],
+        studentAnswer: result.draft.studentAnswer,
+        correctAnswer: result.draft.correctAnswer,
+        notes: result.draft.notes,
+      },
     };
   }
 
