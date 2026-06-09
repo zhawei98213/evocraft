@@ -82,15 +82,16 @@ describe("App", () => {
         expect(screen.getByRole("heading", { name: "识别复核" })).toBeInTheDocument();
       });
 
-      await user.clear(screen.getByLabelText("标题"));
-      await user.type(screen.getByLabelText("标题"), "一次函数图像与坐标综合题");
+      expect(screen.queryByLabelText("标题")).not.toBeInTheDocument();
+      await user.clear(screen.getByLabelText("题型"));
+      await user.type(screen.getByLabelText("题型"), "应用题");
       await waitFor(() => {
         expect(screen.getByRole("button", { name: "保存到错题本" })).toBeEnabled();
       });
       await user.click(screen.getByRole("button", { name: "保存到错题本" }));
 
       await waitFor(() => {
-        expect(screen.getByRole("heading", { name: "一次函数图像与坐标综合题" })).toBeInTheDocument();
+        expect(screen.getByRole("heading", { name: "应用题" })).toBeInTheDocument();
       });
       await user.click(screen.getByRole("button", { name: "错题本" }));
       expect(screen.getByText("共 1 条")).toBeInTheDocument();
@@ -199,10 +200,10 @@ describe("App", () => {
       savedRecords[0]?.id,
       "wq-existing",
     ]);
-    expect(savedRecords[0]?.title).toBe("一次函数图像与坐标综合题");
+    expect(savedRecords[0]?.title).toBe("应用题");
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: "一次函数图像与坐标综合题" })).toBeInTheDocument();
+      expect(screen.getByRole("heading", { name: "应用题" })).toBeInTheDocument();
     });
     await user.click(screen.getByRole("button", { name: "错题本" }));
 
@@ -297,6 +298,8 @@ describe("App", () => {
     });
     expect(screen.getByText("原始证据")).toBeInTheDocument();
     expect(screen.getByText("清晰复核面")).toBeInTheDocument();
+    expect(screen.getByText("待去痕")).toBeInTheDocument();
+    expect(screen.queryByText("去痕后")).not.toBeInTheDocument();
     expect(screen.getByText("题目信息")).toBeInTheDocument();
     expect(screen.getByText("AI 建议：数学")).toBeInTheDocument();
   });
@@ -305,12 +308,12 @@ describe("App", () => {
     const firstRecord = createRecordFromDraft(createMockRecognition(), {
       id: "wq-first",
       now: "2026-05-17T08:00:00.000Z",
-      title: "一次函数图像与坐标综合题",
+      title: "应用题",
     });
     const secondRecord = createRecordFromDraft(createMockRecognition({ subject: "english" }), {
       id: "wq-second",
       now: "2026-05-18T08:00:00.000Z",
-      title: "完形填空语境判断题",
+      title: "完形填空",
       subject: "english",
     });
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify([firstRecord, secondRecord]));
@@ -322,14 +325,17 @@ describe("App", () => {
     await waitFor(() => {
       expect(screen.getByRole("table", { name: "错题资料库" })).toBeInTheDocument();
     });
+    expect(screen.getByRole("columnheader", { name: "题型" })).toBeInTheDocument();
     expect(screen.getByText("待复核")).toBeInTheDocument();
     expect(screen.getByText("本周新增")).toBeInTheDocument();
     expect(screen.getAllByText("已确认区域").length).toBeGreaterThan(0);
 
-    const englishRow = screen.getByRole("row", { name: /完形填空语境判断题/ });
+    const englishRow = screen.getByRole("row", { name: /完形填空/ });
     await user.click(within(englishRow).getByRole("button", { name: "打开" }));
 
-    expect(screen.getByRole("heading", { name: "完形填空语境判断题" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "完形填空" })).toBeInTheDocument();
+    expect(screen.getAllByText("待去痕").length).toBeGreaterThan(0);
+    expect(screen.queryByText("去痕完成")).not.toBeInTheDocument();
   });
 
   it("previews the real browser-selected image in the upload area", async () => {

@@ -71,7 +71,7 @@ export interface WrongQuestionRecord extends WrongQuestionDraft {
   id: string;
   subject: Subject;
   recognitionStatus: "reviewed";
-  cleanupStatus: "reviewed";
+  cleanupStatus: ReviewStatus;
 }
 
 interface SubjectSample {
@@ -103,19 +103,19 @@ interface CreateRecordOverrides {
 
 const subjectSamples: Record<Subject, SubjectSample> = {
   chinese: {
-    title: "阅读理解句子赏析题",
+    title: "阅读理解",
     question:
       "阅读短文第 3 段，结合上下文，说说画线句子表达了人物怎样的心情，并写出你的理由。",
     answer: "抓住关键词和人物动作，结合上下文作答。",
   },
   math: {
-    title: "一次函数图像与坐标综合题",
+    title: "应用题",
     question:
       "23. 如图，在平面直角坐标系中，抛物线与 x 轴交于 A(-1,0)、B(3,0) 两点，与 y 轴交于点 C(0,3)，点 P 是抛物线在第一象限上的一点，连接 OP。\n(1) 求抛物线的解析式；\n(2) 当点 P 的横坐标为 1 时，求三角形 POC 的面积；\n(3) 连接 CP，当 CP 垂直 OP 时，求点 P 的坐标。",
     answer: "先由 A、B、C 三点求解析式，再代入 P 点坐标计算。",
   },
   english: {
-    title: "完形填空语境判断题",
+    title: "完形填空",
     question:
       "Read the passage and choose the best answer for each blank. Pay attention to the tense, pronouns and the meaning of the whole paragraph.",
     answer: "先通读段落，确认时态和上下文线索后再选择。",
@@ -309,6 +309,7 @@ export function createMockRecognition({
   const timestamp = now ?? new Date().toISOString();
   const fallbackRegion = selectedRegion ?? createMockRegionCandidates()[1];
   const originalImageUri = imageUri || createOriginalPlaceholderImage();
+  const regionImageUri = selectedRegionImageUri || originalImageUri;
 
   return {
     id: `draft-${Date.now()}`,
@@ -320,13 +321,13 @@ export function createMockRecognition({
     questionText: sample.question,
     originalImageUri,
     selectedRegion: fallbackRegion,
-    selectedRegionImageUri: selectedRegionImageUri || originalImageUri,
-    cleanedQuestionImageUri: createCleanQuestionImage(subject),
-    visualSnippetUri: createCleanQuestionImage(subject),
+    selectedRegionImageUri: regionImageUri,
+    cleanedQuestionImageUri: regionImageUri,
+    visualSnippetUri: regionImageUri,
     answerOptions: [],
-    studentAnswer: "AI 识别到学生作答痕迹，已从干净题面中隐藏，请人工确认是否需要保留到备注。",
+    studentAnswer: "AI 识别到可能的学生作答痕迹，请人工确认是否需要保留到备注。",
     correctAnswer: sample.answer,
-    notes: "当前为本地 mock 识别结果；真实 AI/OCR 接入前不会上传儿童学习照片。",
+    notes: "当前为本地 mock 识别结果；真实图像去痕尚未接入，请以确认区域和文字草稿复核。",
     recognitionStatus: "needs_review",
     recognitionConfidence: 0.92,
     cleanupStatus: "needs_review",
@@ -335,13 +336,12 @@ export function createMockRecognition({
       { provider: "mock", modelId: "local-region-mock", task: "region_detection" },
       { provider: "mock", modelId: "local-ocr-mock", task: "ocr" },
       { provider: "mock", modelId: "local-structure-mock", task: "structure" },
-      { provider: "mock", modelId: "local-cleanup-mock", task: "cleanup" },
     ],
     reviewItems: [
       { label: "题干文字已识别", status: "可信" },
-      { label: "学生作答已隐藏", status: "请检查" },
+      { label: "题型需确认", status: "需复核" },
       { label: "图形内容已保留", status: "可信" },
-      { label: "批改痕迹需确认", status: "需复核" },
+      { label: "真实去痕未完成", status: "需复核" },
     ],
   };
 }
@@ -369,7 +369,7 @@ export function createRecordFromDraft(
     correctAnswer: overrides.correctAnswer ?? draft.correctAnswer,
     notes: overrides.notes ?? draft.notes,
     recognitionStatus: "reviewed",
-    cleanupStatus: "reviewed",
+    cleanupStatus: draft.cleanupStatus,
   };
 }
 

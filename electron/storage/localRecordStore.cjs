@@ -1,7 +1,7 @@
 const { createHash, randomUUID } = require("node:crypto");
 const { mkdir, readdir, readFile, rename, rm, writeFile } = require("node:fs/promises");
 const { dirname, extname, join, relative, resolve } = require("node:path");
-const { pathToFileURL, fileURLToPath } = require("node:url");
+const { fileURLToPath } = require("node:url");
 
 const SCHEMA_VERSION = 1;
 const IMAGE_FIELDS = [
@@ -29,7 +29,7 @@ function createLocalRecordStore(userDataDir) {
         try {
           const raw = await readFile(recordPath, "utf8");
           const parsed = JSON.parse(raw);
-          records.push(hydrateRecord(parsed, recordDir));
+          records.push(await hydrateRecord(parsed, recordDir));
         } catch {
           // Skip broken records so one bad file does not block the notebook.
         }
@@ -54,7 +54,7 @@ function createLocalRecordStore(userDataDir) {
           await ensureDir(recordDir);
           const dehydrated = await dehydrateRecord(record, recordDir);
           await writeJsonAtomic(join(recordDir, "record.json"), dehydrated);
-          savedRecords.push(hydrateRecord(dehydrated, recordDir));
+          savedRecords.push(await hydrateRecord(dehydrated, recordDir));
         }
 
         const sortedRecords = sortRecords(savedRecords);
@@ -99,7 +99,7 @@ async function dehydrateRecord(record, recordDir) {
   return nextRecord;
 }
 
-function hydrateRecord(record, recordDir) {
+async function hydrateRecord(record, recordDir) {
   const nextRecord = { ...record };
   delete nextRecord.schemaVersion;
 
@@ -108,16 +108,28 @@ function hydrateRecord(record, recordDir) {
     if (typeof value !== "string") continue;
     if (!value.startsWith("./")) continue;
 
-    const hydratedPath = resolveContainedRecordPath(recordDir, value);
-    if (!hydratedPath) {
+    const hydratedDataUrl = await hydrateStoredImageAsset(recordDir, value);
+    if (!hydratedDataUrl) {
       delete nextRecord[field];
       continue;
     }
 
-    nextRecord[field] = pathToFileURL(hydratedPath).toString();
+    nextRecord[field] = hydratedDataUrl;
   }
 
   return nextRecord;
+}
+
+async function hydrateStoredImageAsset(recordDir, storedPath) {
+  const assetPath = resolveContainedRecordPath(recordDir, storedPath);
+  if (!assetPath) return null;
+
+  try {
+    const bytes = await readFile(assetPath);
+    return `data:${getImageMimeTypeFromPath(assetPath)};base64,${bytes.toString("base64")}`;
+  } catch {
+    return null;
+  }
 }
 
 async function persistDataUrlAsset(dataUrl, recordDir, field) {
@@ -159,6 +171,15 @@ function getImageExtensionFromPath(filePath) {
   if (extension === ".bmp") return ".bmp";
   if (extension === ".heic") return ".heic";
   return ".png";
+}
+
+function getImageMimeTypeFromPath(filePath) {
+  const extension = extname(filePath).toLowerCase();
+  if (extension === ".jpg" || extension === ".jpeg") return "image/jpeg";
+  if (extension === ".webp") return "image/webp";
+  if (extension === ".bmp") return "image/bmp";
+  if (extension === ".heic") return "image/heic";
+  return "image/png";
 }
 
 async function writeIndex(indexPath, records) {
@@ -242,7 +263,7 @@ function isValidWrongQuestionRecord(record) {
     hasString(record.notes) &&
     record.recognitionStatus === "reviewed" &&
     isFiniteNumber(record.recognitionConfidence) &&
-    record.cleanupStatus === "reviewed" &&
+    (record.cleanupStatus === "needs_review" || record.cleanupStatus === "reviewed") &&
     isFiniteNumber(record.cleanupConfidence) &&
     Array.isArray(record.modelTraces) &&
     record.modelTraces.every(isValidModelTrace) &&

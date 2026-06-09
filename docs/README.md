@@ -11,7 +11,7 @@
 - [应用集合架构](planning/evocraft-app-collection-architecture.md)：EvoCraft 作为 AI 学习助手应用集合的顶层结构。
 - [想法胶囊](ideas/2026-05-10-evocraft-seed-capsule.md)：原始想法碎片和产品方向。
 - [PRD 编写规范 v1.1](prd/2026-05-16-prd-writing-standards.md)：后续 PRD 新建、重大更新、需求评审和规范反向提炼的统一标准。
-- [MVP PRD v1.12](prd/2026-05-10-wrong-question-capture-mvp-prd.md)：用于生成 UI 图和指导开发的错题收集 MVP 产品需求文档。
+- [MVP PRD v1.13](prd/2026-05-10-wrong-question-capture-mvp-prd.md)：用于生成 UI 图和指导开发的错题收集 MVP 产品需求文档。
 - [已实现 MVP UI 设计图](design/implemented-mvp/2026-05-16-implemented-mvp-ui-design.md)：由当前静态 Web 实现自动跑通主流程后保存的 UI 基线截图。
 - [MVP 技术路线决策](planning/2026-05-16-mvp-technical-route-decision.md)：基于 PRD v1.5、已实现 UI 基线和桌面优先方向确认 React/Vite/TypeScript、AI adapter、Electron 桌面壳和后端的推进顺序。
 - [桌面优先技术选型设计](superpowers/specs/2026-05-16-desktop-first-technical-selection-design.md)：确认下一阶段采用 React/Vite/TypeScript 工程主干、provider-agnostic AI adapter 和 Electron 桌面壳。
@@ -30,6 +30,8 @@
 - [上传照片方向调整实施计划](superpowers/plans/2026-06-07-upload-image-rotation.md)：把上传后旋转图片能力拆成测试、helper、reducer、UI、文档和验证步骤。
 - [完整识别与后台调试日志设计](superpowers/specs/2026-06-07-complete-recognition-debug-logs-design.md)：补充选择题选项结构化、Qwen OCR + 文本整理两阶段识别和规范化识别内容后台日志边界。
 - [完整识别与后台调试日志实施计划](superpowers/plans/2026-06-07-complete-recognition-debug-logs.md)：把移除上传页无用按钮、选项字段、Qwen 两阶段调用、Electron 日志和验证步骤拆成可执行任务。
+- [题型、去痕语义和错题图片修复设计](superpowers/specs/2026-06-09-question-type-cleanup-image-fixes-design.md)：根据真实试用反馈锁定“标题改题型”、停止伪装未真实去痕结果、以及本地错题图片 data URL 水化边界。
+- [题型、去痕语义和错题图片修复实施计划](superpowers/plans/2026-06-09-question-type-cleanup-image-fixes.md)：把题型字段、去痕状态文案、Qwen prompt 和 Electron 本地图片水化修复拆成 TDD 执行步骤。
 - [Codex 会话连续性优化设计](superpowers/specs/2026-06-08-codex-session-continuity-design.md)：把上下文压缩失败转成项目内可恢复流程的详细设计。
 - [Codex 会话连续性实施计划](superpowers/plans/2026-06-08-codex-session-continuity.md)：新增 handoff 协议、脚本、npm 命令和记忆同步的执行计划。
 - [Qwen 脱敏样本评测设计](superpowers/specs/2026-05-31-qwen-sample-evaluation-design.md)：确认第一轮 10-15 张本地脱敏样本评测的样本规范、manifest 合同、隐私边界、结果 redaction 和决策规则。

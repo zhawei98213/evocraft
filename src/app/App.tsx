@@ -561,7 +561,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                   题
                 </div>
                 <h2>错题收集</h2>
-                <p>拍照上传，AI 去痕整理</p>
+                <p>拍照上传，AI 识别整理</p>
                 <button className="button-primary" type="button" onClick={() => goToScreen("upload")}>
                   当前可用
                 </button>
@@ -595,7 +595,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
             <header className="workspace-header">
               <div>
                 <h1 id="upload-title">错题收集</h1>
-                <p>上传错题照片，AI 帮你整理成干净题面</p>
+                <p>上传错题照片，AI 帮你整理成可复核题面</p>
               </div>
             </header>
             <FlowStageTracker screen={state.screen} />
@@ -1052,7 +1052,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                   返回应用集合
                 </button>
                 <h1 id="records-title">错题本</h1>
-                <p>这里集中查看已经保存的错题记录，默认展示干净题面，点开后可查看原图。</p>
+                <p>这里集中查看已经保存的错题记录，默认展示确认区域，点开后可查看原图。</p>
               </div>
               <div className="header-actions">
                 <button className="button-primary" type="button" onClick={() => goToScreen("upload")}>
@@ -1071,8 +1071,8 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                 </article>
                 <article>
                   <span>默认复习材料</span>
-                  <strong>干净题面</strong>
-                  <small>原图仍保留用于复核</small>
+                  <strong>确认区域</strong>
+                  <small>真实去痕待接入</small>
                 </article>
                 <article>
                   <span>待复核</span>
@@ -1123,14 +1123,14 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
               <article className="saved-question-card">
                 <div className="section-heading">
                   <div>
-                    <h2>题目（干净题面）</h2>
+                    <h2>题目（确认区域）</h2>
                     <p>{selectedRecord.title}</p>
                   </div>
-                  <span className="status-chip clean">干净题面</span>
+                  <span className="status-chip clean">待去痕</span>
                 </div>
                 <div className="detail-image-tabs" role="tablist" aria-label="题面来源">
                   {[
-                    ["clean", "干净题面"],
+                    ["clean", "复习图"],
                     ["region", "确认区域"],
                     ["original", "原图"],
                   ].map(([mode, label]) => (
@@ -1169,7 +1169,7 @@ export function App({ recordStore: injectedRecordStore }: AppProps = {}) {
                   </div>
                 </dl>
                 <div className="status-row">
-                  <span className="status-chip clean">去痕完成</span>
+                  <span className="status-chip clean">待去痕</span>
                   <span className="status-chip ai">已人工修正</span>
                   <span className="status-chip review">{getRecordProviderLabel(selectedRecord)}</span>
                 </div>
@@ -1300,7 +1300,7 @@ function ReviewScreen({
       <header className="workspace-header">
         <div>
           <h1 id="review-title">识别复核</h1>
-          <p>检查 AI 草稿和去痕效果，如果词句或图形不对就修改后保存</p>
+          <p>检查 AI 草稿和题面来源，如果词句或图形不对就修改后保存</p>
         </div>
         <div className="header-actions">
           <button className="button-secondary" type="button" onClick={onBack}>
@@ -1338,11 +1338,11 @@ function ReviewScreen({
           <header>
             <div>
               <h2>清晰复核面</h2>
-              <p>去除作答痕迹，默认用于复习</p>
+              <p>当前展示确认区域；真实去痕待接入专项模型</p>
             </div>
-            <span className="status-chip clean">去痕后</span>
+            <span className="status-chip clean">待去痕</span>
           </header>
-          <img src={draft.cleanedQuestionImageUri} alt="AI 生成的干净题面" />
+          <img src={getDraftReviewImageUri(draft)} alt="确认区域复核图" />
           <footer>
             <button className="button-secondary" type="button">
               复制文字
@@ -1382,8 +1382,9 @@ function ReviewScreen({
             </small>
           </label>
           <label>
-            <span>标题</span>
+            <span>题型</span>
             <input
+              aria-label="题型"
               type="text"
               value={form.title}
               onChange={(event) => updateForm("title", event.target.value)}
@@ -1468,7 +1469,7 @@ function RecordList({
         <thead>
           <tr>
             <th>题目预览</th>
-            <th>标题</th>
+            <th>题型</th>
             <th>科目</th>
             <th>保存时间</th>
             <th>状态</th>
@@ -1484,13 +1485,13 @@ function RecordList({
                   onClick={() => onOpenRecord?.(record.id)}
                   type="button"
                 >
-                  <img src={record.cleanedQuestionImageUri} alt="" />
+                  <img src={getRecordStudyImageUri(record)} alt="" />
                   <span className="sr-only">{record.title} 打开</span>
                 </button>
               </td>
               <td>
                 <strong>{record.title}</strong>
-                <small>默认复习：干净题面</small>
+                <small>默认复习：确认区域</small>
               </td>
               <td>{SUBJECTS[record.subject]}</td>
               <td>{formatTime(record.createdAt)}</td>
@@ -1531,7 +1532,7 @@ function RecordList({
             onClick={() => onOpenRecord?.(record.id)}
             type="button"
           >
-            <img src={record.cleanedQuestionImageUri} alt="" />
+            <img src={getRecordStudyImageUri(record)} alt="" />
             <span>
               <strong>{record.title}</strong>
               <small>
@@ -1644,7 +1645,15 @@ function getDetailImageUri(
 ) {
   if (mode === "original") return record.originalImageUri;
   if (mode === "region") return record.selectedRegionImageUri;
-  return record.cleanedQuestionImageUri;
+  return getRecordStudyImageUri(record);
+}
+
+function getDraftReviewImageUri(draft: WrongQuestionDraft) {
+  return draft.cleanedQuestionImageUri || draft.selectedRegionImageUri || draft.originalImageUri;
+}
+
+function getRecordStudyImageUri(record: WrongQuestionRecord) {
+  return record.cleanedQuestionImageUri || record.selectedRegionImageUri || record.originalImageUri;
 }
 
 function formatImageRotation(rotationDegrees: number) {

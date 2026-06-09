@@ -21,9 +21,9 @@ await runTest("saves records, rebuilds index, and clears the store", async (user
   const loaded = await store.load();
   assert.equal(loaded.length, 1);
   assert.equal(loaded[0].id, record.id);
-  assert.match(loaded[0].originalImageUri, /^file:\/\//);
-  assert.match(loaded[0].selectedRegionImageUri, /^file:\/\//);
-  assert.match(loaded[0].cleanedQuestionImageUri, /^file:\/\//);
+  assert.equal(loaded[0].originalImageUri, "data:image/png;base64,b3JpZ2luYWw=");
+  assert.equal(loaded[0].selectedRegionImageUri, "data:image/png;base64,cmVnaW9u");
+  assert.equal(loaded[0].cleanedQuestionImageUri, "data:image/png;base64,Y2xlYW4=");
 
   const index = await readIndex(userDataDir);
   assert.equal(index.schemaVersion, 1);
@@ -89,13 +89,10 @@ await runTest("copies external file assets into the record directory on save", a
   assert.match(storedRecord.originalImageUri, /^\.\/assets\/originalImageUri-/);
   assert.doesNotMatch(storedRecord.originalImageUri, /^file:\/\//);
 
-  const copiedAssetUrl = pathToFileURL(
-    join(userDataDir, "wrong-question", "records", "external-file", storedRecord.originalImageUri),
-  ).toString();
   const loaded = await store.load();
   assert.equal(loaded.length, 1);
   assert.equal(loaded[0].id, "external-file");
-  assert.equal(loaded[0].originalImageUri, copiedAssetUrl);
+  assert.equal(loaded[0].originalImageUri, "data:image/png;base64,ZXh0ZXJuYWwtaW1hZ2U=");
   assert.notEqual(loaded[0].originalImageUri, pathToFileURL(externalPath).toString());
 });
 

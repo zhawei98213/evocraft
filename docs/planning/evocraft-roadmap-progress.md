@@ -1,6 +1,6 @@
 # EvoCraft 路线图与进度
 
-最后更新：2026-06-08
+最后更新：2026-06-09
 
 ## 路线图
 
@@ -83,6 +83,46 @@
 如果没有卡点，写 `无`。命令不需要粘贴完整输出，但要保留足够复现的命令名称或关键命令。
 
 ## 当前进度
+
+### 2026-06-09：题型、去痕语义和错题图片修复
+
+本轮任务是什么：
+
+- 根据真实桌面试用反馈继续执行：把复核页“标题”改成“题型”，纠正当前无真实去痕通道却显示去痕完成的问题，并修复错题本中保存图片不可见的问题。
+
+已完成什么：
+
+- 新增 `docs/superpowers/specs/2026-06-09-question-type-cleanup-image-fixes-design.md` 和 `docs/superpowers/plans/2026-06-09-question-type-cleanup-image-fixes.md`，明确本轮只修复题型语义、去痕诚实展示和本地图片水化，不仓促切换图像去痕模型。
+- 将 MVP PRD 升为 v1.13，同步题型字段、待去痕状态、本地图片 data URL 水化和后续真实图像去痕专项评测边界。
+- React 复核页将“标题”改为“题型”；错题本表头、记录详情和测试流程均按题型展示。
+- Qwen 文本整理 prompt 将 `title` 明确为题型，空题型兜底为“待确认题型”；Qwen 第一版仍只做 OCR + 文本整理，不再把视觉 OCR 模型标成 cleanup trace。
+- mock/domain 记录不再生成伪“干净题面”图，也不把保存记录的 `cleanupStatus` 强行标为 reviewed；没有真实去痕时使用确认区域并显示待去痕。
+- Electron 本地 record store 加载记录时，把记录目录内相对图片资产水化成 `data:image/...;base64,...`，路径穿越和读取失败不会暴露为 `file://`。
+- 刷新 React 桌面主干截图基线，覆盖题型和待去痕文案变化。
+- 同步 docs README、想法胶囊和项目记忆。
+
+卡在哪里：
+
+- 截图脚本第一次运行时仍出现临时 Chrome debugging target 超时；按 systematic debugging 确认手动 headless Chrome 可打开 `9238/json/list` 后，清理 profile 并重跑脚本成功。
+
+执行的是什么命令：
+
+- `git status --short --branch`
+- `rg --files ...`、`rg -n ...`、`sed -n ...` 审读 AGENTS、PRD 规范、当前 PRD、App、domain、Qwen adapter、Electron store 和测试。
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run test:react -- src/app/App.test.tsx`（RED 后 GREEN；最终 28 项通过）
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run test:electron-store`（RED 后 GREEN；通过）
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run test:qwen-adapter`（RED 后 GREEN；通过）
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm test`（6 个 test files / 57 项通过）
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run build`（通过）
+- `git diff --check`（通过）
+- Browser in-app：打开 `http://127.0.0.1:5173/`，确认上传页显示“可复核题面”、错题本显示“确认区域 / 真实去痕待接入”、无破图、无应用 console error。
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" node docs/design/desktop-trunk/capture-react-ui.mjs`（首次 Chrome target 超时，诊断后重跑成功）
+- `PATH="/usr/local/bin:$PWD/node_modules/.bin:$PATH" npm run codex:handoff`（生成 `.omx/context/current-session-handoff.md`）
+
+下一步的计划：
+
+- 按 Lore commit protocol 提交并推送到 `codex/qwen-sample-evaluation`。
+- 后续如要真正“去痕”，应单独做图像编辑 / inpainting 模型评测，不应继续复用当前 Qwen OCR 链路伪装成去痕。
 
 ### 2026-06-08：完整识别与后台调试日志落地
 

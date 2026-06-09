@@ -36,11 +36,12 @@ describe("mockAiAdapter", () => {
     expect(result.draft.modelTraces.every((trace) => Boolean(trace.provider))).toBe(true);
     expect(result.draft.modelTraces.every((trace) => Boolean(trace.modelId))).toBe(true);
     expect(result.draft.correctAnswer).not.toContain("模型推理");
+    expect(result.draft.cleanupStatus).toBe("needs_review");
+    expect(result.draft.cleanedQuestionImageUri).toBe("data:image/png;base64,region");
     expect(result.draft.modelTraces.map((trace) => trace.task)).toEqual([
       "region_detection",
       "ocr",
       "structure",
-      "cleanup",
     ]);
   });
 

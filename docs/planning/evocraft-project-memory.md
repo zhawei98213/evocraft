@@ -1,6 +1,6 @@
 # EvoCraft 项目记忆
 
-最后更新：2026-06-08
+最后更新：2026-06-09
 
 ## 一句话产品意图
 
@@ -21,7 +21,7 @@ EvoCraft 是面向上海孩子的 AI 学习助手应用集合。第一阶段从�
 
 阶段：`1 - 错题收集应用 MVP`
 
-当前目标：MVP 收集闭环已完成；桌面优先迁移第一阶段已闭环，当前有 `React + Vite + TypeScript` 工程主干、typed wrong-question domain、provider-agnostic mock AI adapter contract、storage port、React UI 迁移、截图验证、最小 `Electron` 桌面壳、Electron 本地记录存储、Qwen 评测/adapter spike、main-process real AI IPC、应用内真实 AI 测试模式、外部 AI 授权提示，以及通过 final re-review 的 main-process 授权、eval data URL 和一次性文件读取边界。2026-06-02 已确认真实 AI 配置方式要从隐藏环境变量迁移到应用内设置页：用户显式填写 API key 和 LLM 名称，Electron main process 持有配置，配置成功后仍需单独外部 AI 授权；网页预览没有 Electron preload bridge 时必须禁用配置输入并提示改用桌面应用窗口。2026-06-03 使用用户提供的真实数学错题图片跑通真实 Qwen 流程后，已修复科目选择未写入请求、Qwen 自动找题固定框、0-1000 坐标归一化、默认候选选择和空标题兜底问题。2026-06-06 根据真实桌面试用反馈，基础修复已完成：补充 redacted main-process 日志，科目从上传页前置选择后移到识别后建议和复核确认，候选框支持画布内直接删除，API key 改为 Electron `safeStorage` 本机加密持久化且可更改/清除，并补强桌面图标静态配置链路。2026-06-07 Product Design 重设计已产出三方向，并已选定方向 A“流程控制塔”作为整体 UI 骨架，同时吸收方向 B“双栏复核工坊”的复核分栏和方向 C“资料库中枢”的错题本行列表达。2026-06-07 用户提供真实横向/倒向样本后，MVP PRD 已升为 v1.11：上传后必须允许用户在本地左转/右转照片方向，后续选区、自动找题和识别使用调整后的图片。2026-06-08 已新增 Codex 会话连续性与续跑协议，并提供 `npm run codex:handoff` 生成本地 handoff，降低长线程 compact 失败和新窗口续跑带来的上下文丢失风险。2026-06-08 继续完整识别任务时，MVP PRD 已升为 v1.12：上传页移除无实际流程价值的“使用指南”，选择题选项进入 `answerOptions` 结构化字段和复核/详情界面，Qwen 真实识别改为视觉 OCR + `qwen-plus` 文本整理两阶段，Electron 成功日志输出规范化识别内容但继续脱敏凭据、图片载荷和 raw provider response。当前仍处于 Qwen 10-15 张脱敏样本评测准备阶段，Task 0 预检、Task 1 manifest validation/dry-run 和 Task 2 redacted summary reporter 已完成；Task 3 本地样本运行在 2026-06-07 复查后仍被阻塞：缺少本地 ignored `ai-eval/samples/manifest.local.json`、缺少 `ai-eval/samples/private/` 脱敏样本文件，且评测 CLI 仍缺少本地 `DASHSCOPE_API_KEY`；因此还不能形成 Qwen 效果决策。
+当前目标：MVP 收集闭环已完成；桌面优先迁移第一阶段已闭环，当前有 `React + Vite + TypeScript` 工程主干、typed wrong-question domain、provider-agnostic mock AI adapter contract、storage port、React UI 迁移、截图验证、最小 `Electron` 桌面壳、Electron 本地记录存储、Qwen 评测/adapter spike、main-process real AI IPC、应用内真实 AI 测试模式、外部 AI 授权提示，以及通过 final re-review 的 main-process 授权、eval data URL 和一次性文件读取边界。2026-06-02 已确认真实 AI 配置方式要从隐藏环境变量迁移到应用内设置页：用户显式填写 API key 和 LLM 名称，Electron main process 持有配置，配置成功后仍需单独外部 AI 授权；网页预览没有 Electron preload bridge 时必须禁用配置输入并提示改用桌面应用窗口。2026-06-03 使用用户提供的真实数学错题图片跑通真实 Qwen 流程后，已修复科目选择未写入请求、Qwen 自动找题固定框、0-1000 坐标归一化、默认候选选择和空标题兜底问题。2026-06-06 根据真实桌面试用反馈，基础修复已完成：补充 redacted main-process 日志，科目从上传页前置选择后移到识别后建议和复核确认，候选框支持画布内直接删除，API key 改为 Electron `safeStorage` 本机加密持久化且可更改/清除，并补强桌面图标静态配置链路。2026-06-07 Product Design 重设计已产出三方向，并已选定方向 A“流程控制塔”作为整体 UI 骨架，同时吸收方向 B“双栏复核工坊”的复核分栏和方向 C“资料库中枢”的错题本行列表达。2026-06-07 用户提供真实横向/倒向样本后，MVP PRD 已升为 v1.11：上传后必须允许用户在本地左转/右转照片方向，后续选区、自动找题和识别使用调整后的图片。2026-06-08 已新增 Codex 会话连续性与续跑协议，并提供 `npm run codex:handoff` 生成本地 handoff，降低长线程 compact 失败和新窗口续跑带来的上下文丢失风险。2026-06-08 继续完整识别任务时，MVP PRD 已升为 v1.12：上传页移除无实际流程价值的“使用指南”，选择题选项进入 `answerOptions` 结构化字段和复核/详情界面，Qwen 真实识别改为视觉 OCR + `qwen-plus` 文本整理两阶段，Electron 成功日志输出规范化识别内容但继续脱敏凭据、图片载荷和 raw provider response。2026-06-09 MVP PRD 已升为 v1.13：用户可编辑字段中的 `title` 按题型解释和展示；真实图像去痕未接入时复核页和详情页展示确认区域并标记待去痕；Electron 本地记录加载把记录目录内图片资产水化为 renderer 可显示的 image data URL，避免错题本图片不可见。当前仍处于 Qwen 10-15 张脱敏样本评测准备阶段，Task 0 预检、Task 1 manifest validation/dry-run 和 Task 2 redacted summary reporter 已完成；Task 3 本地样本运行在 2026-06-07 复查后仍被阻塞：缺少本地 ignored `ai-eval/samples/manifest.local.json`、缺少 `ai-eval/samples/private/` 脱敏样本文件，且评测 CLI 仍缺少本地 `DASHSCOPE_API_KEY`；因此还不能形成 Qwen 效果决策。
 
 当前 MVP 边界：只完成 EvoCraft 应用集合中第一个应用“错题收集”的核心闭环，也就是“从一张可能包含多道题的上传图片中，确认一道题区域并收集成错题记录”。本轮已把隐私确认、本地删除/清空和失败恢复纳入 MVP 收尾范围。保留应用集合的顶层结构，但暂不实现整卷批量拆题、其他学习应用、完整游戏化经济或复杂多应用平台能力。
 
@@ -41,7 +41,7 @@ EvoCraft 是面向上海孩子的 AI 学习助手应用集合。第一阶段从�
 - 第一版设计目标：桌面优先，同时在结构上为平板和手机预留空间。
 - AI 识别结果必须允许用户编辑，因为 OCR、手写识别、图形识别都可能出错。
 - 原图或题目截图必须作为错题记录的一部分保留。
-- 错题记录默认用于复习和分析时，应优先展示去除书写痕迹后的干净题面；原图保留用于溯源、校验和重新处理。
+- 错题记录默认用于复习和分析时，应优先展示可复习题面；真实图像去痕未接入时，可复习题面就是确认区域并标记待去痕。原图保留用于溯源、校验和重新处理。
 - 游戏化是长期身份的一部分，但不进入第一个 MVP 的核心功能；最多体现在轻微的视觉气质上。
 - UI 视觉基线选定 B 方案 `未来学习工作台`：桌面端三栏工作台、蓝色主功能色、青绿色辅助提示、清晰 AI 状态标签、工具感中保留儿童学习温度。
 - Logo 首轮方向已保存到 `docs/design/logo/2026-05-18-evocraft-logo-options.md`。用户已确认沿左上 A 的“扫描框 + 打开笔记 + 整理完成”方向作为当前选定 logo 方向，final candidate 保存为 `docs/design/logo/2026-05-18-evocraft-logo-scan-notebook-final.png`。当前已接入 React 应用内品牌位、renderer favicon 和 Electron macOS `.icns`，导出资源已处理为透明圆角矩形；App Hub 的错题收集卡片保持原来的业务入口图标。后续发布前仍需矢量化、Windows `.ico` 和真实 dock/installer 视觉验收。
@@ -83,12 +83,13 @@ EvoCraft 是面向上海孩子的 AI 学习助手应用集合。第一阶段从�
 - 上传后的照片方向必须可由用户本地手动校正：真实作业照片可能横向、倒置或带 EXIF orientation；左转/右转后的图片应成为后续选区、自动找题、确认区域截图和识别输入，替换新图时方向状态归零。
 - 上传页不保留没有可执行流程价值的“使用指南”按钮；上传、隐私、授权和方向说明应靠近对应操作，而不是作为空泛 header 动作。
 - 选择题选项必须是结构化数据：识别草稿和保存记录使用 `answerOptions`，复核页允许编辑，详情页展示已保存选项；旧记录缺少该字段时按空数组处理。
-- Qwen 真实识别第一版采用两阶段：视觉 OCR 只提取可见题干、选项、学生痕迹和备注；文本整理阶段默认使用 `qwen-plus` 判断科目并整理标题、题干、选项和复核项；二阶段失败时保留 OCR 阶段题干和选项，不阻断人工复核保存。
-- Electron main-process `ai.recognize.success` 日志允许输出规范化识别内容用于后台调试，包括科目、标题、题干、选项、学生答案痕迹、可见正确答案和备注；仍不得输出 API key、Authorization、图片 data URL 或 raw provider response。
+- Qwen 真实识别第一版采用两阶段：视觉 OCR 只提取可见题干、选项、学生痕迹和备注；文本整理阶段默认使用 `qwen-plus` 判断科目并整理题型、题干、选项和复核项；二阶段失败时保留 OCR 阶段题干和选项，不阻断人工复核保存。
+- Electron main-process `ai.recognize.success` 日志允许输出规范化识别内容用于后台调试，包括科目、题型、题干、选项、学生答案痕迹、可见正确答案和备注；仍不得输出 API key、Authorization、图片 data URL 或 raw provider response。
+- 用户可编辑字段中的 `title` 字段名只为兼容旧记录；产品语义必须是题型，例如判断题、应用题、完型填空，provider 空题型回退为“待确认题型”。
 - 桌面图片读取必须遵循最小权限：renderer 不能用 arbitrary path 请求 main 读取本地图片，只能读取本次系统文件选择对话框明确返回且尚未消费的一次性路径。
 - 本机 AI 评测可以读取本地脱敏样本，但进入云端 provider adapter 前必须转成可发送的 `data:image/...;base64,...` 输入；共享 adapter 需要拒绝 `file://` 等本地路径 URL，避免把本地文件引用当作云端可访问资源。
 - Qwen 脱敏样本评测必须先跑 10-15 张小样本，不直接扩大到 50 张；评测提交物只能是 redacted aggregate summary，真实图片、`manifest.local.json`、raw JSONL、完整 OCR/provider 响应和 API key 均不得入库。
-- 桌面本地持久化第一版采用文件夹 + JSON 索引：每条错题一个目录，保存 `record.json`、原图、确认区域图、干净题面渲染数据和模型调用日志；`index.json` 只做列表摘要，可从记录目录重建，后续保留迁 SQLite 或 SaaS 的路径。
+- 桌面本地持久化第一版采用文件夹 + JSON 索引：每条错题一个目录，保存 `record.json`、原图、确认区域图、复习图来源和模型调用日志；`index.json` 只做列表摘要，可从记录目录重建；加载到 renderer 时只把记录目录内相对图片资产水化成 image data URL，后续保留迁 SQLite 或 SaaS 的路径。
 - 真实 AI 效果验证采用本机评测脚本调用云端模型，不做模型训练或本地模型部署；第一轮用 10-15 张三科混合脱敏样本验证 schema、prompt、成本、失败边界和人工修正点，再扩到 50 张。
 - 重要实现前必须先有详细设计文档体系：PRD/产品边界、详细设计、实施计划、agent run ledger 和验证记录要按 `docs/planning/2026-05-23-design-documentation-system.md` 组织。
 - 使用 subagent-driven 前必须创建 run ledger，并为每个 agent 维护工作计划和进度记录；当前真实 AI 识别接入 run ledger 位于 `docs/superpowers/agent-runs/2026-05-23-real-ai-recognition/README.md`。

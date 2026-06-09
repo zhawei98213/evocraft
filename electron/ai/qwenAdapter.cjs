@@ -260,7 +260,7 @@ function createQwenAdapter({
           createdAt: now,
           updatedAt: now,
           subject,
-          title: asNonBlankString(structured?.title ?? ocrResult.parsed?.title, "识别草稿"),
+          title: asNonBlankString(structured?.title ?? ocrResult.parsed?.title, "待确认题型"),
           questionText: asString(
             structured?.questionText ?? ocrResult.parsed?.questionText ?? ocrResult.parsed?.rawQuestionText,
             "",
@@ -286,7 +286,6 @@ function createQwenAdapter({
           modelTraces: [
             { provider: "qwen", modelId: model, task: "ocr" },
             { provider: "qwen", modelId: structureModel, task: "structure" },
-            { provider: "qwen", modelId: model, task: "cleanup" },
           ],
           reviewItems,
           providerMeta: {

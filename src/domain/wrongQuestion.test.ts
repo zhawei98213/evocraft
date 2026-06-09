@@ -50,8 +50,9 @@ describe("wrongQuestion domain", () => {
     expect(record.id).toBe("wq-fixed");
     expect(record.appId).toBe("wrong_question_capture");
     expect(record.recognitionStatus).toBe("reviewed");
-    expect(record.cleanupStatus).toBe("reviewed");
+    expect(record.cleanupStatus).toBe("needs_review");
     expect(record.selectedRegionImageUri).toBe("data:image/png;base64,region");
+    expect(record.cleanedQuestionImageUri).toBe("data:image/png;base64,region");
     expect(record.modelTraces[0]).toMatchObject({
       provider: "mock",
       task: "region_detection",

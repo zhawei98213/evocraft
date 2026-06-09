@@ -40,7 +40,8 @@ function buildQuestionStructurePrompt({ subject }) {
   return [
     ...lines,
     "必须返回 JSON 对象，字段包括 subject, title, questionText, answerOptions, studentAnswer, correctAnswer, notes, reviewItems。",
-    "title 是简短题目标题；questionText 是整理后的题干；answerOptions 是数组，每项包含 label 和 text。",
+    "title 是题型，例如 判断题、应用题、完型填空、阅读理解、选择题；不要把题干摘要、题号或知识点当作 title。",
+    "questionText 是整理后的题干；answerOptions 是数组，每项包含 label 和 text。",
     "选择题选项必须保留 A/B/C/D 等 label；二阶段不得删除 OCR 阶段已经看见的选项。",
     "reviewItems 必须是数组，每项只包含 label 和 status；status 只能使用 可信 或 需复核。",
   ].join("\n");

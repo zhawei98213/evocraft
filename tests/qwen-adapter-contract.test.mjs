@@ -299,7 +299,7 @@ const adapter = createQwenAdapter({
               message: {
                 content: JSON.stringify({
                   subject: "english",
-                  title: "English choice question",
+                  title: "完形填空",
                   questionText: "Where are you making a cake?",
                   answerOptions: [
                     { label: "A", text: "do; make" },
@@ -331,7 +331,7 @@ const result = await adapter.recognizeQuestion({
 
 assert.equal(result.ok, true);
 assert.equal(result.draft.subject, "english");
-assert.equal(result.draft.title, "English choice question");
+assert.equal(result.draft.title, "完形填空");
 assert.equal(result.draft.questionText, "Where are you making a cake?");
 assert.deepEqual(result.draft.answerOptions, [
   { label: "A", text: "do; make" },
@@ -355,6 +355,7 @@ assert.match(calls[0].init.body, /"temperature":0/);
 assert.match(calls[0].init.body, /data:image\/png;base64,cmVnaW9u/);
 assert.doesNotMatch(calls[0].init.body, /data:image\/png;base64,b3JpZ2luYWw=/);
 assert.match(calls[1].init.body, /qwen-plus/);
+assert.match(calls[1].init.body, /title 是题型/);
 assert.match(calls[1].init.body, /Where are you making a cake/);
 assert.match(calls[1].init.body, /are; making/);
 assert.doesNotMatch(calls[1].init.body, /data:image\/png;base64/);
@@ -451,7 +452,7 @@ const emptyTitleResult = await createQwenAdapter({
               content: JSON.stringify({
                 title: "",
                 questionText: "写出符合要求的小数。",
-                reviewItems: [{ label: "标题", status: "需复核" }],
+                reviewItems: [{ label: "题型", status: "需复核" }],
               }),
             },
           },
@@ -466,7 +467,7 @@ const emptyTitleResult = await createQwenAdapter({
   selectedRegionImageUri: "data:image/png;base64,cmVnaW9u",
 });
 assert.equal(emptyTitleResult.ok, true);
-assert.equal(emptyTitleResult.draft.title, "识别草稿");
+assert.equal(emptyTitleResult.draft.title, "待确认题型");
 
 const autoSubjectWithoutProviderSubjectResult = await createQwenAdapter({
   apiKey: "test-key",
